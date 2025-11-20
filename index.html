@@ -240,7 +240,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version" onclick="forceCacheClear()">v6.0.4</span>
+                <span class="app-version" onclick="forceCacheClear()">v6.0.5</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -320,7 +320,7 @@
     });
     
     // ----------------------------------------------------------------------
-    // 核心：自訂彈窗系統 (不變)
+    // 核心：自訂彈窗系統 (V5.2.2)
     // ----------------------------------------------------------------------
     function showCustomDialog(title, message, buttons) {
         const modal = document.getElementById('customModal');
@@ -479,9 +479,9 @@
 
         allTemplates.forEach(t => {
             // 修正：鎖定中文標題
-            const bankName = t['銀行名稱'] || t['BankName'] || 'Error: 銀行名稱 missing';
-            const billDate = t['結帳日'] || t['BillDate'] || 'Error';
-            const paymentDate = t['扣款日'] || t['PaymentDate'] || 'Error';
+            const bankName = t['銀行名稱'] || t.BankName || 'Error: 銀行名稱 missing';
+            const billDate = t['結帳日'] || t.BillDate || 'Error';
+            const paymentDate = t['扣款日'] || t.PaymentDate || 'Error';
 
             const div = document.createElement('div');
             div.className = 'template-item';
@@ -515,7 +515,6 @@
         btn.disabled = true;
         btn.innerText = '新增中...';
 
-        // 注意：GAS 程式碼 V6.0 仍然以英文 Key 傳送，但會在 GAS 內部轉換。這裡繼續沿用。
         const templateObj = { 
             password: USER_PASSWORD,
             action: 'template_create',
@@ -735,23 +734,22 @@
             const paymentTag = `<span class="tag-date tag-payment">預計扣款: ${templatePaymentDate}日</span>`; 
             
             if (matchingRecord) {
-                // 已登錄：顯示金額，允許刪除，顯示交易備註
+                // 🚀 V6.0.5 修正：已登錄時，隱藏所有日期標籤，只顯示備註 (如果有的話)
                 const loggedAmount = Number(matchingRecord.amount);
                 totalLoggedAmount += loggedAmount;
                 
                 amountDisplay = `<div class="t-amount">$${loggedAmount.toLocaleString()}</div>`;
                 deleteButton = `<button class="btn-delete" onclick="deleteRecord(${matchingRecord.rowIndex})">×</button>`;
                 
-                // 顯示實際扣款日和備註
-                infoTags = `${billTag} <span class="tag-date tag-payment">實際扣款: ${matchingRecord.paymentDate}日</span>`;
+                // 只有備註 tag
+                infoTags = '';
                 if (matchingRecord.note) {
                     infoTags += `<span class="t-note">備註: ${matchingRecord.note}</span>`;
                 }
 
             } else {
-                // 未登錄：顯示 `-`
+                // 未登錄：顯示 `-` 和日期標籤
                 amountDisplay = `<div class="unlogged">-</div>`;
-                // 僅顯示結帳日和預計扣款日
                 infoTags = `${billTag} ${paymentTag}`;
             }
 
