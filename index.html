@@ -171,7 +171,7 @@
             font-size: 13px; 
             color: var(--text-sub); 
             margin-top: 4px; 
-            font-style: italic; /* 讓備註更明顯 */
+            font-style: italic; 
         }
 
         /* 金額區 (右側) */
@@ -281,7 +281,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version" onclick="forceCacheClear()">v6.0.14</span>
+                <span class="app-version" onclick="forceCacheClear()">v6.0.16</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -310,11 +310,7 @@
                     <input type="number" id="amount" inputmode="decimal" placeholder="$0">
                 </div>
             </div>
-            <div id="paymentDateVisualDisplay" style="margin-top: -10px; margin-bottom: 10px; padding-left: 4px; font-size: 13px; color: var(--text-sub);">
-                扣款日參照: -
-            </div>
-            <input type="hidden" id="paymentDateValueHidden" value="-"> 
-
+            
             <div class="form-row">
                 <div class="form-col" style="flex: 5;">
                     <label>備註 (選填)</label>
@@ -364,12 +360,12 @@
             verifyLogin(true); 
         }
         
-        // V6.0.14: 綁定選單變動事件，立即更新參照扣款日
-        document.getElementById('bankSelector').addEventListener('change', autoFillPaymentDate);
+        // V6.0.16: 移除 autoFillPaymentDate 及其綁定，因為參照欄位已移除
+        // document.getElementById('bankSelector').addEventListener('change', autoFillPaymentDate);
     });
     
     // ----------------------------------------------------------------------
-    // 核心資料處理：鍵值淨化與安全讀取
+    // 核心資料處理：鍵值淨化與安全讀取 (不變)
     // ----------------------------------------------------------------------
     /**
      * 清理物件陣列中的所有鍵值，去除前後空白。
@@ -664,35 +660,15 @@
     }
 
     // ----------------------------------------------------------------------
-    // 交易登錄與刪除 (V6.0.14: 移除扣款日欄位，改為參照顯示)
+    // 交易登錄與刪除 (V6.0.16: 移除參照邏輯)
     // ----------------------------------------------------------------------
-    function autoFillPaymentDate() {
-        const selectedBankName = document.getElementById('bankSelector').value;
-        const visualDisplay = document.getElementById('paymentDateVisualDisplay');
-        const hiddenValue = document.getElementById('paymentDateValueHidden');
-        
-        const template = allTemplates.find(t => getCleanValue(t, TEMPLATE_KEYS.BANK) === selectedBankName);
-        let paymentDate = '-';
-
-        if (template) {
-            paymentDate = getCleanValue(template, TEMPLATE_KEYS.PAYMENT_DATE);
-        } 
-        
-        // 更新參照顯示
-        visualDisplay.innerHTML = `扣款日參照: <strong>${paymentDate}日</strong>`;
-        // 更新隱藏欄位，用於提交時抓取
-        hiddenValue.value = paymentDate;
-    }
     
     function updateTemplateSelector() {
         const select = document.getElementById('bankSelector');
         select.innerHTML = '<option value="" disabled selected>請選擇銀行/卡別</option>';
-        const visualDisplay = document.getElementById('paymentDateVisualDisplay');
 
         if (allTemplates.length === 0) {
              select.innerHTML = '<option value="" disabled selected>請先在「設定」中新增銀行</option>';
-             visualDisplay.innerHTML = '扣款日參照: -';
-             document.getElementById('paymentDateValueHidden').value = '-';
              return;
         }
 
@@ -706,7 +682,7 @@
         });
         
         select.selectedIndex = 0;
-        autoFillPaymentDate();
+        // 不再需要呼叫 autoFillPaymentDate
     }
 
     function submitData() {
@@ -715,8 +691,11 @@
         const note = document.getElementById('note').value;
         const targetMonth = document.getElementById('billMonthInput').value; 
         
-        // V6.0.14: 從隱藏欄位獲取值
-        const paymentDate = document.getElementById('paymentDateValueHidden').value; 
+        // V6.0.16: 直接從選定的模板中獲取 paymentDate
+        const selectedBankName = document.getElementById('bankSelector').value;
+        const template = allTemplates.find(t => getCleanValue(t, TEMPLATE_KEYS.BANK) === selectedBankName);
+        const paymentDate = template ? getCleanValue(template, TEMPLATE_KEYS.PAYMENT_DATE) : '-'; // 獲取扣款日
+        
 
         if(!bank || !amount) { showCustomAlert('請選擇銀行並輸入金額', '輸入錯誤'); return; } 
         
@@ -754,7 +733,6 @@
                 document.getElementById('amount').value = '';
                 document.getElementById('note').value = '';
                 document.getElementById('bankSelector').selectedIndex = 0; 
-                autoFillPaymentDate();
             }, 1000); 
 
         }).catch(() => {
@@ -802,7 +780,7 @@
     }
 
     // ----------------------------------------------------------------------
-    // V6.0.14 NEW: 帳單逾期警示邏輯
+    // V6.0.14 NEW: 帳單逾期警示邏輯 (V6.0.16: 修正錯別字)
     // ----------------------------------------------------------------------
     function createOverdueAlert() {
         const today = new Date();
@@ -826,12 +804,13 @@
 
             const billDate = parseInt(billDateStr);
             
-            // 截止日期設定為 結帳日 + 1 天 (例如結帳日 20日，截止日是 21日 00:00:00)
+            // 截止日期設定為 結帳日 + 1 天 
             const cutoffDate = new Date(currentYear, currentMonth - 1, billDate + 1); 
             
             // 1. 檢查交易是否已登錄
             const isLogged = allData.some(record => 
-                getCleanValue(record, TEMPLATE_KEYS.BANK) === bankName && 
+                // V6.0.15 FIX: 使用 record.bank (來自POST payload) 進行匹配
+                record.bank === bankName && 
                 String(record.month).trim() === yearMonth
             );
 
@@ -848,7 +827,7 @@
                 <div class="overdue-alert">
                     <span class="alert-icon">⚠️</span>
                     <div class="alert-text">
-                        <strong>${bankList}</strong> 尚未完成帳單登錄，請盡快登入避免延遲繳費。
+                        <strong>${bankList}</strong> 尚未完成帳單登錄，請盡快登<strong>錄</strong>避免延遲繳費。
                     </div>
                 </div>
             `;
@@ -860,7 +839,7 @@
 
 
     // ----------------------------------------------------------------------
-    // 明細列表顯示 (Template Driven) V6.0.14
+    // 明細列表顯示 (Template Driven) V6.0.16
     // ----------------------------------------------------------------------
     function filterData() {
         const selectedMonth = document.getElementById('monthSelector').value;
@@ -883,23 +862,23 @@
         allTemplates.forEach(template => {
             const templateBankName = getCleanValue(template, TEMPLATE_KEYS.BANK);
             const templateBillDate = getCleanValue(template, TEMPLATE_KEYS.BILL_DATE);
-            const templatePaymentDate = getCleanValue(template, TEMPLATE_KEYS.PAYMENT_DATE); // 單一事實來源
+            const templatePaymentDate = getCleanValue(template, TEMPLATE_KEYS.PAYMENT_DATE); 
 
             // Logo 佔位符
             const firstChar = templateBankName.charAt(0) || 'E';
             const logoHtml = `<div class="t-logo">${firstChar}</div>`;
             
-            // 尋找模板銀行在當月是否已有登錄紀錄
-            const matchingRecord = currentMonthData.find(record => getCleanValue(record, TEMPLATE_KEYS.BANK) === templateBankName);
+            // V6.0.15 FIX: 修正查找匹配紀錄的邏輯，使用 record.bank (來自POST payload) 進行匹配
+            const matchingRecord = currentMonthData.find(record => record.bank === templateBankName); 
 
             let amountDisplay;
             let infoTags;
             let deleteButton = '';
             
-            // 結帳日標籤 (僅從 Template 讀取)
+            // 結帳日標籤 
             const billTag = `<span class="tag-date tag-bill-date">結帳日: ${templateBillDate}日</span>`;
             
-            // 扣款日標籤 (僅從 Template 讀取)
+            // 扣款日標籤 
             const paymentTag = `<span class="tag-date tag-payment-date">扣款日: ${templatePaymentDate}日</span>`;
             
             if (matchingRecord) {
@@ -953,7 +932,7 @@
         document.getElementById('count').textContent = `${allTemplates.length} 筆銀行`;
         listContainer.innerHTML = html;
         
-        // V6.0.14: 呼叫警示檢查
+        // 呼叫警示檢查
         createOverdueAlert();
     }
     
