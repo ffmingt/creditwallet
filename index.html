@@ -290,6 +290,20 @@
         }
         .template-name { font-weight: 600; flex-grow: 1; }
         .template-dates { font-size: 12px; color: var(--text-sub); text-align: right; margin-right: 10px; }
+        .template-actions { display: flex; gap: 5px; align-items: center; }
+        /* 🔴 V6.0.37 NEW: 編輯按鈕樣式 */
+        .btn-edit { 
+            color: #5a67d8; 
+            background: none; 
+            border: none; 
+            font-size: 1rem; 
+            cursor: pointer; 
+            opacity: 0.8; 
+            padding: 5px;
+            transition: opacity 0.1s;
+        }
+        .btn-edit:hover { opacity: 1; }
+        /* 刪除按鈕樣式 */
         .template-item .btn-delete { font-size: 1rem; padding: 4px 8px; }
     </style>
 </head>
@@ -355,12 +369,41 @@
             </div>
         </div>
     </div>
+    
+    <div id="editTemplateModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title">編輯銀行資訊</div>
+            <div class="input-group" style="padding: 15px; margin-bottom: 20px;">
+                <div class="form-col">
+                    <label>銀行/卡別名稱</label>
+                    <input type="hidden" id="editTemplateIndex"> 
+                    <input type="text" id="editTemplateBank" placeholder="例如：中信 LinePay">
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>結帳日 (幾號)</label>
+                        <input type="number" id="editTemplateBillDate" placeholder="例如：5">
+                    </div>
+                    <div class="form-col">
+                        <label>扣款日 (幾號)</label>
+                        <input type="number" id="editTemplatePaymentDate" placeholder="例如：20">
+                    </div>
+                </div>
+                <button class="modal-btn primary" id="saveEditBtn" onclick="saveTemplateEdit()">儲存修改</button>
+            </div>
+            
+            <div class="modal-actions" style="margin-top: 0;">
+                <button class="modal-btn secondary" onclick="closeEditModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
 
     <div class="hero">
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version">v6.0.36</span>
+                <span class="app-version">v6.0.37</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -621,7 +664,7 @@
     }
 
     // ----------------------------------------------------------------------
-    // 模板管理邏輯 (V6.0.29: 復原重複名稱檢查)
+    // 模板管理邏輯 (V6.0.37: 增加編輯功能)
     // ----------------------------------------------------------------------
     function openSettingsModal() {
         document.getElementById('settingsModal').classList.add('show');
@@ -630,6 +673,10 @@
     
     function closeSettingsModal() {
         document.getElementById('settingsModal').classList.remove('show');
+    }
+    
+    function closeEditModal() {
+        document.getElementById('editTemplateModal').classList.remove('show');
     }
 
     function renderTemplateList() {
@@ -652,17 +699,104 @@
             const bankName = getCleanValue(t, TEMPLATE_KEYS.BANK);
             const billDate = getCleanValue(t, TEMPLATE_KEYS.BILL_DATE);
             const paymentDate = getCleanValue(t, TEMPLATE_KEYS.PAYMENT_DATE);
+            // 由於 GAS 傳回的物件上沒有 templateIndex，我們必須使用 allTemplates 陣列中的**原始 index**
+            // 這裡的 t.templateIndex 實際上是 GAS 傳回的物件中包含的 index 欄位，它代表工作表中的行號
+            const templateIndex = t.templateIndex; 
 
             const div = document.createElement('div');
             div.className = 'template-item';
             div.innerHTML = `
                 <span class="template-name">${bankName}</span>
                 <span class="template-dates">結帳日: ${billDate}日 / 扣款日: ${paymentDate}日</span>
-                <button class="btn-delete" onclick="deleteTemplate(${t.templateIndex})">×</button>
+                <div class="template-actions">
+                    <button class="btn-edit" onclick="openEditModal(${templateIndex}, '${bankName.replace(/'/g, "\\'")}', '${billDate}', '${paymentDate}')">&#9998;</button>
+                    <button class="btn-delete" onclick="deleteTemplate(${templateIndex})">×</button>
+                </div>
             `;
             container.appendChild(div);
         });
     }
+    
+    /**
+     * 開啟編輯模態視窗並預填資料
+     * @param {number} index - 模板在 Google Sheet 上的行號 (templateIndex)
+     * @param {string} bank - 銀行名稱
+     * @param {string} billDate - 結帳日
+     * @param {string} paymentDate - 扣款日
+     */
+    function openEditModal(index, bank, billDate, paymentDate) {
+        document.getElementById('editTemplateIndex').value = index;
+        document.getElementById('editTemplateBank').value = bank;
+        document.getElementById('editTemplateBillDate').value = billDate;
+        document.getElementById('editTemplatePaymentDate').value = paymentDate;
+        
+        document.getElementById('editTemplateModal').classList.add('show');
+    }
+    
+    // 儲存編輯後的模板
+    async function saveTemplateEdit() {
+        const index = document.getElementById('editTemplateIndex').value;
+        const bank = document.getElementById('editTemplateBank').value.trim();
+        const billDate = document.getElementById('editTemplateBillDate').value.trim();
+        const paymentDate = document.getElementById('editTemplatePaymentDate').value.trim();
+        
+        if (!bank || !billDate || !paymentDate) {
+            showCustomAlert('請填寫所有欄位', '輸入錯誤');
+            return;
+        }
+
+        if (isNaN(billDate) || isNaN(paymentDate) || billDate < 1 || billDate > 31 || paymentDate < 1 || paymentDate > 31) {
+            showCustomAlert('結帳日和扣款日必須是 1 到 31 之間的數字。', '輸入錯誤');
+            return;
+        }
+
+        // 🔴 V6.0.37: 重複名稱檢查 (排除自身)
+        const isDuplicateTemplate = allTemplates.some(template => 
+            getCleanValue(template, TEMPLATE_KEYS.BANK) === bank &&
+            // 檢查是否為當前編輯的行號 (如果不是當前行號且名稱重複，則視為重複)
+            template.templateIndex != index 
+        );
+        
+        if (isDuplicateTemplate) {
+            showCustomAlert('銀行名稱已存在。請使用不同的名稱。', '重複名稱警告');
+            return;
+        }
+
+        const btn = document.getElementById('saveEditBtn');
+        const originalText = btn.innerText;
+        btn.disabled = true;
+        btn.innerText = '儲存中...';
+
+        const templateObj = { 
+            password: USER_PASSWORD,
+            action: 'template_update', // 🔴 V6.0.37 NEW ACTION
+            templateIndex: index,
+            BankName: bank, 
+            BillDate: billDate, 
+            PaymentDate: paymentDate
+        };
+        
+        try {
+            await fetch(API_URL, {
+                method: 'POST', mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(templateObj)
+            });
+            
+            setTimeout(() => {
+                closeEditModal();
+                loadData(); 
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }, 500); 
+
+        } catch(e) {
+            showCustomAlert('修改請求失敗，請檢查網路。', '錯誤');
+            btn.disabled = false;
+            btn.innerText = originalText;
+        }
+    }
+
 
     async function addTemplate() {
         const bank = document.getElementById('newTemplateBank').value.trim();
@@ -679,7 +813,7 @@
             return;
         }
 
-        // 🔴 V6.0.29：重複模板名稱檢查
+        // 🔴 V6.0.29：重複模板名稱檢查 (新增時)
         const isDuplicateTemplate = allTemplates.some(template => 
             getCleanValue(template, TEMPLATE_KEYS.BANK) === bank
         );
