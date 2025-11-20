@@ -6,7 +6,14 @@
     <title>My Wallet V6.0</title>
     <style>
         /* --- 樣式區 --- */
-        :root { --bg-color: #F8F9FD; --card-bg: #FFFFFF; --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%); --text-main: #2D3748; --text-sub: #718096; --input-bg: #EDF2F7; }
+        :root { 
+            --bg-color: #F8F9FD; 
+            --card-bg: #FFFFFF; 
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            --text-main: #2D3748; 
+            --text-sub: #718096; 
+            --input-bg: #EDF2F7; 
+        }
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding-bottom: 150px; }
         
         /* 登入遮罩 */
@@ -70,14 +77,15 @@
             border-radius: 24px; 
             padding: 30px 25px; 
             color: white; 
-            box-shadow: 0 20px 25px -5px rgba(102, 126, 234, 0.4); 
-            position: relative; /* 定位 Emoji 用 */
+            /* V6.0.31: 陰影加深，增加立體感 */
+            box-shadow: 0 15px 30px -5px rgba(102, 126, 234, 0.6); 
+            position: relative; 
             overflow: hidden; 
         }
         .card-label { font-size: 13px; opacity: 0.8; letter-spacing: 1px; margin-bottom: 8px; }
         .total-amount { font-size: 42px; font-weight: 700; letter-spacing: -1px; }
         
-        /* 🔴 V6.0.27 NEW: 支出狀態符號樣式 */
+        /* V6.0.31: 增加動態效果 */
         .spending-status {
             position: absolute;
             top: 35px; 
@@ -86,7 +94,10 @@
             opacity: 0.9;
             pointer-events: none; 
             transition: transform 0.3s ease;
-            line-height: 1; /* 確保不佔用額外空間 */
+            line-height: 1; 
+        }
+        .spending-status:hover {
+            transform: scale(1.1) rotate(-5deg); 
         }
 
 
@@ -158,7 +169,8 @@
         /* 銀行 Logo */
         .t-logo {
             width: 35px; height: 35px; border-radius: 50%;
-            background: #667eea; color: white;
+            background: var(--primary-gradient); /* 保持使用主題漸變色 */
+            color: white;
             display: flex; justify-content: center; align-items: center;
             font-size: 16px; font-weight: 700;
         }
@@ -189,6 +201,7 @@
             color: var(--text-sub);
             font-size: 13px; 
         }
+        /* 保持標籤顏色：藍色/綠色 */
         .tag-bill-date { color: #5a67d8; font-weight: 600; } 
         .tag-payment-date { color: #38a169; font-weight: 600; } 
         
@@ -311,7 +324,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version">v6.0.29</span>
+                <span class="app-version">v6.0.32</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -614,7 +627,7 @@
             return;
         }
 
-        // 🔴 V6.0.29 新增：重複模板名稱檢查
+        // 🔴 V6.0.29：重複模板名稱檢查
         const isDuplicateTemplate = allTemplates.some(template => 
             getCleanValue(template, TEMPLATE_KEYS.BANK) === bank
         );
@@ -813,7 +826,7 @@
     }
 
     // ----------------------------------------------------------------------
-    // 警示邏輯 (V6.0.17 核心 + V6.0.22 簡單分行)
+    // 警示邏輯 (V6.0.32: 復原提醒文本)
     // ----------------------------------------------------------------------
     function createOverdueAlert() {
         const today = new Date();
@@ -869,7 +882,7 @@
 
 
     // ----------------------------------------------------------------------
-    // 明細列表顯示 (V6.0.27: 新增表情符號邏輯)
+    // 明細列表顯示 (V6.0.31: 新增表情符號邏輯)
     // ----------------------------------------------------------------------
     function filterData() {
         const selectedMonth = document.getElementById('monthSelector').value;
