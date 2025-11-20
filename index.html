@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>My Wallet V6.0</title>
     <style>
-        /* --- 樣式區 --- */
+        /* --- 樣式區 (無變動) --- */
         :root { --bg-color: #F8F9FD; --card-bg: #FFFFFF; --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%); --text-main: #2D3748; --text-sub: #718096; --input-bg: #EDF2F7; }
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding-bottom: 150px; }
         
@@ -105,7 +105,7 @@
         .t-logo {
             width: 24px;
             height: 24px;
-            border-radius: 50%; /* 圓形 */
+            border-radius: 50%; 
             color: white;
             font-size: 14px;
             font-weight: bold;
@@ -113,7 +113,7 @@
             justify-content: center;
             align-items: center;
             margin-right: 10px;
-            flex-shrink: 0; /* 防止縮小 */
+            flex-shrink: 0; 
         }
 
         .t-info { display: flex; flex-direction: column; gap: 6px; }
@@ -222,7 +222,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version" onclick="forceCacheClear()">v6.0.2</span>
+                <span class="app-version" onclick="forceCacheClear()">v6.0.3</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -282,8 +282,8 @@
     const API_URL = "https://script.google.com/macros/s/AKfycby60jdswu4PguQ0YNMpYdfdOewU-YscwRvOpcVxZhV7KNpwhVzSO7tJ8vNx1fPmw_tjGw/exec";
     // ==========================================
 
-    let allData = []; // 儲存 Data 工作表的交易紀錄
-    let allTemplates = []; // 儲存 Templates 工作表的模板紀錄
+    let allData = []; 
+    let allTemplates = []; 
     let USER_PASSWORD = "";
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -298,12 +298,11 @@
             verifyLogin(true); 
         }
         
-        // 新增：監聽銀行選擇器變動，自動帶入扣款日
         document.getElementById('bankSelector').addEventListener('change', autoFillPaymentDate);
     });
     
     // ----------------------------------------------------------------------
-    // 核心：自訂彈窗系統 (與 V5.2.2 相同)
+    // 核心：自訂彈窗系統
     // ----------------------------------------------------------------------
     function showCustomDialog(title, message, buttons) {
         const modal = document.getElementById('customModal');
@@ -440,7 +439,7 @@
     }
 
     // ----------------------------------------------------------------------
-    // 模板管理邏輯
+    // 模板管理邏輯 (新增/刪除)
     // ----------------------------------------------------------------------
     function openSettingsModal() {
         document.getElementById('settingsModal').classList.add('show');
@@ -456,7 +455,7 @@
         container.innerHTML = '';
         
         if (allTemplates.length === 0) {
-             container.innerHTML = '<div class="list-message">尚未新增任何銀行模板</div>';
+             container.innerHTML = '<div class="list-message">尚未新增任何銀行</div>';
              return;
         }
 
@@ -626,6 +625,44 @@
         });
     }
 
+    async function deleteRecord(rowIndex) {
+        showCustomConfirmation('確定要刪除這筆交易紀錄嗎？', '確認刪除', async () => {
+            
+            const deleteObj = { 
+                password: USER_PASSWORD, 
+                action: 'delete',
+                rowIndex: rowIndex
+            };
+
+            const btn = document.getElementById('submitBtn');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = '刪除中...';
+
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(deleteObj)
+                });
+                
+                setTimeout(() => {
+                    loadData(); 
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                }, 1000); 
+
+            } catch(error) {
+                showCustomAlert('刪除請求失敗，請檢查網路。', '錯誤');
+                btn.disabled = false;
+                btn.innerText = originalText;
+                loadData();
+            }
+        });
+    }
+
+
     // ----------------------------------------------------------------------
     // 銀行標誌邏輯
     // ----------------------------------------------------------------------
@@ -654,16 +691,18 @@
             return;
         }
 
-        // 篩選出當前月份的交易紀錄
         const currentMonthData = allData.filter(item => String(item.month).trim() === selectedMonth);
         
         let totalLoggedAmount = 0;
         let html = '';
         
         allTemplates.forEach(template => {
-            const templateBankName = template.BankName;
+            const templateBankName = String(template.BankName).trim(); // 🚨 修正：確保模板名稱乾淨
             
-            const matchingRecord = currentMonthData.find(record => record.bank === templateBankName);
+            // 🚨 修正：在比對時，確保交易紀錄的銀行名稱也是乾淨的
+            const matchingRecord = currentMonthData.find(record => 
+                String(record.bank).trim() === templateBankName
+            );
 
             let amountDisplay;
             let infoTags = `<span class="tag-date">結帳日: ${template.BillDate}日</span>`;
@@ -672,7 +711,6 @@
             let deleteButton = '';
             
             if (matchingRecord) {
-                // 已登錄：顯示金額，允許刪除，顯示交易備註
                 const loggedAmount = Number(matchingRecord.amount);
                 totalLoggedAmount += loggedAmount;
                 
@@ -685,7 +723,6 @@
                 }
 
             } else {
-                // 未登錄：顯示 `-`
                 amountDisplay = `<div class="unlogged">-</div>`;
                 infoTags += `<span class="tag-date" style="background: #fff5f5; color: #e53e3e;">尚未登錄帳單</span>`;
             }
