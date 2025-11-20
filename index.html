@@ -126,7 +126,7 @@
 
 <script>
     // ==========================================
-    // 🔴 你的專屬網址
+    // 🔴 你的專屬網址 (請自行確認是否正確)
     const API_URL = "https://script.google.com/macros/s/AKfycby60jdswu4PguQ0YNMpYdfdOewU-YscwRvOpcVxZhV7KNpwhVzSO7tJ8vNx1fPmw_tjGw/exec";
     // ==========================================
 
@@ -137,19 +137,19 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         const savedPass = localStorage.getItem('myBillAppPassword');
-        if(savedPass) {
-            document.getElementById('passwordInput').value = savedPass;
-            verifyLogin(true); 
-        }
         
         initMonthDropdown('monthSelector'); 
         initMonthDropdown('billMonthInput');
         initDateDropdown(); 
         setDefaultInputMonth();
         setupBankAutocomplete();
+        
+        if(savedPass) {
+            document.getElementById('passwordInput').value = savedPass;
+            verifyLogin(true); 
+        }
     });
 
-    // ─── 新增：刪除記錄功能 ───
     async function deleteRecord(rowIndex) {
         if(!confirm(`確定要刪除試算表中的第 ${rowIndex} 行紀錄嗎？`)) {
             return;
@@ -157,8 +157,8 @@
 
         const deleteObj = { 
             password: USER_PASSWORD, 
-            action: 'delete', // 告訴後端這是刪除操作
-            rowIndex: rowIndex // 告訴後端要刪除哪一行
+            action: 'delete',
+            rowIndex: rowIndex
         };
 
         const btn = document.getElementById('submitBtn');
@@ -167,17 +167,13 @@
         btn.innerText = '刪除中...';
 
         try {
-            const response = await fetch(API_URL, {
+            await fetch(API_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(deleteObj)
             });
-
-            // 由於 GAS 的 no-cors 模式無法讀取成功/失敗狀態，
-            // 我們假設 POST 成功，然後重新載入資料。
             
-            // 延遲一點點時間讓 Google Sheet 完成寫入
             setTimeout(() => {
                 loadData(); 
                 btn.disabled = false;
@@ -188,11 +184,10 @@
             alert('刪除請求失敗，請檢查網路。');
             btn.disabled = false;
             btn.innerText = originalText;
-            loadData(); // 嘗試重新載入資料
+            loadData();
         }
     }
-    // ───────────────────────────
-
+    
     function logout() {
         if(!confirm('確定要登出嗎？')) return;
         localStorage.removeItem('myBillAppPassword');
@@ -220,53 +215,61 @@
         btn.innerText = isAutoLogin ? '自動登入中...' : '驗證中...';
         errorMsg.textContent = '';
 
-        const url = `${API_URL}?password=${encodeURIComponent(pass)}`;
+        USER_PASSWORD = pass;
+        loadData(true); // 呼叫 loadData 並傳遞 true 表示這是第一次登入/驗證
 
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                if(data.error) {
-                    throw new Error(data.error);
-                } else {
-                    USER_PASSWORD = pass;
-                    localStorage.setItem('myBillAppPassword', pass);
-                    
-                    const overlay = document.getElementById('loginOverlay');
-                    overlay.style.opacity = '0';
-                    setTimeout(() => { overlay.style.display = 'none'; }, 300);
-                    
-                    allData = data.reverse();
-                    filterData();
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                btn.disabled = false;
-                btn.innerText = '解鎖';
-                if (err.message && err.message.includes("密碼")) {
-                    errorMsg.textContent = '❌ 密碼錯誤';
-                    localStorage.removeItem('myBillAppPassword');
-                } else {
-                    errorMsg.innerHTML = '⚠️ 連線失敗';
-                }
-            });
     }
 
-    function loadData() {
+    function loadData(isInitialLogin = false) {
         const container = document.getElementById('listContainer');
-        container.innerHTML = '<div class="loading-state">☁️ 正在重新載入資料...</div>';
+        const loginBtn = document.getElementById('loginBtn');
+
+        // 只在不是第一次登入時顯示載入狀態，避免覆蓋登入中的文字
+        if (!isInitialLogin) {
+            container.innerHTML = '<div class="loading-state">☁️ 正在重新載入資料...</div>';
+        }
         
         const url = `${API_URL}?password=${encodeURIComponent(USER_PASSWORD)}`;
 
         fetch(url)
             .then(res => res.json())
             .then(data => {
-                // 這裡我們不處理密碼錯誤，因為登入時已處理
+                if(data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // 成功讀取
+                localStorage.setItem('myBillAppPassword', USER_PASSWORD);
+                
+                // 處理登入成功後的畫面轉換
+                if (isInitialLogin) {
+                    const overlay = document.getElementById('loginOverlay');
+                    overlay.style.opacity = '0';
+                    setTimeout(() => { overlay.style.display = 'none'; }, 300);
+                }
+
                 allData = data.reverse();
                 filterData();
+                loginBtn.disabled = false;
+                loginBtn.innerText = '解鎖';
             })
             .catch(err => {
-                 container.innerHTML = '<div class="loading-state">⚠️ 載入失敗</div>';
+                 console.error(err);
+                 if (isInitialLogin) {
+                    loginBtn.disabled = false;
+                    loginBtn.innerText = '解鎖';
+                    const errorMsg = document.getElementById('loginError');
+                    if (err.message && err.message.includes("密碼")) {
+                        errorMsg.textContent = '❌ 密碼錯誤';
+                        localStorage.removeItem('myBillAppPassword');
+                    } else if (err.message && err.message.includes("工作表名稱錯誤")) {
+                        errorMsg.innerHTML = `⚠️ 連線錯誤：請檢查 GAS 中的 <b>SHEET_NAME</b> 是否為 <b>${err.message.split('：')[1]}</b>`;
+                    } else {
+                        errorMsg.innerHTML = '⚠️ 伺服器連線失敗';
+                    }
+                 } else {
+                    container.innerHTML = '<div class="loading-state">⚠️ 載入失敗</div>';
+                 }
             });
     }
 
@@ -284,25 +287,22 @@
         btn.disabled = true;
         btn.innerText = '加密上傳中...';
 
+        // 確保視圖切換到剛記帳的月份
         document.getElementById('monthSelector').value = targetMonth;
 
         const tempObj = { 
-            password: USER_PASSWORD, // 密碼
-            action: 'post', // 告訴後端這是新增操作
+            password: USER_PASSWORD,
+            action: 'post',
             bank, amount: Number(amount), note, paymentDate, month: targetMonth
         };
         
-        // 樂觀更新
-        // allData.unshift(tempObj); // 由於刪除會讓行號錯位，這裡取消樂觀更新，強制重新載入
-        // filterData(); 
-
         fetch(API_URL, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(tempObj)
         }).then(() => {
-            // 寫入成功後，延遲重載資料
+            
             setTimeout(() => {
                 loadData(); 
                 btn.disabled = false;
@@ -321,14 +321,16 @@
 
     function filterData() {
         const selectedMonth = document.getElementById('monthSelector').value;
-        const filtered = allData.filter(item => item.month === selectedMonth);
+        
+        // 🚨 最終的月份過濾修正: 強制轉為字串並移除空白
+        const filtered = allData.filter(item => String(item.month).trim() === selectedMonth);
+        
         let total = 0;
         let html = '';
         filtered.forEach(item => {
             total += Number(item.amount);
             let dateTag = item.paymentDate ? `<span class="tag-date">📅 ${item.paymentDate}</span>` : '';
             
-            // 傳遞 rowIndex 給 deleteRecord 函式
             html += `
                 <div class="transaction-item">
                     <div class="t-info">
@@ -345,7 +347,8 @@
         document.getElementById('count').textContent = `${filtered.length} 筆`;
         document.getElementById('listContainer').innerHTML = filtered.length ? html : '<div class="loading-state">本月無資料</div>';
     }
-
+    
+    // --- 輔助函式 (不變) ---
     function setupBankAutocomplete() {
         const input = document.getElementById('bank');
         const box = document.getElementById('bankSuggestions');
@@ -384,11 +387,17 @@
     function initMonthDropdown(id) {
         const select = document.getElementById(id);
         const date = new Date();
+        // 初始化月份選擇器，從下個月開始倒數 20 個月
         date.setMonth(date.getMonth()+1);
         for(let i=0; i<20; i++) {
-            const val = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
-            const opt = document.createElement('option'); opt.value = val; opt.text = `${date.getFullYear()}年 ${String(date.getMonth()+1).padStart(2,'0')}月`;
-            select.appendChild(opt); date.setMonth(date.getMonth()-1);
+            const currentMonth = date.getMonth();
+            const currentYear = date.getFullYear();
+            const val = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
+            const opt = document.createElement('option'); 
+            opt.value = val; 
+            opt.text = `${currentYear}年 ${String(currentMonth+1).padStart(2,'0')}月`;
+            select.appendChild(opt); 
+            date.setMonth(date.getMonth()-1);
         }
     }
 </script>
