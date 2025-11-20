@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>My Wallet V6.0</title>
     <style>
-        /* --- 樣式區 --- */
+        /* --- 樣式區 (無變動) --- */
         :root { --bg-color: #F8F9FD; --card-bg: #FFFFFF; --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%); --text-main: #2D3748; --text-sub: #718096; --input-bg: #EDF2F7; }
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding-bottom: 150px; }
         
@@ -222,7 +222,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version" onclick="forceCacheClear()">v6.0.4</span>
+                <span class="app-version" onclick="forceCacheClear()">v6.0.5</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -543,11 +543,17 @@
     // ----------------------------------------------------------------------
     // 交易登錄與刪除
     // ----------------------------------------------------------------------
+    // 💡 V6.0.5 FIX: 修正自動填充扣款日期的比對邏輯，使用 Aggressive Normalization
     function autoFillPaymentDate() {
         const selectedBankName = document.getElementById('bankSelector').value;
         const paymentDateInput = document.getElementById('paymentDateDisplay');
         
-        const template = allTemplates.find(t => t.BankName === selectedBankName);
+        // 🚨 這裡必須對選中的值和模板名稱都進行正規化
+        const normalizedSelectedBank = String(selectedBankName).replace(/\s/g, '').toLowerCase();
+
+        const template = allTemplates.find(t => 
+             String(t.BankName).replace(/\s/g, '').toLowerCase() === normalizedSelectedBank
+        );
 
         if (template) {
             paymentDateInput.value = `${template.PaymentDate}日`;
@@ -568,7 +574,8 @@
 
         allTemplates.forEach(t => {
             const option = document.createElement('option');
-            option.value = t.BankName;
+            // 選項值保持原樣，但在比對時進行正規化
+            option.value = t.BankName; 
             option.text = t.BankName;
             select.appendChild(option);
         });
@@ -678,6 +685,7 @@
     // ----------------------------------------------------------------------
     // 明細列表顯示 (Template Driven)
     // ----------------------------------------------------------------------
+    // 💡 V6.0.5 FIX: 修正資料過濾比對邏輯，使用 Aggressive Normalization
     function filterData() {
         const selectedMonth = document.getElementById('monthSelector').value;
         const listContainer = document.getElementById('listContainer');
@@ -695,10 +703,12 @@
         let html = '';
         
         allTemplates.forEach(template => {
-            const templateBankName = String(template.BankName).trim(); 
+            // 🚨 關鍵修正：對模板名稱進行Aggressive Normalization
+            const normalizedTemplateBankName = String(template.BankName).replace(/\s/g, '').toLowerCase(); 
             
+            // 🚨 關鍵修正：對交易紀錄的銀行名稱進行Aggressive Normalization
             const matchingRecord = currentMonthData.find(record => 
-                String(record.bank).trim() === templateBankName
+                String(record.bank).replace(/\s/g, '').toLowerCase() === normalizedTemplateBankName
             );
 
             let amountDisplay;
@@ -727,9 +737,9 @@
             html += `
                 <div class="transaction-item">
                     <div class="t-bank-info">
-                        ${getBankIcon(templateBankName)}
+                        ${getBankIcon(template.BankName)}
                         <div class="t-info">
-                            <div class="t-bank">${templateBankName}</div>
+                            <div class="t-bank">${template.BankName}</div>
                             <div class="tags-row">${infoTags}</div>
                         </div>
                     </div>
