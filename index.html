@@ -35,7 +35,6 @@
             font-weight: 600;
             color: #764ba2; 
             margin-bottom: 2px;
-            /* V6.0.25: 移除 cursor: pointer; 變回純文字 */
         }
 
         .header-actions { display: flex; align-items: center; gap: 8px; }
@@ -290,7 +289,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version">v6.0.25</span>
+                <span class="app-version">v6.0.26</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -334,7 +333,7 @@
         <div class="section-title">
             <span>明細列表</span>
             <select id="monthSelector" onchange="filterData()"></select>
-            <span style="font-size:12px; font-weight:normal; background:#eee; padding:4px 8px; border-radius:10px;" id="count">0 筆銀行</span>
+            <span style="font-size:12px; font-weight:normal; background:#eee; padding:4px 8px; border-radius:10px;" id="count">0 間銀行</span>
         </div>
         <div id="alertContainer"></div>
         <div id="listContainer"></div>
@@ -455,10 +454,8 @@
     }
 
     // ----------------------------------------------------------------------
-    // 載入與登入 (V6.0.25: 簡化 logout 邏輯)
+    // 載入與登入 (V6.0.25 核心)
     // ----------------------------------------------------------------------
-    
-    // V6.0.25: 移除 forceCacheClear() 函數
 
     function logout() {
         // V6.0.25: 保持簡潔的登出提示，並執行強制清除快取/重新載入
@@ -698,7 +695,7 @@
              return;
         }
         
-        // 🔴 V6.0.24 新增：重複登錄檢查
+        // 🔴 V6.0.24 新增：重複登錄檢查 (本地端快取檢查)
         const isDuplicate = allData.some(record => 
             record.bank === bank && 
             String(record.month).trim() === targetMonth
@@ -839,7 +836,7 @@
 
 
     // ----------------------------------------------------------------------
-    // 明細列表顯示 (V6.0.17 核心)
+    // 明細列表顯示 (V6.0.26 修正計數單位)
     // ----------------------------------------------------------------------
     function filterData() {
         const selectedMonth = document.getElementById('monthSelector').value;
@@ -849,7 +846,8 @@
             document.getElementById('alertContainer').innerHTML = ''; // 清除警示
             listContainer.innerHTML = '<div class="list-message">請先點擊「設定」新增銀行。</div>';
             document.getElementById('totalAmount').textContent = `$0`;
-            document.getElementById('count').textContent = `0 筆銀行`;
+            // 🔴 V6.0.26 修正: 筆 -> 間
+            document.getElementById('count').textContent = `0 間銀行`; 
             return;
         }
 
@@ -929,7 +927,8 @@
         });
         
         document.getElementById('totalAmount').textContent = `$${totalLoggedAmount.toLocaleString()}`;
-        document.getElementById('count').textContent = `${allTemplates.length} 筆銀行`;
+        // 🔴 V6.0.26 修正: 筆 -> 間
+        document.getElementById('count').textContent = `${allTemplates.length} 間銀行`;
         listContainer.innerHTML = html;
         
         // 呼叫警示檢查
