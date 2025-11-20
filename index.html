@@ -35,7 +35,7 @@
             font-weight: 600;
             color: #764ba2; 
             margin-bottom: 2px;
-            cursor: pointer; 
+            /* V6.0.25: 移除 cursor: pointer; 變回純文字 */
         }
 
         .header-actions { display: flex; align-items: center; gap: 8px; }
@@ -290,7 +290,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version" onclick="forceCacheClear()">v6.0.24</span>
+                <span class="app-version">v6.0.25</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -455,29 +455,17 @@
     }
 
     // ----------------------------------------------------------------------
-    // 載入與登入 (V6.0.17 核心)
+    // 載入與登入 (V6.0.25: 簡化 logout 邏輯)
     // ----------------------------------------------------------------------
-    function forceCacheClear() {
-        showCustomConfirmation('確定要清除所有 App 快取並強制更新版本嗎？ (需要重新登入)', '強制更新', () => {
-            localStorage.removeItem('myBillAppPassword');
-            location.reload(true); 
-        });
-    }
+    
+    // V6.0.25: 移除 forceCacheClear() 函數
 
     function logout() {
+        // V6.0.25: 保持簡潔的登出提示，並執行強制清除快取/重新載入
         showCustomConfirmation('確定要登出嗎？下次需要重新輸入密碼。', '登出確認', () => {
             localStorage.removeItem('myBillAppPassword');
-            USER_PASSWORD = "";
-            const overlay = document.getElementById('loginOverlay');
-            overlay.style.display = 'flex';
-            setTimeout(() => overlay.style.opacity = '1', 50);
-            document.getElementById('passwordInput').value = '';
-            document.getElementById('loginBtn').disabled = false;
-            document.getElementById('loginBtn').innerText = '解鎖';
-            document.getElementById('listContainer').innerHTML = '';
-            document.getElementById('totalAmount').textContent = '$0';
-            allData = [];
-            allTemplates = [];
+            // 強制重新載入頁面，確保載入最新的 HTML 檔案和清除所有 App 快取
+            location.reload(true); 
         });
     }
 
