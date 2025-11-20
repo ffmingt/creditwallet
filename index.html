@@ -44,8 +44,8 @@
             font-weight: 700; 
             color: var(--text-main); 
             outline: none; 
-            margin-left: 10px; /* 與標題隔開 */
-            flex-grow: 1; /* 讓它佔用空間 */
+            margin-left: 10px; 
+            flex-grow: 1; 
             text-align: right;
         }
 
@@ -86,17 +86,36 @@
             margin-bottom: 15px; 
             display: flex; 
             justify-content: space-between; 
-            align-items: center; /* 垂直居中對齊 */
+            align-items: center; 
         }
         
         .section-title span:first-child { 
-            /* 明細列表標題 */
             font-size: 18px; 
             font-weight: 700; 
             line-height: 1.2;
         }
 
         .transaction-item { background: var(--card-bg); border-radius: 16px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        
+        /* 銀行標誌與資訊組 */
+        .t-bank-info {
+            display: flex;
+            align-items: center;
+        }
+        .t-logo {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%; /* 圓形 */
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 10px;
+            flex-shrink: 0; /* 防止縮小 */
+        }
+
         .t-info { display: flex; flex-direction: column; gap: 6px; }
         .t-bank { font-size: 16px; font-weight: 700; color: var(--text-main); }
         .tags-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
@@ -203,7 +222,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version" onclick="forceCacheClear()">v6.0.1</span>
+                <span class="app-version" onclick="forceCacheClear()">v6.0.2</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -284,7 +303,7 @@
     });
     
     // ----------------------------------------------------------------------
-    // 核心：自訂彈窗系統
+    // 核心：自訂彈窗系統 (與 V5.2.2 相同)
     // ----------------------------------------------------------------------
     function showCustomDialog(title, message, buttons) {
         const modal = document.getElementById('customModal');
@@ -607,41 +626,17 @@
         });
     }
 
-    async function deleteRecord(rowIndex) {
-        showCustomConfirmation('確定要刪除這筆交易紀錄嗎？', '確認刪除', async () => {
-            
-            const deleteObj = { 
-                password: USER_PASSWORD, 
-                action: 'delete',
-                rowIndex: rowIndex
-            };
+    // ----------------------------------------------------------------------
+    // 銀行標誌邏輯
+    // ----------------------------------------------------------------------
+    function getBankIcon(bankName) {
+        const initial = bankName.substring(0, 1);
+        // 簡單的 hash 函數產生顏色
+        const colors = ['#f56565', '#48bb78', '#4299e1', '#9f7aea', '#ecc94b', '#ed8936'];
+        // 根據首字元計算顏色索引
+        const colorIndex = initial.charCodeAt(0) % colors.length;
 
-            const btn = document.getElementById('submitBtn');
-            const originalText = btn.innerText;
-            btn.disabled = true;
-            btn.innerText = '刪除中...';
-
-            try {
-                await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(deleteObj)
-                });
-                
-                setTimeout(() => {
-                    loadData(); 
-                    btn.disabled = false;
-                    btn.innerText = originalText;
-                }, 1000); 
-
-            } catch(error) {
-                showCustomAlert('刪除請求失敗，請檢查網路。', '錯誤');
-                btn.disabled = false;
-                btn.innerText = originalText;
-                loadData();
-            }
-        });
+        return `<div class="t-logo" style="background-color: ${colors[colorIndex]};">${initial}</div>`;
     }
 
 
@@ -668,11 +663,12 @@
         allTemplates.forEach(template => {
             const templateBankName = template.BankName;
             
-            // 尋找模板銀行在當月是否已有登錄紀錄
             const matchingRecord = currentMonthData.find(record => record.bank === templateBankName);
 
             let amountDisplay;
             let infoTags = `<span class="tag-date">結帳日: ${template.BillDate}日</span>`;
+            infoTags += `<span class="tag-date">扣款日: ${template.PaymentDate}日</span>`; // 新增扣款日顯示
+
             let deleteButton = '';
             
             if (matchingRecord) {
@@ -683,7 +679,7 @@
                 amountDisplay = `<div class="t-amount">$${loggedAmount.toLocaleString()}</div>`;
                 deleteButton = `<button class="btn-delete" onclick="deleteRecord(${matchingRecord.rowIndex})">×</button>`;
                 
-                infoTags += `<span class="tag-date" style="background: #e6fffa; color: #38a169;">扣款日: ${matchingRecord.paymentDate}日</span>`;
+                infoTags += `<span class="tag-date" style="background: #e6fffa; color: #38a169;">已登錄</span>`;
                 if (matchingRecord.note) {
                     infoTags += `<span class="t-note">備註: ${matchingRecord.note}</span>`;
                 }
@@ -696,9 +692,12 @@
 
             html += `
                 <div class="transaction-item">
-                    <div class="t-info">
-                        <div class="t-bank">${templateBankName}</div>
-                        <div class="tags-row">${infoTags}</div>
+                    <div class="t-bank-info">
+                        ${getBankIcon(templateBankName)}
+                        <div class="t-info">
+                            <div class="t-bank">${templateBankName}</div>
+                            <div class="tags-row">${infoTags}</div>
+                        </div>
                     </div>
                     <div class="t-amount-group">
                         ${amountDisplay}
@@ -713,7 +712,7 @@
     }
     
     // ----------------------------------------------------------------------
-    // 輔助函式
+    // 輔助函式 (不變)
     // ----------------------------------------------------------------------
     function setDefaultInputMonth() {
         const inputSelect = document.getElementById('billMonthInput');
