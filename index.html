@@ -253,7 +253,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version" onclick="forceCacheClear()">v6.0.9</span>
+                <span class="app-version" onclick="forceCacheClear()">v6.0.11</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -287,7 +287,7 @@
             <div class="form-row">
                 <div class="form-col" style="flex: 2;">
                     <label>扣款日 (自動)</label>
-                    <input type="text" id="paymentDateDisplay" value="N/A" disabled style="color:var(--text-sub); background: #eee;">
+                    <input type="text" id="paymentDateDisplay" value="-" disabled style="color:var(--text-sub); background: #eee;">
                 </div>
                 <div class="form-col" style="flex: 3;">
                     <label>備註 (選填)</label>
@@ -317,7 +317,7 @@
     let allTemplates = []; 
     let USER_PASSWORD = "";
     
-    // 鎖定標題欄位的中文 Key，這將用於讀取 Templates 和 Data 工作表的欄位
+    // 鎖定標題欄位的中文 Key
     const TEMPLATE_KEYS = {
         BANK: '銀行名稱', 
         BILL_DATE: '結帳日',
@@ -339,6 +339,31 @@
         document.getElementById('bankSelector').addEventListener('change', autoFillPaymentDate);
     });
     
+    // ----------------------------------------------------------------------
+    // 核心資料處理：鍵值淨化
+    // ----------------------------------------------------------------------
+    /**
+     * 清理物件陣列中的所有鍵值，去除前後空白。
+     * 這可以解決 Google Sheets API 返回的鍵值中可能包含隱形空白的問題。
+     * @param {Array<Object>} dataArray - 原始資料陣列
+     * @returns {Array<Object>} 鍵值已清理的新陣列
+     */
+    function normalizeKeys(dataArray) {
+        if (!Array.isArray(dataArray)) return dataArray;
+        return dataArray.map(obj => {
+            if (typeof obj !== 'object' || obj === null) return obj;
+            const newObj = {};
+            for (const key in obj) {
+                if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                    // 檢查 key 是否為字串並 trim
+                    const cleanKey = typeof key === 'string' ? key.trim() : key;
+                    newObj[cleanKey] = obj[key];
+                }
+            }
+            return newObj;
+        });
+    }
+
     // ----------------------------------------------------------------------
     // 核心：自訂彈窗系統 (不變)
     // ----------------------------------------------------------------------
@@ -442,8 +467,9 @@
                 setTimeout(() => { overlay.style.display = 'none'; }, 300);
             }
 
-            allData = data.data.reverse(); 
-            allTemplates = data.templates; 
+            // V6.0.11 FIX: 載入後立即清理所有資料的鍵值
+            allData = normalizeKeys(data.data).reverse(); 
+            allTemplates = normalizeKeys(data.templates); 
             
             if (data.template_error) {
                 showCustomAlert(data.template_error, '警告');
@@ -590,7 +616,7 @@
     }
 
     // ----------------------------------------------------------------------
-    // 交易登錄與刪除 (不變)
+    // 交易登錄與刪除 (修正扣款日顯示)
     // ----------------------------------------------------------------------
     function autoFillPaymentDate() {
         const selectedBankName = document.getElementById('bankSelector').value;
@@ -600,10 +626,12 @@
         const template = allTemplates.find(t => t[TEMPLATE_KEYS.BANK] === selectedBankName);
 
         if (template) {
-            const paymentDate = template[TEMPLATE_KEYS.PAYMENT_DATE];
+            // V6.0.10 Fix: 使用 || '-' 處理空值
+            const paymentDate = template[TEMPLATE_KEYS.PAYMENT_DATE] || '-';
             paymentDateInput.value = `${paymentDate}日`;
         } else {
-            paymentDateInput.value = 'N/A';
+            // V6.0.10 Fix: 預設值改為 '-'
+            paymentDateInput.value = '-';
         }
     }
     
@@ -613,7 +641,7 @@
 
         if (allTemplates.length === 0) {
              select.innerHTML = '<option value="" disabled selected>請先在「設定」中新增銀行</option>';
-             document.getElementById('paymentDateDisplay').value = 'N/A';
+             document.getElementById('paymentDateDisplay').value = '-'; // V6.0.10 Fix
              return;
         }
 
@@ -641,6 +669,12 @@
         const paymentDate = paymentDateDisplay.replace('日', ''); 
 
         if(!bank || !amount) { showCustomAlert('請選擇銀行並輸入金額', '輸入錯誤'); return; } 
+        // V6.0.10 警告：如果扣款日顯示為 '-'，則不允許提交
+        if (paymentDate === '-') {
+             showCustomAlert('請確認扣款日已正確填入。', '輸入錯誤');
+             return;
+        }
+
 
         const btn = document.getElementById('submitBtn');
         const originalText = btn.innerText;
@@ -718,7 +752,7 @@
 
 
     // ----------------------------------------------------------------------
-    // 明細列表顯示 (Template Driven) V6.0.9
+    // 明細列表顯示 (Template Driven) V6.0.11
     // ----------------------------------------------------------------------
     function filterData() {
         const selectedMonth = document.getElementById('monthSelector').value;
@@ -754,8 +788,9 @@
             let infoTags;
             let deleteButton = '';
             
-            // 統一日期標籤
-            const billTag = `<span class="tag-date tag-bill-date">結帳日: ${templateBillDate}日</span>`;
+            // V6.0.10 Fix: 結帳日也使用 || '-' 處理空值
+            const billDateValue = templateBillDate || '-';
+            const billTag = `<span class="tag-date tag-bill-date">結帳日: ${billDateValue}日</span>`;
             
             if (matchingRecord) {
                 // 已登錄：使用 Data Sheet 的 '扣款日' 欄位作為值
@@ -765,8 +800,8 @@
                 amountDisplay = `<div class="t-amount">$${loggedAmount.toLocaleString()}</div>`;
                 deleteButton = `<button class="btn-delete" onclick="deleteRecord(${matchingRecord.rowIndex})">×</button>`;
                 
-                // V6.0.9 FIX: 讀取已登錄紀錄中的扣款日欄位
-                const paymentDateValue = matchingRecord[TEMPLATE_KEYS.PAYMENT_DATE] || 'N/A'; 
+                // V6.0.11 Fix: 讀取已登錄紀錄中的扣款日欄位，並使用 || '-' 處理空值
+                const paymentDateValue = matchingRecord[TEMPLATE_KEYS.PAYMENT_DATE] || '-'; 
                 const paymentTag = `<span class="tag-date tag-payment-date">扣款日: ${paymentDateValue}日</span>`;
                 
                 // 垂直堆疊日期
@@ -785,7 +820,8 @@
                 // 未登錄：使用 Templates Sheet 的 '扣款日' 欄位作為值
                 amountDisplay = `<div class="unlogged">-</div>`;
                 
-                const paymentDateValue = templatePaymentDate || 'N/A';
+                // V6.0.11 Fix: 讀取模板中的扣款日欄位，並使用 || '-' 處理空值
+                const paymentDateValue = templatePaymentDate || '-';
                 const paymentTag = `<span class="tag-date tag-payment-date">扣款日: ${paymentDateValue}日</span>`;
                 
                 // 垂直堆疊日期
