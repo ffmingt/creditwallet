@@ -21,7 +21,16 @@
             --text-sub: #718096; 
             --input-bg: #EDF2F7; 
         }
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding-bottom: 150px; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding-bottom: 150px; 
+            /* 🔴 V6.0.35 NEW: 禁用文字選取，提升 App 質感 */
+            user-select: none;
+            -webkit-user-select: none; 
+        }
         
         /* 登入遮罩 */
         #loginOverlay { 
@@ -332,7 +341,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version">v6.0.34</span>
+                <span class="app-version">v6.0.35</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
