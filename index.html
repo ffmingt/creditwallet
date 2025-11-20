@@ -244,7 +244,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version" onclick="forceCacheClear()">v6.0.5</span>
+                <span class="app-version" onclick="forceCacheClear()">v6.0.6</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -310,7 +310,7 @@
     
     // 鎖定標題欄位的中文 Key，確保程式碼能正確讀取試算表標題
     const TEMPLATE_KEYS = {
-        BANK: '銀行名稱',
+        BANK: '銀行名稱', // 鎖定中文標題，以應對使用者沒有變動標題的情況
         BILL_DATE: '結帳日',
         PAYMENT_DATE: '扣款日'
     };
@@ -331,7 +331,7 @@
     });
     
     // ----------------------------------------------------------------------
-    // 核心：自訂彈窗系統
+    // 核心：自訂彈窗系統 (不變)
     // ----------------------------------------------------------------------
     function showCustomDialog(title, message, buttons) {
         const modal = document.getElementById('customModal');
@@ -490,9 +490,9 @@
 
         allTemplates.forEach(t => {
             // 修正：鎖定中文標題
-            const bankName = t[TEMPLATE_KEYS.BANK] || t.BankName || 'Error: 銀行名稱 missing';
-            const billDate = t[TEMPLATE_KEYS.BILL_DATE] || t.BillDate || 'Error';
-            const paymentDate = t[TEMPLATE_KEYS.PAYMENT_DATE] || t.PaymentDate || 'Error';
+            const bankName = t[TEMPLATE_KEYS.BANK] || 'Error: 銀行名稱 missing';
+            const billDate = t[TEMPLATE_KEYS.BILL_DATE] || 'Error';
+            const paymentDate = t[TEMPLATE_KEYS.PAYMENT_DATE] || 'Error';
 
             const div = document.createElement('div');
             div.className = 'template-item';
@@ -753,7 +753,7 @@
                 amountDisplay = `<div class="t-amount">$${loggedAmount.toLocaleString()}</div>`;
                 deleteButton = `<button class="btn-delete" onclick="deleteRecord(${matchingRecord.rowIndex})">×</button>`;
                 
-                // 顯示實際扣款日和備註
+                // 顯示實際扣款日和備註 (兩行排版)
                 const actualPaymentTag = `<span class="tag-date tag-payment">實際扣款: ${matchingRecord.paymentDate}日</span>`;
                 
                 infoTags = `
@@ -765,9 +765,9 @@
                 }
 
             } else {
-                // 未登錄：顯示 `-`
+                // 未登錄：顯示 `-` (兩行排版)
                 amountDisplay = `<div class="unlogged">-</div>`;
-                // 僅顯示結帳日和預計扣款日
+                
                 infoTags = `
                     <div class="tags-row date-row">${billTag}</div>
                     <div class="tags-row date-row">${paymentTag}</div>
