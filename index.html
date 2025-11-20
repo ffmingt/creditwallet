@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>My Wallet V6.0</title>
     <style>
-        /* --- 樣式區 (無變動) --- */
+        /* --- 樣式區 --- */
         :root { --bg-color: #F8F9FD; --card-bg: #FFFFFF; --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%); --text-main: #2D3748; --text-sub: #718096; --input-bg: #EDF2F7; }
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding-bottom: 150px; }
         
@@ -67,7 +67,7 @@
         .total-amount { font-size: 42px; font-weight: 700; letter-spacing: -1px; }
         .input-section { padding: 0 24px; margin-top: 10px; }
         .input-group { background: var(--card-bg); border-radius: 20px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 15px; }
-        .bill-month-row { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 5px; }
+        .bill-month-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 5px; }
         .bill-month-label { font-size: 14px; color: var(--text-sub); font-weight: 600; }
         select#billMonthInput { border: none; background: #EDF2F7; padding: 6px 12px; border-radius: 8px; font-size: 15px; font-weight: 600; color: var(--text-main); outline: none; }
         .form-row { display: flex; gap: 12px; }
@@ -222,7 +222,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version" onclick="forceCacheClear()">v6.0.3</span>
+                <span class="app-version" onclick="forceCacheClear()">v6.0.4</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -668,9 +668,7 @@
     // ----------------------------------------------------------------------
     function getBankIcon(bankName) {
         const initial = bankName.substring(0, 1);
-        // 簡單的 hash 函數產生顏色
         const colors = ['#f56565', '#48bb78', '#4299e1', '#9f7aea', '#ecc94b', '#ed8936'];
-        // 根據首字元計算顏色索引
         const colorIndex = initial.charCodeAt(0) % colors.length;
 
         return `<div class="t-logo" style="background-color: ${colors[colorIndex]};">${initial}</div>`;
@@ -697,16 +695,15 @@
         let html = '';
         
         allTemplates.forEach(template => {
-            const templateBankName = String(template.BankName).trim(); // 🚨 修正：確保模板名稱乾淨
+            const templateBankName = String(template.BankName).trim(); 
             
-            // 🚨 修正：在比對時，確保交易紀錄的銀行名稱也是乾淨的
             const matchingRecord = currentMonthData.find(record => 
                 String(record.bank).trim() === templateBankName
             );
 
             let amountDisplay;
             let infoTags = `<span class="tag-date">結帳日: ${template.BillDate}日</span>`;
-            infoTags += `<span class="tag-date">扣款日: ${template.PaymentDate}日</span>`; // 新增扣款日顯示
+            infoTags += `<span class="tag-date">扣款日: ${template.PaymentDate}日</span>`; 
 
             let deleteButton = '';
             
