@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>My Wallet V6.0</title>
     <style>
-        /* --- 樣式區 (無變動) --- */
+        /* --- 樣式區 --- */
         :root { --bg-color: #F8F9FD; --card-bg: #FFFFFF; --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%); --text-main: #2D3748; --text-sub: #718096; --input-bg: #EDF2F7; }
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding-bottom: 150px; }
         
@@ -44,7 +44,7 @@
             font-weight: 700; 
             color: var(--text-main); 
             outline: none; 
-            margin-left: 10px; 
+            margin-left: 10px;
             flex-grow: 1; 
             text-align: right;
         }
@@ -67,7 +67,7 @@
         .total-amount { font-size: 42px; font-weight: 700; letter-spacing: -1px; }
         .input-section { padding: 0 24px; margin-top: 10px; }
         .input-group { background: var(--card-bg); border-radius: 20px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 15px; }
-        .bill-month-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 5px; }
+        .bill-month-row { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 5px; }
         .bill-month-label { font-size: 14px; color: var(--text-sub); font-weight: 600; }
         select#billMonthInput { border: none; background: #EDF2F7; padding: 6px 12px; border-radius: 8px; font-size: 15px; font-weight: 600; color: var(--text-main); outline: none; }
         .form-row { display: flex; gap: 12px; }
@@ -86,7 +86,7 @@
             margin-bottom: 15px; 
             display: flex; 
             justify-content: space-between; 
-            align-items: center; 
+            align-items: center;
         }
         
         .section-title span:first-child { 
@@ -95,42 +95,60 @@
             line-height: 1.2;
         }
 
-        .transaction-item { background: var(--card-bg); border-radius: 16px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-        
-        /* 銀行標誌與資訊組 */
-        .t-bank-info {
-            display: flex;
-            align-items: center;
-        }
-        .t-logo {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%; 
-            color: white;
-            font-size: 14px;
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-right: 10px;
-            flex-shrink: 0; 
+        /* 列表項目 */
+        .transaction-item { 
+            background: var(--card-bg); border-radius: 16px; padding: 18px; 
+            margin-bottom: 12px; 
+            display: grid; /* 使用 Grid 佈局 */
+            grid-template-columns: 2fr 1fr auto; /* 銀行/日期 | 金額 | 刪除鈕 */
+            gap: 10px;
+            align-items: center; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02); 
         }
 
-        .t-info { display: flex; flex-direction: column; gap: 6px; }
+        /* 銀行資訊區 (左側) */
+        .t-info { 
+            display: flex; flex-direction: column; 
+            gap: 4px; /* 減小間距 */
+            min-width: 150px;
+        }
         .t-bank { font-size: 16px; font-weight: 700; color: var(--text-main); }
-        .tags-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-        .tag-date { font-size: 12px; color: #4299e1; background: #ebf8ff; padding: 3px 8px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; }
-        .t-note { font-size: 13px; color: var(--text-sub); }
-        .t-amount-group { display: flex; align-items: center; gap: 15px; } 
-        .t-amount { font-size: 18px; font-weight: 700; }
-        .btn-delete { color: #FF3B30; background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.7; padding: 0 5px; } 
-        .loading-state { text-align: center; padding: 40px; color: var(--text-sub); font-size: 14px; }
         
-        .unlogged { color: var(--text-sub); font-weight: 600; font-size: 16px;} 
+        /* 標籤區 (日期) */
+        .tags-row { 
+            display: flex; 
+            gap: 8px; /* 增加標籤間距 */
+            align-items: center; 
+            flex-wrap: wrap; 
+        }
+        .tag-date { 
+            font-size: 11px; /* 標籤更小 */
+            padding: 3px 6px; 
+            border-radius: 4px; 
+            font-weight: 600; 
+            display: inline-flex; 
+            align-items: center; 
+        }
+        .tag-bill { color: #5a67d8; background: #ebf8ff; } /* 結帳日 */
+        .tag-payment { color: #38a169; background: #e6fffa; } /* 扣款日 */
+        .t-note { font-size: 13px; color: var(--text-sub); }
+
+        /* 金額區 (右側) */
+        .t-amount-group { 
+            display: flex; 
+            align-items: center; 
+            justify-content: flex-end; /* 金額靠右 */
+            gap: 15px; 
+        } 
+        .t-amount { font-size: 18px; font-weight: 700; white-space: nowrap; }
+        .btn-delete { color: #FF3B30; background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.7; padding: 0 5px; margin-left: auto; } /* 讓刪除鈕在最右邊 */
+        
+        .unlogged { color: #E53E3E; font-weight: 600; font-size: 16px;} /* 未登錄使用紅色，更顯眼 */
+        .unlogged-bg { background: #fffafa; } /* 未登錄底色 */
         .list-message { color: var(--text-sub); text-align: center; padding: 20px; font-size: 15px; }
 
 
-        /* ─── Custom Modal Styles ─── */
+        /* ─── Custom Modal Styles (不變) ─── */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.5); z-index: 999999;
@@ -222,7 +240,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version" onclick="forceCacheClear()">v6.0.8</span>
+                <span class="app-version" onclick="forceCacheClear()">v6.0.2</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -245,7 +263,7 @@
                 <div class="form-col" style="flex: 3;">
                     <label>銀行 / 卡別</label>
                     <select id="bankSelector" class="form-select">
-                        <option value="" disabled selected>請先在「設定」中新增銀行</option>
+                        <option value="" disabled selected>請選擇銀行/卡別</option>
                     </select>
                 </div>
                 <div class="form-col" style="flex: 2;">
@@ -300,16 +318,6 @@
         
         document.getElementById('bankSelector').addEventListener('change', autoFillPaymentDate);
     });
-    
-    // ----------------------------------------------------------------------
-    // 終極字串清理函數：清理所有潛在的不可見字元、空格並轉小寫
-    function cleanString(str) {
-        if (typeof str !== 'string') str = String(str);
-        return str
-            .replace(/\s/g, '') // 移除所有標準空白字元
-            .replace(/[\u200B-\u200D\uFEFF]/g, '') // 移除零寬度空格等特殊不可見字元
-            .toLowerCase();
-    }
     
     // ----------------------------------------------------------------------
     // 核心：自訂彈窗系統 (不變)
@@ -449,7 +457,7 @@
     }
 
     // ----------------------------------------------------------------------
-    // 模板管理邏輯 (不變)
+    // 模板管理邏輯
     // ----------------------------------------------------------------------
     function openSettingsModal() {
         document.getElementById('settingsModal').classList.add('show');
@@ -472,12 +480,10 @@
         allTemplates.forEach(t => {
             const div = document.createElement('div');
             div.className = 'template-item';
-            
-            // 🚨 模板資料存取，Key已在 GAS 中標準化
             div.innerHTML = `
-                <span class="template-name">${t.bankname}</span>
-                <span class="template-dates">結帳日: ${t.billdate}日 / 扣款日: ${t.paymentdate}日</span>
-                <button class="btn-delete" onclick="deleteTemplate(${t.templateindex})">×</button>
+                <span class="template-name">${t.BankName}</span>
+                <span class="template-dates">結帳日: ${t.BillDate}日 / 扣款日: ${t.PaymentDate}日</span>
+                <button class="btn-delete" onclick="deleteTemplate(${t.templateIndex})">×</button>
             `;
             container.appendChild(div);
         });
@@ -492,6 +498,13 @@
             showCustomAlert('請填寫所有欄位', '輸入錯誤');
             return;
         }
+
+        // 檢查結帳日和扣款日是否為有效數字
+        if (isNaN(billDate) || isNaN(paymentDate) || billDate < 1 || billDate > 31 || paymentDate < 1 || paymentDate > 31) {
+            showCustomAlert('結帳日和扣款日必須是 1 到 31 之間的數字。', '輸入錯誤');
+            return;
+        }
+
 
         const btn = document.querySelector('#settingsModal .btn-submit');
         const originalText = btn.innerText;
@@ -521,7 +534,7 @@
             }, 500); 
 
         } catch(e) {
-            showCustomAlert('模板新增請求失敗，請檢查網路。', '錯誤');
+            showCustomAlert('新增請求失敗，請檢查網路。', '錯誤');
             btn.disabled = false;
             btn.innerText = originalText;
         }
@@ -547,7 +560,7 @@
                 }, 500); 
 
             } catch(e) {
-                showCustomAlert('模板刪除請求失敗，請檢查網路。', '錯誤');
+                showCustomAlert('刪除請求失敗，請檢查網路。', '錯誤');
             }
         });
     }
@@ -559,16 +572,10 @@
         const selectedBankName = document.getElementById('bankSelector').value;
         const paymentDateInput = document.getElementById('paymentDateDisplay');
         
-        const normalizedSelectedBank = cleanString(selectedBankName);
-
-        const template = allTemplates.find(t => 
-             // 🚨 模板資料存取，Key已在 GAS 中標準化
-             cleanString(t.bankname) === normalizedSelectedBank
-        );
+        const template = allTemplates.find(t => t.BankName === selectedBankName);
 
         if (template) {
-            // 🚨 模板資料存取，Key已在 GAS 中標準化
-            paymentDateInput.value = `${template.paymentdate}日`;
+            paymentDateInput.value = `${template.PaymentDate}日`;
         } else {
             paymentDateInput.value = 'N/A';
         }
@@ -586,9 +593,8 @@
 
         allTemplates.forEach(t => {
             const option = document.createElement('option');
-            // 🚨 模板資料存取，Key已在 GAS 中標準化
-            option.value = t.bankname; 
-            option.text = t.bankname;
+            option.value = t.BankName;
+            option.text = t.BankName;
             select.appendChild(option);
         });
         
@@ -683,18 +689,6 @@
 
 
     // ----------------------------------------------------------------------
-    // 銀行標誌邏輯
-    // ----------------------------------------------------------------------
-    function getBankIcon(bankName) {
-        const initial = bankName.substring(0, 1);
-        const colors = ['#f56565', '#48bb78', '#4299e1', '#9f7aea', '#ecc94b', '#ed8936'];
-        const colorIndex = initial.charCodeAt(0) % colors.length;
-
-        return `<div class="t-logo" style="background-color: ${colors[colorIndex]};">${initial}</div>`;
-    }
-
-
-    // ----------------------------------------------------------------------
     // 明細列表顯示 (Template Driven)
     // ----------------------------------------------------------------------
     function filterData() {
@@ -708,59 +702,58 @@
             return;
         }
 
-        const currentMonthData = allData.filter(item => cleanString(item.month) === selectedMonth);
+        // 篩選出當前月份的交易紀錄
+        const currentMonthData = allData.filter(item => String(item.month).trim() === selectedMonth);
         
         let totalLoggedAmount = 0;
         let html = '';
         
         allTemplates.forEach(template => {
-            // 🚨 模板資料存取，Key已在 GAS 中標準化
-            const templateBankName = cleanString(template.bankname); 
+            const templateBankName = template.BankName;
             
-            // 銀行名稱比對：對交易紀錄的銀行名稱也進行清理
-            const matchingRecord = currentMonthData.find(record => 
-                // 🚨 交易紀錄資料存取，Key已在 GAS 中標準化
-                cleanString(record.bank) === templateBankName
-            );
+            // 尋找模板銀行在當月是否已有登錄紀錄
+            const matchingRecord = currentMonthData.find(record => record.bank === templateBankName);
 
             let amountDisplay;
-            // 🚨 模板資料存取，Key已在 GAS 中標準化
-            let infoTags = `<span class="tag-date">結帳日: ${template.billdate}日</span>`;
-            infoTags += `<span class="tag-date">扣款日: ${template.paymentdate}日</span>`; 
-
+            let infoTags;
             let deleteButton = '';
             
+            // 修正：將所有標籤合併到一個字串
+            const billTag = `<span class="tag-date tag-bill">結帳日: ${template.BillDate}日</span>`;
+            const paymentTag = `<span class="tag-date tag-payment">扣款日: ${template.PaymentDate}日</span>`;
+            
             if (matchingRecord) {
-                // 🚨 交易紀錄資料存取，Key已在 GAS 中標準化
+                // 已登錄：顯示金額，允許刪除，顯示交易備註
                 const loggedAmount = Number(matchingRecord.amount);
                 totalLoggedAmount += loggedAmount;
                 
                 amountDisplay = `<div class="t-amount">$${loggedAmount.toLocaleString()}</div>`;
                 deleteButton = `<button class="btn-delete" onclick="deleteRecord(${matchingRecord.rowIndex})">×</button>`;
                 
-                infoTags += `<span class="tag-date" style="background: #e6fffa; color: #38a169;">已登錄</span>`;
+                // 顯示實際扣款日和備註
+                infoTags = `${billTag} <span class="tag-date tag-payment">${matchingRecord.paymentDate}日</span>`;
                 if (matchingRecord.note) {
-                    infoTags += `<span class="t-note">備註: ${matchingRecord.note}</span>`;
+                    infoTags += `<span class="t-note">${matchingRecord.note}</span>`;
                 }
 
             } else {
+                // 未登錄：顯示 `-`
                 amountDisplay = `<div class="unlogged">-</div>`;
-                infoTags += `<span class="tag-date" style="background: #fff5f5; color: #e53e3e;">尚未登錄帳單</span>`;
+                // 僅顯示結帳日和預計扣款日
+                infoTags = `${billTag} ${paymentTag}`;
             }
 
+            // 修正：使用 Grid 佈局對應 CSS 
             html += `
                 <div class="transaction-item">
-                    <div class="t-bank-info">
-                        ${getBankIcon(template.bankname)}
-                        <div class="t-info">
-                            <div class="t-bank">${template.bankname}</div>
-                            <div class="tags-row">${infoTags}</div>
-                        </div>
+                    <div class="t-info">
+                        <div class="t-bank">${templateBankName}</div>
+                        <div class="tags-row">${infoTags}</div>
                     </div>
                     <div class="t-amount-group">
                         ${amountDisplay}
-                        ${deleteButton}
                     </div>
+                    ${deleteButton}
                 </div>`;
         });
         
@@ -770,7 +763,7 @@
     }
     
     // ----------------------------------------------------------------------
-    // 輔助函式 (不變)
+    // 輔助函式 (格式化修正 YYYYMM)
     // ----------------------------------------------------------------------
     function setDefaultInputMonth() {
         const inputSelect = document.getElementById('billMonthInput');
