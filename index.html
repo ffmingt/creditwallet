@@ -253,7 +253,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version" onclick="forceCacheClear()">v6.0.8</span>
+                <span class="app-version" onclick="forceCacheClear()">v6.0.9</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -317,11 +317,11 @@
     let allTemplates = []; 
     let USER_PASSWORD = "";
     
-    // 鎖定標題欄位的中文 Key
+    // 鎖定標題欄位的中文 Key，這將用於讀取 Templates 和 Data 工作表的欄位
     const TEMPLATE_KEYS = {
         BANK: '銀行名稱', 
         BILL_DATE: '結帳日',
-        PAYMENT_DATE: '扣款日'
+        PAYMENT_DATE: '扣款日' // 統一使用 '扣款日'
     };
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -718,7 +718,7 @@
 
 
     // ----------------------------------------------------------------------
-    // 明細列表顯示 (Template Driven) V6.0.8 最終穩定版
+    // 明細列表顯示 (Template Driven) V6.0.9
     // ----------------------------------------------------------------------
     function filterData() {
         const selectedMonth = document.getElementById('monthSelector').value;
@@ -738,7 +738,7 @@
         let html = '';
         
         allTemplates.forEach(template => {
-            // 鎖定中文標題
+            // 修正：鎖定中文標題 (Templates)
             const templateBankName = template[TEMPLATE_KEYS.BANK];
             const templateBillDate = template[TEMPLATE_KEYS.BILL_DATE];
             const templatePaymentDate = template[TEMPLATE_KEYS.PAYMENT_DATE];
@@ -758,15 +758,15 @@
             const billTag = `<span class="tag-date tag-bill-date">結帳日: ${templateBillDate}日</span>`;
             
             if (matchingRecord) {
-                // 已登錄：使用交易紀錄的扣款日
+                // 已登錄：使用 Data Sheet 的 '扣款日' 欄位作為值
                 const loggedAmount = Number(matchingRecord.amount);
                 totalLoggedAmount += loggedAmount;
                 
                 amountDisplay = `<div class="t-amount">$${loggedAmount.toLocaleString()}</div>`;
                 deleteButton = `<button class="btn-delete" onclick="deleteRecord(${matchingRecord.rowIndex})">×</button>`;
                 
-                // 統一使用「扣款日」標籤
-                const paymentDateValue = matchingRecord.paymentDate;
+                // V6.0.9 FIX: 讀取已登錄紀錄中的扣款日欄位
+                const paymentDateValue = matchingRecord[TEMPLATE_KEYS.PAYMENT_DATE] || 'N/A'; 
                 const paymentTag = `<span class="tag-date tag-payment-date">扣款日: ${paymentDateValue}日</span>`;
                 
                 // 垂直堆疊日期
@@ -782,11 +782,10 @@
                 }
 
             } else {
-                // 未登錄：使用模板設定的扣款日
+                // 未登錄：使用 Templates Sheet 的 '扣款日' 欄位作為值
                 amountDisplay = `<div class="unlogged">-</div>`;
                 
-                // 統一使用「扣款日」標籤
-                const paymentDateValue = templatePaymentDate;
+                const paymentDateValue = templatePaymentDate || 'N/A';
                 const paymentTag = `<span class="tag-date tag-payment-date">扣款日: ${paymentDateValue}日</span>`;
                 
                 // 垂直堆疊日期
