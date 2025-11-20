@@ -87,7 +87,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version">v5.1.1</span>
+                <span class="app-version">v5.2</span>
             </div>
             <div class="header-actions">
                 <select id="monthSelector" onchange="filterData()"></select>
@@ -337,7 +337,7 @@
     function filterData() {
         const selectedMonth = document.getElementById('monthSelector').value;
         
-        // 🚨 最終月份過濾修正: 強制轉為字串並移除空白
+        // 最終月份過濾修正: 強制轉為字串並移除空白
         const filtered = allData.filter(item => String(item.month).trim() === selectedMonth);
         
         let total = 0;
