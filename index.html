@@ -290,7 +290,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version" onclick="forceCacheClear()">v6.0.23</span>
+                <span class="app-version" onclick="forceCacheClear()">v6.0.24</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -667,7 +667,7 @@
     }
 
     // ----------------------------------------------------------------------
-    // 交易登錄與刪除 (V6.0.17 核心)
+    // 交易登錄與刪除 (V6.0.24 核心: 新增重複提交檢查)
     // ----------------------------------------------------------------------
     
     function updateTemplateSelector() {
@@ -697,20 +697,29 @@
         const note = document.getElementById('note').value;
         const targetMonth = document.getElementById('billMonthInput').value; 
         
+        // 1. 基礎驗證
+        if(!bank || !amount) { showCustomAlert('請選擇銀行並輸入金額', '輸入錯誤'); return; } 
+
         // 直接從選定的模板中獲取 paymentDate
         const selectedBankName = document.getElementById('bankSelector').value;
         const template = allTemplates.find(t => getCleanValue(t, TEMPLATE_KEYS.BANK) === selectedBankName);
-        const paymentDate = template ? getCleanValue(template, TEMPLATE_KEYS.PAYMENT_DATE) : '-'; // 獲取扣款日
+        const paymentDate = template ? getCleanValue(template, TEMPLATE_KEYS.PAYMENT_DATE) : '-'; 
         
-
-        if(!bank || !amount) { showCustomAlert('請選擇銀行並輸入金額', '輸入錯誤'); return; } 
-        
-        // 檢查日期是否有效
         if (paymentDate === '-') {
              showCustomAlert('請確認已選擇有效的卡別並設定扣款日。', '輸入錯誤');
              return;
         }
-
+        
+        // 🔴 V6.0.24 新增：重複登錄檢查
+        const isDuplicate = allData.some(record => 
+            record.bank === bank && 
+            String(record.month).trim() === targetMonth
+        );
+        
+        if (isDuplicate) {
+            showCustomAlert('此銀行本月帳單已登錄！若需修改，請先刪除原有記錄再重新登錄。', '重複登錄警告');
+            return; 
+        }
 
         const btn = document.getElementById('submitBtn');
         const originalText = btn.innerText;
