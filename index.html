@@ -65,9 +65,31 @@
             cursor: pointer;
         }
 
-        .total-card { background: var(--primary-gradient); border-radius: 24px; padding: 30px 25px; color: white; box-shadow: 0 20px 25px -5px rgba(102, 126, 234, 0.4); position: relative; overflow: hidden; }
+        .total-card { 
+            background: var(--primary-gradient); 
+            border-radius: 24px; 
+            padding: 30px 25px; 
+            color: white; 
+            box-shadow: 0 20px 25px -5px rgba(102, 126, 234, 0.4); 
+            position: relative; /* 定位 Emoji 用 */
+            overflow: hidden; 
+        }
         .card-label { font-size: 13px; opacity: 0.8; letter-spacing: 1px; margin-bottom: 8px; }
         .total-amount { font-size: 42px; font-weight: 700; letter-spacing: -1px; }
+        
+        /* 🔴 V6.0.27 NEW: 支出狀態符號樣式 */
+        .spending-status {
+            position: absolute;
+            top: 35px; 
+            right: 25px; 
+            font-size: 50px; 
+            opacity: 0.9;
+            pointer-events: none; 
+            transition: transform 0.3s ease;
+            line-height: 1; /* 確保不佔用額外空間 */
+        }
+
+
         .input-section { padding: 0 24px; margin-top: 10px; }
         .input-group { background: var(--card-bg); border-radius: 20px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 15px; }
         .bill-month-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 5px; }
@@ -281,15 +303,14 @@
 
             <div class="modal-actions" style="margin-top: 20px;">
                 <button class="modal-btn secondary" onclick="closeSettingsModal()">關閉</button>
-            </div>
-        </div>
+            </div> </div>
     </div>
 
     <div class="hero">
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version">v6.0.26</span>
+                <span class="app-version">v6.0.28</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -299,6 +320,7 @@
         <div class="total-card">
             <div class="card-label">本月總支出 (已登錄)</div>
             <div class="total-amount" id="totalAmount">$0</div>
+            <span id="spendingStatus" class="spending-status"></span>
         </div>
     </div>
 
@@ -417,7 +439,7 @@
 
 
     // ----------------------------------------------------------------------
-    // 核心：自訂彈窗系統 (不變)
+    // 核心：自訂彈窗系統 (V6.0.23 核心)
     // ----------------------------------------------------------------------
     function showCustomDialog(title, message, buttons) {
         const modal = document.getElementById('customModal');
@@ -836,7 +858,7 @@
 
 
     // ----------------------------------------------------------------------
-    // 明細列表顯示 (V6.0.26 修正計數單位)
+    // 明細列表顯示 (V6.0.27: 新增表情符號邏輯)
     // ----------------------------------------------------------------------
     function filterData() {
         const selectedMonth = document.getElementById('monthSelector').value;
@@ -846,8 +868,8 @@
             document.getElementById('alertContainer').innerHTML = ''; // 清除警示
             listContainer.innerHTML = '<div class="list-message">請先點擊「設定」新增銀行。</div>';
             document.getElementById('totalAmount').textContent = `$0`;
-            // 🔴 V6.0.26 修正: 筆 -> 間
             document.getElementById('count').textContent = `0 間銀行`; 
+            document.getElementById('spendingStatus').innerHTML = '&#128522;'; // $0 預設表情
             return;
         }
 
@@ -927,9 +949,20 @@
         });
         
         document.getElementById('totalAmount').textContent = `$${totalLoggedAmount.toLocaleString()}`;
-        // 🔴 V6.0.26 修正: 筆 -> 間
         document.getElementById('count').textContent = `${allTemplates.length} 間銀行`;
         listContainer.innerHTML = html;
+        
+        // 🔴 V6.0.27 NEW: 根據總金額設定表情符號
+        const statusElement = document.getElementById('spendingStatus');
+        let emoji = '&#128522;'; // 😊 Relaxed/Happy (Default for $0 or low)
+
+        if (totalLoggedAmount > 10000) {
+            emoji = '&#128552;'; // 😨 Excessive
+        } else if (totalLoggedAmount > 5000) {
+            emoji = '&#128528;'; // 😐 Moderate
+        } 
+        
+        statusElement.innerHTML = emoji;
         
         // 呼叫警示檢查
         createOverdueAlert();
