@@ -377,7 +377,7 @@
                 <div class="form-col">
                     <label>銀行/卡別名稱</label>
                     <input type="hidden" id="editTemplateIndex"> 
-                    <input type="text" id="editTemplateBank" placeholder="例如：中信 LinePay">
+                    <input type="text" id="editTemplateBank" placeholder="例如：中信 LinePay"> 
                 </div>
                 <div class="form-row">
                     <div class="form-col">
@@ -403,7 +403,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version">v6.0.37</span>
+                <span class="app-version">v6.0.45</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -448,6 +448,14 @@
         <div class="section-title">
             <span>明細列表</span>
             <select id="monthSelector" onchange="filterData()"></select>
+            
+            <button 
+                style="background: #e2e8f0; color: var(--text-main); border: none; padding: 4px 8px; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; margin-right: 5px;" 
+                onclick="loadData()" 
+                title="強制重新載入"
+            >
+                &#x21BB; </button>
+            
             <span style="font-size:12px; font-weight:normal; background:#eee; padding:4px 8px; border-radius:10px;" id="count">0 間銀行</span>
         </div>
         <div id="alertContainer"></div>
@@ -699,7 +707,6 @@
             const bankName = getCleanValue(t, TEMPLATE_KEYS.BANK);
             const billDate = getCleanValue(t, TEMPLATE_KEYS.BILL_DATE);
             const paymentDate = getCleanValue(t, TEMPLATE_KEYS.PAYMENT_DATE);
-            // 由於 GAS 傳回的物件上沒有 templateIndex，我們必須使用 allTemplates 陣列中的**原始 index**
             // 這裡的 t.templateIndex 實際上是 GAS 傳回的物件中包含的 index 欄位，它代表工作表中的行號
             const templateIndex = t.templateIndex; 
 
