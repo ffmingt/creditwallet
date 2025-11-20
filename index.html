@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>My Wallet V6.0</title>
     <style>
-        /* --- 樣式區 (無變動) --- */
+        /* ... (CSS 樣式部分不變) ... */
         :root { --bg-color: #F8F9FD; --card-bg: #FFFFFF; --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%); --text-main: #2D3748; --text-sub: #718096; --input-bg: #EDF2F7; }
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding-bottom: 150px; }
-        
-        /* 登入遮罩 */
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8f9fd; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 30px; box-sizing: border-box; transition: opacity 0.3s; }
         .login-box { width: 100%; max-width: 320px; text-align: center; background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
         .login-title { font-size: 22px; font-weight: 800; margin-bottom: 10px; color: #333; }
@@ -18,12 +16,8 @@
         .login-btn:active { transform: scale(0.95); }
         .login-btn:disabled { opacity: 0.7; cursor: not-allowed; }
         .error-msg { color: #ff4757; font-size: 13px; margin-top: 15px; min-height: 20px; }
-
-        /* 主介面樣式 */
         .hero { padding: 20px 24px; }
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        
-        /* App 標題和版本號群組 */
         .app-title-group { display: flex; align-items: flex-end; gap: 8px; }
         .app-title { font-size: 24px; font-weight: 800; }
         .app-version {
@@ -33,10 +27,7 @@
             margin-bottom: 2px;
             cursor: pointer; 
         }
-
         .header-actions { display: flex; align-items: center; gap: 8px; }
-        
-        /* 月份選擇器調整: 移到明細列表區 */
         select#monthSelector { 
             border: none; 
             background: transparent; 
@@ -48,9 +39,7 @@
             flex-grow: 1; 
             text-align: right;
         }
-
         .btn-logout { background: #fff; color: #FF3B30; border: 1px solid #FF3B30; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; }
-        
         .btn-setting { 
             background: #fff; 
             color: var(--text-main); 
@@ -61,7 +50,6 @@
             font-weight: 600; 
             cursor: pointer;
         }
-
         .total-card { background: var(--primary-gradient); border-radius: 24px; padding: 30px 25px; color: white; box-shadow: 0 20px 25px -5px rgba(102, 126, 234, 0.4); position: relative; overflow: hidden; }
         .card-label { font-size: 13px; opacity: 0.8; letter-spacing: 1px; margin-bottom: 8px; }
         .total-amount { font-size: 42px; font-weight: 700; letter-spacing: -1px; }
@@ -74,11 +62,8 @@
         .form-col { flex: 1; display: flex; flex-direction: column; gap: 5px; position: relative; }
         label { font-size: 12px; color: var(--text-sub); font-weight: 600; margin-left: 4px; }
         input, select.form-select { width: 100%; background: var(--input-bg); border: none; padding: 14px; border-radius: 12px; font-size: 16px; color: var(--text-main); box-sizing: border-box; outline: none; appearance: none; }
-        
         .btn-submit { width: 100%; background: var(--text-main); color: white; border: none; padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.1s; }
         .btn-submit:disabled { opacity: 0.6; }
-        
-        /* 明細列表區 */
         .list-section { padding: 30px 24px; }
         .section-title { 
             font-size: 18px; 
@@ -88,20 +73,13 @@
             justify-content: space-between; 
             align-items: center; 
         }
-        
         .section-title span:first-child { 
             font-size: 18px; 
             font-weight: 700; 
             line-height: 1.2;
         }
-
         .transaction-item { background: var(--card-bg); border-radius: 16px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-        
-        /* 銀行標誌與資訊組 */
-        .t-bank-info {
-            display: flex;
-            align-items: center;
-        }
+        .t-bank-info { display: flex; align-items: center; }
         .t-logo {
             width: 24px;
             height: 24px;
@@ -115,7 +93,6 @@
             margin-right: 10px;
             flex-shrink: 0; 
         }
-
         .t-info { display: flex; flex-direction: column; gap: 6px; }
         .t-bank { font-size: 16px; font-weight: 700; color: var(--text-main); }
         .tags-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
@@ -125,12 +102,8 @@
         .t-amount { font-size: 18px; font-weight: 700; }
         .btn-delete { color: #FF3B30; background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.7; padding: 0 5px; } 
         .loading-state { text-align: center; padding: 40px; color: var(--text-sub); font-size: 14px; }
-        
         .unlogged { color: var(--text-sub); font-weight: 600; font-size: 16px;} 
         .list-message { color: var(--text-sub); text-align: center; padding: 20px; font-size: 15px; }
-
-
-        /* ─── Custom Modal Styles ─── */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.5); z-index: 999999;
@@ -152,8 +125,6 @@
         .modal-btn.primary { background: var(--text-main); color: white; }
         .modal-btn.secondary { background: #E2E8F0; color: var(--text-main); }
         .modal-btn.danger { background: #FF3B30; color: white; }
-        
-        /* 設置面板專用 */
         #templateList { margin-top: 15px; }
         .template-item { 
             display: flex; justify-content: space-between; align-items: center; 
@@ -222,7 +193,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version" onclick="forceCacheClear()">v6.0.6</span>
+                <span class="app-version" onclick="forceCacheClear()">v6.0.7</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -302,7 +273,29 @@
     });
     
     // ----------------------------------------------------------------------
-    // 核心：自訂彈窗系統
+    // 🚨 V6.0.7 偵錯工具和終極字串清理函數
+    // ----------------------------------------------------------------------
+    // 終極字串清理函數：清理所有潛在的不可見字元、空格並轉小寫
+    function cleanString(str) {
+        if (typeof str !== 'string') str = String(str);
+        return str
+            .replace(/\s/g, '') // 移除所有標準空白字元
+            .replace(/[\u200B-\u200D\uFEFF]/g, '') // 移除零寬度空格等特殊不可見字元
+            .toLowerCase();
+    }
+    
+    // 偵錯輔助函數：將字串轉為字元碼供偵錯
+    function charsToCode(str) {
+        let codes = [];
+        if (typeof str !== 'string') str = String(str);
+        for (let i = 0; i < str.length; i++) {
+            codes.push(str.charCodeAt(i));
+        }
+        return codes.join(', ');
+    }
+
+    // ----------------------------------------------------------------------
+    // 核心：自訂彈窗系統 (不變)
     // ----------------------------------------------------------------------
     function showCustomDialog(title, message, buttons) {
         const modal = document.getElementById('customModal');
@@ -439,7 +432,7 @@
     }
 
     // ----------------------------------------------------------------------
-    // 模板管理邏輯 (新增/刪除)
+    // 模板管理邏輯 (不變)
     // ----------------------------------------------------------------------
     function openSettingsModal() {
         document.getElementById('settingsModal').classList.add('show');
@@ -541,19 +534,8 @@
     }
 
     // ----------------------------------------------------------------------
-    // 交易登錄與刪除
+    // 交易登錄與刪除 (不變)
     // ----------------------------------------------------------------------
-    
-    // 🚨 V6.0.6 終極字串清理函數
-    function cleanString(str) {
-        if (typeof str !== 'string') str = String(str);
-        return str
-            .replace(/\s/g, '') // 移除所有標準空白字元
-            .replace(/[\u200B-\u200D\uFEFF]/g, '') // 移除零寬度空格等特殊不可見字元
-            .toLowerCase();
-    }
-    
-    // V6.0.6 修正：確保自動填充扣款日期的比對邏輯，使用終極字串清理
     function autoFillPaymentDate() {
         const selectedBankName = document.getElementById('bankSelector').value;
         const paymentDateInput = document.getElementById('paymentDateDisplay');
@@ -679,7 +661,7 @@
 
 
     // ----------------------------------------------------------------------
-    // 銀行標誌邏輯
+    // 銀行標誌邏輯 (不變)
     // ----------------------------------------------------------------------
     function getBankIcon(bankName) {
         const initial = bankName.substring(0, 1);
@@ -693,7 +675,6 @@
     // ----------------------------------------------------------------------
     // 明細列表顯示 (Template Driven)
     // ----------------------------------------------------------------------
-    // 💡 V6.0.6 修正：確保所有比對都使用 cleanString
     function filterData() {
         const selectedMonth = document.getElementById('monthSelector').value;
         const listContainer = document.getElementById('listContainer');
@@ -705,7 +686,7 @@
             return;
         }
 
-        // 🚨 月份比對：對從試算表讀取的月份資料也進行清理
+        // 🚨 月份比對：確保月份字串也被清理
         const currentMonthData = allData.filter(item => cleanString(item.month) === selectedMonth);
         
         let totalLoggedAmount = 0;
@@ -714,10 +695,29 @@
         allTemplates.forEach(template => {
             const templateBankName = cleanString(template.BankName); 
             
-            // 🚨 銀行名稱比對：對交易紀錄的銀行名稱也進行清理
+            // 銀行名稱比對：使用清理後的字串比對
             const matchingRecord = currentMonthData.find(record => 
                 cleanString(record.bank) === templateBankName
             );
+            
+            // 🚨 偵錯輸出：將比對字串和結果輸出到瀏覽器控制台
+            console.group(`[DEBUG] Comparing Template: ${template.BankName}`);
+            console.log("Normalized Template Name:", templateBankName, "Code:", charsToCode(templateBankName));
+            
+            if (matchingRecord) {
+                 console.log("✅ MATCH FOUND!");
+            } else {
+                 console.log("❌ MATCH FAILED.");
+                 console.log("Normalized Record Name:", cleanString(template.BankName), "Code:", charsToCode(cleanString(template.BankName)));
+                 
+                 // 嘗試輸出所有當前月份交易的銀行名稱，幫助用戶偵錯
+                 console.log("--- Current Month Data ---");
+                 currentMonthData.forEach((record, index) => {
+                     const recordBankCleaned = cleanString(record.bank);
+                     console.log(`[${index}] Sheet Value: "${record.bank}" | Cleaned: "${recordBankCleaned}" | Code: ${charsToCode(recordBankCleaned)}`);
+                 });
+            }
+            console.groupEnd();
 
             let amountDisplay;
             let infoTags = `<span class="tag-date">結帳日: ${template.BillDate}日</span>`;
