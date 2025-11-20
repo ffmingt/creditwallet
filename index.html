@@ -97,48 +97,45 @@
 
         /* 列表項目 */
         .transaction-item { 
-            background: var(--card-bg); border-radius: 16px; padding: 12px 18px; /* 減小垂直內邊距 */
+            background: var(--card-bg); border-radius: 16px; padding: 18px; 
             margin-bottom: 12px; 
             display: grid; 
-            grid-template-columns: 35px 2fr 1fr auto; /* Logo | 銀行/日期 | 金額 | 刪除鈕 */
-            gap: 15px; /* 增加間距 */
+            grid-template-columns: 2fr 1fr auto; 
+            gap: 10px;
             align-items: center; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); /* 增加陰影，更像卡片 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02); 
         }
 
-        /* 銀行 Logo */
-        .t-logo {
-            width: 35px; height: 35px; border-radius: 50%;
-            background: #667eea; color: white;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 16px; font-weight: 700;
-        }
-        
-        /* 銀行資訊區 (Logo 旁邊) */
+        /* 銀行資訊區 (左側) */
         .t-info { 
             display: flex; flex-direction: column; 
-            gap: 0px; /* 消除內部間距，讓標題和日期緊靠 */
+            gap: 8px; /* 增加垂直間距 */
             min-width: 150px;
         }
-        .t-bank { font-size: 16px; font-weight: 700; color: var(--text-main); line-height: 1.2;}
+        .t-bank { font-size: 16px; font-weight: 700; color: var(--text-main); }
         
-        /* 標籤/日期區 (第二行) */
+        /* 標籤區 (日期) - 這裡決定了分行排版 */
         .tags-row { 
             display: flex; 
-            gap: 10px; 
-            align-items: center; 
-            font-size: 13px; /* 字體略大 */
-            color: var(--text-sub);
+            flex-direction: column; /* 垂直堆疊 */
+            gap: 4px; /* 日期之間的垂直間距 */
         }
         .tag-date { 
-            padding: 0; /* 移除標籤背景和內邊距 */
-            background: none !important;
-            font-weight: 500;
-            color: var(--text-sub);
+            font-size: 11px; 
+            padding: 3px 6px; 
+            border-radius: 4px; 
+            font-weight: 600; 
+            display: inline-flex; 
+            align-items: center; 
+            width: fit-content; /* 讓標籤寬度只到內容結束 */
         }
-        .tag-bill-date { color: #5a67d8; font-weight: 600; } /* 結帳日 */
-        .tag-payment-date { color: #38a169; font-weight: 600; } /* 扣款日 */
-        .t-note { font-size: 13px; color: var(--text-sub); }
+        .tag-bill { color: #5a67d8; background: #ebf8ff; } 
+        .tag-payment { color: #38a169; background: #e6fffa; } 
+        .t-note { 
+            font-size: 13px; 
+            color: var(--text-sub); 
+            margin-top: 4px; /* 備註與日期區隔 */
+        }
 
         /* 金額區 (右側) */
         .t-amount-group { 
@@ -148,7 +145,7 @@
             gap: 15px; 
         } 
         .t-amount { font-size: 18px; font-weight: 700; white-space: nowrap; }
-        .btn-delete { color: #FF3B30; background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.7; padding: 0 5px; margin-left: 10px; } /* 讓刪除鈕在最右邊 */
+        .btn-delete { color: #FF3B30; background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.7; padding: 0 5px; margin-left: auto; } 
         
         .unlogged { color: #E53E3E; font-weight: 600; font-size: 16px;} 
         .unlogged-bg { background: #fffafa; } 
@@ -247,7 +244,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version" onclick="forceCacheClear()">v6.0.6</span>
+                <span class="app-version" onclick="forceCacheClear()">v6.0.5</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -310,6 +307,13 @@
     let allData = []; 
     let allTemplates = []; 
     let USER_PASSWORD = "";
+    
+    // 鎖定標題欄位的中文 Key，確保程式碼能正確讀取試算表標題
+    const TEMPLATE_KEYS = {
+        BANK: '銀行名稱',
+        BILL_DATE: '結帳日',
+        PAYMENT_DATE: '扣款日'
+    };
 
     document.addEventListener('DOMContentLoaded', () => {
         const savedPass = localStorage.getItem('myBillAppPassword');
@@ -327,7 +331,7 @@
     });
     
     // ----------------------------------------------------------------------
-    // 核心：自訂彈窗系統 (V5.2.2)
+    // 核心：自訂彈窗系統
     // ----------------------------------------------------------------------
     function showCustomDialog(title, message, buttons) {
         const modal = document.getElementById('customModal');
@@ -464,7 +468,7 @@
     }
 
     // ----------------------------------------------------------------------
-    // 模板管理邏輯 (不變)
+    // 模板管理邏輯
     // ----------------------------------------------------------------------
     function openSettingsModal() {
         document.getElementById('settingsModal').classList.add('show');
@@ -485,9 +489,10 @@
         }
 
         allTemplates.forEach(t => {
-            const bankName = t['銀行名稱'] || t.BankName || 'Error: 銀行名稱 missing';
-            const billDate = t['結帳日'] || t.BillDate || 'Error';
-            const paymentDate = t['扣款日'] || t.PaymentDate || 'Error';
+            // 修正：鎖定中文標題
+            const bankName = t[TEMPLATE_KEYS.BANK] || t.BankName || 'Error: 銀行名稱 missing';
+            const billDate = t[TEMPLATE_KEYS.BILL_DATE] || t.BillDate || 'Error';
+            const paymentDate = t[TEMPLATE_KEYS.PAYMENT_DATE] || t.PaymentDate || 'Error';
 
             const div = document.createElement('div');
             div.className = 'template-item';
@@ -521,6 +526,7 @@
         btn.disabled = true;
         btn.innerText = '新增中...';
 
+        // 注意：GAS 程式碼 V6.0 仍然以英文 Key 傳送
         const templateObj = { 
             password: USER_PASSWORD,
             action: 'template_create',
@@ -576,16 +582,17 @@
     }
 
     // ----------------------------------------------------------------------
-    // 交易登錄與刪除 (不變)
+    // 交易登錄與刪除
     // ----------------------------------------------------------------------
     function autoFillPaymentDate() {
         const selectedBankName = document.getElementById('bankSelector').value;
         const paymentDateInput = document.getElementById('paymentDateDisplay');
         
-        const template = allTemplates.find(t => t['銀行名稱'] === selectedBankName || t.BankName === selectedBankName);
+        // 修正：鎖定中文標題
+        const template = allTemplates.find(t => t[TEMPLATE_KEYS.BANK] === selectedBankName);
 
         if (template) {
-            const paymentDate = template['扣款日'] || template.PaymentDate;
+            const paymentDate = template[TEMPLATE_KEYS.PAYMENT_DATE];
             paymentDateInput.value = `${paymentDate}日`;
         } else {
             paymentDateInput.value = 'N/A';
@@ -603,7 +610,8 @@
         }
 
         allTemplates.forEach(t => {
-            const bankName = t['銀行名稱'] || t.BankName || 'Error: 銀行名稱 missing';
+            // 修正：鎖定中文標題
+            const bankName = t[TEMPLATE_KEYS.BANK];
 
             const option = document.createElement('option');
             option.value = bankName;
@@ -702,7 +710,7 @@
 
 
     // ----------------------------------------------------------------------
-    // 明細列表顯示 (Template Driven) V6.0.6 精修版
+    // 明細列表顯示 (Template Driven)
     // ----------------------------------------------------------------------
     function filterData() {
         const selectedMonth = document.getElementById('monthSelector').value;
@@ -715,6 +723,7 @@
             return;
         }
 
+        // 篩選出當前月份的交易紀錄
         const currentMonthData = allData.filter(item => String(item.month).trim() === selectedMonth);
         
         let totalLoggedAmount = 0;
@@ -722,55 +731,54 @@
         
         allTemplates.forEach(template => {
             // 修正：鎖定中文標題
-            const templateBankName = template['銀行名稱'] || template.BankName || 'Error: 銀行名稱 missing';
-            const templateBillDate = template['結帳日'] || template.BillDate || 'Error';
-            const templatePaymentDate = template['扣款日'] || template.PaymentDate || 'Error';
+            const templateBankName = template[TEMPLATE_KEYS.BANK];
+            const templateBillDate = template[TEMPLATE_KEYS.BILL_DATE];
+            const templatePaymentDate = template[TEMPLATE_KEYS.PAYMENT_DATE];
             
-            // Logo 佔位符
-            const firstChar = templateBankName.charAt(0);
-            const logoHtml = `<div class="t-logo">${firstChar}</div>`;
-            
+            // 尋找模板銀行在當月是否已有登錄紀錄
             const matchingRecord = currentMonthData.find(record => record.bank === templateBankName);
 
             let amountDisplay;
-            let tagsRowHtml;
+            let infoTags;
             let deleteButton = '';
             
-            // 統一日期標籤
-            const billDateText = `結帳日: ${templateBillDate}日`;
-            const paymentDateText = `繳款日: ${templatePaymentDate}日`; 
+            const billTag = `<span class="tag-date tag-bill">結帳日: ${templateBillDate}日</span>`;
+            const paymentTag = `<span class="tag-date tag-payment">預計扣款: ${templatePaymentDate}日</span>`; 
             
             if (matchingRecord) {
-                // 已登錄：顯示金額，隱藏日期標籤，顯示備註
+                // 已登錄：顯示金額，允許刪除，顯示交易備註
                 const loggedAmount = Number(matchingRecord.amount);
                 totalLoggedAmount += loggedAmount;
                 
                 amountDisplay = `<div class="t-amount">$${loggedAmount.toLocaleString()}</div>`;
                 deleteButton = `<button class="btn-delete" onclick="deleteRecord(${matchingRecord.rowIndex})">×</button>`;
                 
-                // 顯示備註 (如果有的話)
-                let noteDisplay = '';
+                // 顯示實際扣款日和備註
+                const actualPaymentTag = `<span class="tag-date tag-payment">實際扣款: ${matchingRecord.paymentDate}日</span>`;
+                
+                infoTags = `
+                    <div class="tags-row date-row">${billTag}</div>
+                    <div class="tags-row date-row">${actualPaymentTag}</div>
+                `;
                 if (matchingRecord.note) {
-                    noteDisplay = `<span class="t-note">${matchingRecord.note}</span>`;
+                    infoTags += `<div class="t-note">備註: ${matchingRecord.note}</div>`;
                 }
 
-                // 日期行：顯示結帳日和預計扣款日 (V6.0.5 邏輯)，如果金額已登錄，則顯示備註
-                tagsRowHtml = `<div class="tags-row"><span class="tag-date tag-bill-date">${billDateText}</span> | <span class="tag-date tag-payment-date">${paymentDateText}</span> ${noteDisplay}</div>`;
-                
             } else {
-                // 未登錄：顯示 `-` 和日期標籤
+                // 未登錄：顯示 `-`
                 amountDisplay = `<div class="unlogged">-</div>`;
-                
-                // 日期行：顯示結帳日和預計扣款日
-                tagsRowHtml = `<div class="tags-row"><span class="tag-date tag-bill-date">${billDateText}</span> | <span class="tag-date tag-payment-date">${paymentDateText}</span></div>`;
+                // 僅顯示結帳日和預計扣款日
+                infoTags = `
+                    <div class="tags-row date-row">${billTag}</div>
+                    <div class="tags-row date-row">${paymentTag}</div>
+                `;
             }
 
             html += `
                 <div class="transaction-item">
-                    ${logoHtml}
                     <div class="t-info">
                         <div class="t-bank">${templateBankName}</div>
-                        ${tagsRowHtml}
+                        ${infoTags}
                     </div>
                     <div class="t-amount-group">
                         ${amountDisplay}
