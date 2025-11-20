@@ -23,7 +23,7 @@
         .hero { padding: 20px 24px; }
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         
-        /* 新增：App 標題和版本號群組 */
+        /* App 標題和版本號群組 */
         .app-title-group {
             display: flex;
             align-items: flex-end; 
@@ -278,7 +278,6 @@
                         errorMsg.textContent = '❌ 密碼錯誤';
                         localStorage.removeItem('myBillAppPassword');
                     } else if (err.message && err.message.includes("工作表名稱錯誤")) {
-                        // 如果 GAS 拋出工作表錯誤訊息，則顯示
                         const sheetName = err.message.split('：')[1];
                         errorMsg.innerHTML = `⚠️ 連線錯誤：請檢查 GAS 中的 <b>SHEET_NAME</b> 是否為 <b>${sheetName}</b>`;
                     } else {
@@ -338,7 +337,7 @@
     function filterData() {
         const selectedMonth = document.getElementById('monthSelector').value;
         
-        // 最終月份過濾修正: 強制轉為字串並移除空白
+        // 🚨 最終月份過濾修正: 強制轉為字串並移除空白
         const filtered = allData.filter(item => String(item.month).trim() === selectedMonth);
         
         let total = 0;
@@ -364,7 +363,7 @@
         document.getElementById('listContainer').innerHTML = filtered.length ? html : '<div class="loading-state">本月無資料</div>';
     }
     
-    // --- 輔助函式 (不變) ---
+    // --- 輔助函式 (格式化修正 YYYYMM) ---
     function setupBankAutocomplete() {
         const input = document.getElementById('bank');
         const box = document.getElementById('bankSuggestions');
@@ -372,7 +371,6 @@
         input.addEventListener('input', (e) => renderSuggestions(e.target.value));
         document.addEventListener('click', (e) => { if (!input.contains(e.target) && !box.contains(e.target)) box.classList.remove('show'); });
         function renderSuggestions(text) {
-            box.innerHTML = '';
             const filtered = text ? BANK_LIST.filter(b => b.toLowerCase().includes(text.trim().toLowerCase())) : BANK_LIST;
             if (filtered.length === 0) { box.classList.remove('show'); return; }
             filtered.forEach(bankName => {
@@ -393,13 +391,18 @@
             option.value = i + "日"; option.text = i + "日"; select.appendChild(option);
         }
     }
+    
+    // 格式化修正: YYYYMM
     function setDefaultInputMonth() {
         const inputSelect = document.getElementById('billMonthInput');
         const viewSelect = document.getElementById('monthSelector');
         const date = new Date();
-        const val = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+        // 格式化為 YYYYMM (例如 202511)
+        const val = `${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}`;
         inputSelect.value = val; viewSelect.value = val;
     }
+    
+    // 格式化修正: YYYYMM
     function initMonthDropdown(id) {
         const select = document.getElementById(id);
         const date = new Date();
@@ -407,7 +410,8 @@
         for(let i=0; i<20; i++) {
             const currentMonth = date.getMonth();
             const currentYear = date.getFullYear();
-            const val = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
+            // 格式化為 YYYYMM (例如 202511)
+            const val = `${currentYear}${String(currentMonth+1).padStart(2,'0')}`;
             const opt = document.createElement('option'); 
             opt.value = val; 
             opt.text = `${currentYear}年 ${String(currentMonth+1).padStart(2,'0')}月`;
