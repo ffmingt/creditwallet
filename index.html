@@ -40,7 +40,17 @@
         }
         .login-box { width: 100%; max-width: 320px; text-align: center; background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
         .login-title { font-size: 22px; font-weight: 800; margin-bottom: 10px; color: #333; }
-        .login-input { width: 100%; padding: 15px; background: #edf2f7; border: none; border-radius: 12px; font-size: 24px; text-align: center; outline: none; margin: 20px 0; letter-spacing: 4px; font-weight: bold; }
+        .login-input { 
+            width: 100%; padding: 15px; background: #edf2f7; border: none; border-radius: 12px; 
+            font-size: 24px; text-align: center; outline: none; margin: 20px 0; 
+            letter-spacing: 4px; font-weight: bold; 
+            /* V6.0.36 NEW: 焦點效果優化 */
+            transition: box-shadow 0.2s;
+        }
+        .login-input:focus {
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.5); /* 經典主題顏色外框 */
+        }
+
         .login-btn { width: 100%; padding: 15px; background: var(--primary-gradient); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .login-btn:active { transform: scale(0.95); }
         .login-btn:disabled { opacity: 0.7; cursor: not-allowed; }
@@ -289,7 +299,16 @@
         <div class="login-box">
             <div class="login-title">安全鎖定 🔒</div>
             <div style="color:#888; font-size:14px; margin-bottom:10px;">請輸入密碼以存取資料</div>
-            <input type="tel" id="passwordInput" class="login-input" placeholder="••••" maxlength="8">
+            
+            <input 
+                type="password" 
+                id="passwordInput" 
+                class="login-input" 
+                placeholder="••••" 
+                maxlength="8"
+                inputmode="numeric" 
+                oninput="checkAutoLogin(this)"
+            >
             <button id="loginBtn" class="login-btn" onclick="verifyLogin()">解鎖</button>
             <div id="loginError" class="error-msg"></div>
         </div>
@@ -341,7 +360,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version">v6.0.35</span>
+                <span class="app-version">v6.0.36</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -509,6 +528,13 @@
     // ----------------------------------------------------------------------
     // 載入與登入 (V6.0.25 核心)
     // ----------------------------------------------------------------------
+    
+    // 🔴 V6.0.36 NEW: 自動提交檢查
+    function checkAutoLogin(input) {
+        if (input.value.length === 8) {
+            verifyLogin();
+        }
+    }
 
     function logout() {
         // V6.0.25: 保持簡潔的登出提示，並執行強制清除快取/重新載入
@@ -525,6 +551,8 @@
         const btn = document.getElementById('loginBtn');
 
         if(!pass) { errorMsg.textContent = '請輸入密碼'; return; }
+        // V6.0.36 FIX: 防止在驗證過程中重複觸發
+        if (btn.disabled) return;
 
         btn.disabled = true;
         btn.innerText = isAutoLogin ? '自動登入中...' : '驗證中...';
