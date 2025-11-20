@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>My Wallet</title>
+    <style>
+        /* --- 樣式區 --- */
+        :root { --bg-color: #F8F9FD; --card-bg: #FFFFFF; --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%); --text-main: #2D3748; --text-sub: #718096; --input-bg: #EDF2F7; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding-bottom: 150px; }
+        
+        /* 登入遮罩 */
+        #loginOverlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #f8f9fd; z-index: 99999; 
+            display: flex; /* 預設顯示 */
+            flex-direction: column; justify-content: center; align-items: center; 
+            padding: 30px; box-sizing: border-box; transition: opacity 0.3s; 
+        }
+        .login-box { width: 100%; max-width: 320px; text-align: center; background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .login-title { font-size: 22px; font-weight: 800; margin-bottom: 10px; color: #333; }
+        .login-input { width: 100%; padding: 15px; background: #edf2f7; border: none; border-radius: 12px; font-size: 24px; text-align: center; outline: none; margin: 20px 0; letter-spacing: 4px; font-weight: bold; }
+        .login-btn { width: 100%; padding: 15px; background: var(--primary-gradient); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .login-btn:active { transform: scale(0.95); }
+        .login-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        .error-msg { color: #ff4757; font-size: 13px; margin-top: 15px; min-height: 20px; }
+
+        /* 主介面樣式 */
+        .hero { padding: 20px 24px; }
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .app-title { font-size: 24px; font-weight: 800; }
+        
+        /* 右上角功能區 */
+        .header-actions { display: flex; align-items: center; gap: 8px; }
+        
+        select#monthSelector { border: none; background: transparent; font-size: 16px; font-weight: 600; color: #5a67d8; outline: none; text-align: right; }
+        
+        /* 登出按鈕 */
+        .btn-logout {
+            background: #fff;
+            color: #FF3B30; /* 紅色字體 */
+            border: 1px solid #FF3B30;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-logout:active { background: #FFF0F0; }
+        
+        .total-card { background: var(--primary-gradient); border-radius: 24px; padding: 30px 25px; color: white; box-shadow: 0 20px 25px -5px rgba(102, 126, 234, 0.4); position: relative; overflow: hidden; }
+        .total-card::after { content: ''; position: absolute; top: -50%; right: -20%; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+        .card-label { font-size: 13px; opacity: 0.8; letter-spacing: 1px; margin-bottom: 8px; }
+        .total-amount { font-size: 42px; font-weight: 700; letter-spacing: -1px; }
+        .input-section { padding: 0 24px; margin-top: 10px; }
+        .input-group { background: var(--card-bg); border-radius: 20px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 15px; }
+        .bill-month-row { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 5px; }
+        .bill-month-label { font-size: 14px; color: var(--text-sub); font-weight: 600; }
+        select#billMonthInput { border: none; background: #EDF2F7; padding: 6px 12px; border-radius: 8px; font-size: 15px; font-weight: 600; color: var(--text-main); outline: none; }
+        .form-row { display: flex; gap: 12px; }
+        .form-col { flex: 1; display: flex; flex-direction: column; gap: 5px; position: relative; }
+        label { font-size: 12px; color: var(--text-sub); font-weight: 600; margin-left: 4px; }
+        input, select.form-select { width: 100%; background: var(--input-bg); border: none; padding: 14px; border-radius: 12px; font-size: 16px; color: var(--text-main); box-sizing: border-box; outline: none; appearance: none; }
+        .suggestions-box { position: absolute; top: 105%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 100; display: none; border: 1px solid #eee; }
+        .suggestions-box.show { display: block; }
+        .suggestion-item { padding: 12px 16px; font-size: 15px; border-bottom: 1px solid #f5f5f5; color: #333; cursor: pointer; }
+        .suggestion-item:active { background: #f0f0f0; }
+        .btn-submit { width: 100%; background: var(--text-main); color: white; border: none; padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.1s; }
+        .btn-submit:active { transform: scale(0.98); }
+        .btn-submit:disabled { opacity: 0.6; }
+        .list-section { padding: 30px 24px; }
+        .section-title { font-size: 18px; font-weight: 700; margin-bottom: 15px; display: flex; justify-content: space-between; }
+        .transaction-item { background: var(--card-bg); border-radius: 16px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .t-info { display: flex; flex-direction: column; gap: 6px; }
+        .t-bank { font-size: 16px; font-weight: 700; color: var(--text-main); }
+        .tags-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .tag-date { font-size: 12px; color: #4299e1; background: #ebf8ff; padding: 3px 8px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; }
+        .t-note { font-size: 13px; color: var(--text-sub); }
+        .t-amount { font-size: 18px; font-weight: 700; }
+        .loading-state { text-align: center; padding: 40px; color: var(--text-sub); font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div id="loginOverlay">
+        <div class="login-box">
+            <div class="login-title">安全鎖定 🔒</div>
+            <div style="color:#888; font-size:14px; margin-bottom:10px;">請輸入密碼以存取資料</div>
+            <input type="tel" id="passwordInput" class="login-input" placeholder="••••" maxlength="8">
+            <button id="loginBtn" class="login-btn" onclick="verifyLogin()">解鎖</button>
+            <div id="loginError" class="error-msg"></div>
+        </div>
+    </div>
+
+    <div class="hero">
+        <div class="header-row">
+            <div class="app-title">帳單管家</div>
+            <div class="header-actions">
+                <select id="monthSelector" onchange="filterData()"></select>
+                <button class="btn-logout" onclick="logout()">登出</button>
+            </div>
+        </div>
+        <div class="total-card">
+            <div class="card-label">本月總支出</div>
+            <div class="total-amount" id="totalAmount">$0</div>
+        </div>
+    </div>
+
+    <div class="input-section">
+        <div class="input-group">
+            <div class="bill-month-row">
+                <span class="bill-month-label">記帳月份</span>
+                <select id="billMonthInput"></select>
+            </div>
+            <div class="form-row">
+                <div class="form-col" style="flex: 3;">
+                    <label>銀行 / 卡別</label>
+                    <input type="text" id="bank" placeholder="搜尋..." autocomplete="off">
+                    <div id="bankSuggestions" class="suggestions-box"></div>
+                </div>
+                <div class="form-col" style="flex: 2;">
+                    <label>金額</label>
+                    <input type="number" id="amount" inputmode="decimal" placeholder="$0">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-col" style="flex: 2;">
+                    <label>扣款日</label>
+                    <select id="paymentDate" class="form-select">
+                        <option value="" disabled selected>選擇</option>
+                    </select>
+                </div>
+                <div class="form-col" style="flex: 3;">
+                    <label>備註 (選填)</label>
+                    <input type="text" id="note" placeholder="消費項目...">
+                </div>
+            </div>
+            <button class="btn-submit" id="submitBtn" onclick="submitData()">＋ 確認記帳</button>
+        </div>
+    </div>
+
+    <div class="list-section">
+        <div class="section-title">
+            <span>明細列表</span>
+            <span style="font-size:12px; font-weight:normal; background:#eee; padding:4px 8px; border-radius:10px;" id="count">0 筆</span>
+        </div>
+        <div id="listContainer"></div>
+    </div>
+
+<script>
+    // ==========================================
+    // 🔴 你的專屬網址
+    const API_URL = "https://script.google.com/macros/s/AKfycby60jdswu4PguQ0YNMpYdfdOewU-YscwRvOpcVxZhV7KNpwhVzSO7tJ8vNx1fPmw_tjGw/exec";
+    // ==========================================
+
+    const BANK_LIST = [ "中國信託", "中信 LinePay", "中信 英雄聯盟卡", "中信 商旅鈦金", "玉山銀行", "玉山 UBear", "玉山 Pi卡", "玉山 Only卡", "玉山 家樂福卡", "國泰世華", "國泰 Cube卡", "國泰 CUBE (玩數位)", "國泰 CUBE (樂饗購)", "台新銀行", "台新 GoGo卡", "台新 FlyGo", "台新 玫瑰卡", "富邦銀行", "富邦 J卡", "富邦 momo卡", "富邦 Costco卡", "永豐銀行", "永豐 大戶卡", "永豐 Sport卡", "聯邦銀行", "聯邦 吉鶴卡", "聯邦 賴點卡", "星展銀行", "星展 eco永續卡", "匯豐銀行", "匯豐 旅人卡", "匯豐 匯鑽卡", "渣打銀行", "第一銀行", "一銀 iLEO", "華南銀行", "華南 SnY卡", "兆豐銀行", "元大銀行" ];
+    
+    let allData = [];
+    let USER_PASSWORD = "";
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedPass = localStorage.getItem('myBillAppPassword');
+        if(savedPass) {
+            document.getElementById('passwordInput').value = savedPass;
+            verifyLogin(true); // 自動登入
+        }
+        
+        initMonthDropdown('monthSelector'); 
+        initMonthDropdown('billMonthInput');
+        initDateDropdown(); 
+        setDefaultInputMonth();
+        setupBankAutocomplete();
+    });
+
+    // ─── 修正後的登出功能 (軟登出) ───
+    function logout() {
+        if(!confirm('確定要登出嗎？')) return;
+
+        // 1. 清除密碼記憶
+        localStorage.removeItem('myBillAppPassword');
+        USER_PASSWORD = "";
+
+        // 2. 讓登入遮罩「重新顯示」 (強制蓋在最上面)
+        const overlay = document.getElementById('loginOverlay');
+        overlay.style.display = 'flex';
+        setTimeout(() => overlay.style.opacity = '1', 50); // 加上淡入動畫
+
+        // 3. 重置輸入框與按鈕
+        document.getElementById('passwordInput').value = '';
+        const btn = document.getElementById('loginBtn');
+        btn.disabled = false;
+        btn.innerText = '解鎖';
+        
+        // 4. 為了安全，把背景的資料清空 (視覺上清空)
+        document.getElementById('listContainer').innerHTML = '';
+        document.getElementById('totalAmount').textContent = '$0';
+        allData = []; // 清空記憶體資料
+    }
+    // ───────────────────────────
+
+    function verifyLogin(isAutoLogin = false) {
+        const pass = document.getElementById('passwordInput').value;
+        const errorMsg = document.getElementById('loginError');
+        const btn = document.getElementById('loginBtn');
+
+        if(!pass) { errorMsg.textContent = '請輸入密碼'; return; }
+
+        btn.disabled = true;
+        btn.innerText = isAutoLogin ? '自動登入中...' : '驗證中...';
+        errorMsg.textContent = '';
+
+        const url = `${API_URL}?password=${encodeURIComponent(pass)}`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if(data.error) {
+                    throw new Error(data.error);
+                } else {
+                    USER_PASSWORD = pass;
+                    localStorage.setItem('myBillAppPassword', pass);
+                    
+                    // 登入成功 -> 隱藏遮罩
+                    const overlay = document.getElementById('loginOverlay');
+                    overlay.style.opacity = '0';
+                    setTimeout(() => { overlay.style.display = 'none'; }, 300);
+                    
+                    allData = data.reverse();
+                    filterData();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                btn.disabled = false;
+                btn.innerText = '解鎖';
+                if (err.message && err.message.includes("密碼")) {
+                    errorMsg.textContent = '❌ 密碼錯誤';
+                    localStorage.removeItem('myBillAppPassword');
+                } else {
+                    errorMsg.innerHTML = '⚠️ 連線失敗';
+                }
+            });
+    }
+
+    function submitData() {
+        const bank = document.getElementById('bank').value;
+        const amount = document.getElementById('amount').value;
+        const note = document.getElementById('note').value;
+        const paymentDate = document.getElementById('paymentDate').value;
+        const targetMonth = document.getElementById('billMonthInput').value; 
+        
+        if(!bank || !amount) { alert('請輸入銀行與金額'); return; }
+
+        const btn = document.getElementById('submitBtn');
+        const originalText = btn.innerText;
+        btn.disabled = true;
+        btn.innerText = '加密上傳中...';
+
+        document.getElementById('monthSelector').value = targetMonth;
+
+        const tempObj = { 
+            bank, amount: Number(amount), note, paymentDate, month: targetMonth,
+            password: USER_PASSWORD
+        };
+        
+        allData.unshift(tempObj);
+        filterData();
+
+        fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tempObj)
+        }).then(() => {
+            btn.disabled = false;
+            btn.innerText = originalText;
+            document.getElementById('bank').value = '';
+            document.getElementById('amount').value = '';
+            document.getElementById('note').value = '';
+        }).catch(() => {
+            alert('上傳失敗，請檢查網路');
+            btn.disabled = false;
+            btn.innerText = originalText;
+        });
+    }
+
+    function filterData() {
+        const selectedMonth = document.getElementById('monthSelector').value;
+        const filtered = allData.filter(item => item.month === selectedMonth);
+        let total = 0;
+        let html = '';
+        filtered.forEach(item => {
+            total += Number(item.amount);
+            let dateTag = item.paymentDate ? `<span class="tag-date">📅 ${item.paymentDate}</span>` : '';
+            html += `
+                <div class="transaction-item">
+                    <div class="t-info">
+                        <div class="t-bank">${item.bank}</div>
+                        <div class="tags-row">${dateTag}${item.note ? `<span class="t-note">${item.note}</span>` : ''}</div>
+                    </div>
+                    <div class="t-amount">$${Number(item.amount).toLocaleString()}</div>
+                </div>`;
+        });
+        document.getElementById('totalAmount').textContent = `$${total.toLocaleString()}`;
+        document.getElementById('count').textContent = `${filtered.length} 筆`;
+        document.getElementById('listContainer').innerHTML = filtered.length ? html : '<div class="loading-state">本月無資料</div>';
+    }
+
+    function setupBankAutocomplete() {
+        const input = document.getElementById('bank');
+        const box = document.getElementById('bankSuggestions');
+        input.addEventListener('focus', () => renderSuggestions(input.value));
+        input.addEventListener('input', (e) => renderSuggestions(e.target.value));
+        document.addEventListener('click', (e) => { if (!input.contains(e.target) && !box.contains(e.target)) box.classList.remove('show'); });
+        function renderSuggestions(text) {
+            box.innerHTML = '';
+            const filtered = text ? BANK_LIST.filter(b => b.toLowerCase().includes(text.trim().toLowerCase())) : BANK_LIST;
+            if (filtered.length === 0) { box.classList.remove('show'); return; }
+            filtered.forEach(bankName => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.textContent = bankName;
+                div.onclick = () => { input.value = bankName; box.classList.remove('show'); };
+                box.appendChild(div);
+            });
+            box.classList.add('show');
+        }
+    }
+
+    function initDateDropdown() {
+        const select = document.getElementById('paymentDate');
+        for (let i = 1; i <= 31; i++) {
+            const option = document.createElement('option');
+            option.value = i + "日"; option.text = i + "日"; select.appendChild(option);
+        }
+    }
+    function setDefaultInputMonth() {
+        const inputSelect = document.getElementById('billMonthInput');
+        const viewSelect = document.getElementById('monthSelector');
+        const date = new Date();
+        const val = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+        inputSelect.value = val; viewSelect.value = val;
+    }
+    function initMonthDropdown(id) {
+        const select = document.getElementById(id);
+        const date = new Date();
+        date.setMonth(date.getMonth()+1);
+        for(let i=0; i<20; i++) {
+            const val = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+            const opt = document.createElement('option'); opt.value = val; opt.text = `${date.getFullYear()}年 ${String(date.getMonth()+1).padStart(2,'0')}月`;
+            select.appendChild(opt); date.setMonth(date.getMonth()-1);
+        }
+    }
+</script>
+</body>
+</html>
