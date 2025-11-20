@@ -6,6 +6,13 @@
     <title>My Wallet V6.0</title>
     <style>
         /* --- 樣式區 --- */
+        /* 🔴 V6.0.33 NEW: 定義微動浮動動畫 */
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-5px); } /* 上移 5 像素 */
+            100% { transform: translateY(0); }
+        }
+
         :root { 
             --bg-color: #F8F9FD; 
             --card-bg: #FFFFFF; 
@@ -85,7 +92,7 @@
         .card-label { font-size: 13px; opacity: 0.8; letter-spacing: 1px; margin-bottom: 8px; }
         .total-amount { font-size: 42px; font-weight: 700; letter-spacing: -1px; }
         
-        /* V6.0.31: 增加動態效果 */
+        /* V6.0.33 UPDATE: 增加浮動動畫 */
         .spending-status {
             position: absolute;
             top: 35px; 
@@ -95,6 +102,7 @@
             pointer-events: none; 
             transition: transform 0.3s ease;
             line-height: 1; 
+            animation: float 3s ease-in-out infinite; 
         }
         .spending-status:hover {
             transform: scale(1.1) rotate(-5deg); 
@@ -324,7 +332,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version">v6.0.32</span>
+                <span class="app-version">v6.0.33</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -983,7 +991,7 @@
         if (totalLoggedAmount > 10000) {
             emoji = '&#128552;'; // 😨 Excessive
         } else if (totalLoggedAmount > 5000) {
-            emoji = '&#128528;'; // 😐 Moderate
+            emoji = '&#128528;s'; // 😐 Moderate
         } 
         
         statusElement.innerHTML = emoji;
