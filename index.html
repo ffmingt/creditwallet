@@ -95,7 +95,7 @@
             line-height: 1.2;
         }
 
-        /* NEW: 逾期提醒區塊樣式 */
+        /* NEW: 逾期提醒區塊樣式 (V6.0.17 base) */
         .overdue-alert {
             background-color: #fef2f2; /* Light red/pink background */
             border: 1px solid #f4c2c2;
@@ -103,7 +103,7 @@
             padding: 15px;
             margin-bottom: 20px;
             display: flex;
-            align-items: center;
+            align-items: center; /* 使用 center 讓單行文字居中 */
             gap: 12px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
@@ -113,10 +113,11 @@
         }
         .alert-text {
             font-size: 15px;
-            font-weight: 600;
+            font-weight: 600; /* V6.0.17 默認的粗體 */
             color: #ef4444;
             line-height: 1.4;
         }
+
 
         /* 列表項目 */
         .transaction-item { 
@@ -281,7 +282,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version" onclick="forceCacheClear()">v6.0.16</span>
+                <span class="app-version" onclick="forceCacheClear()">v6.0.22</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -359,13 +360,10 @@
             document.getElementById('passwordInput').value = savedPass;
             verifyLogin(true); 
         }
-        
-        // V6.0.16: 移除 autoFillPaymentDate 及其綁定，因為參照欄位已移除
-        // document.getElementById('bankSelector').addEventListener('change', autoFillPaymentDate);
     });
     
     // ----------------------------------------------------------------------
-    // 核心資料處理：鍵值淨化與安全讀取 (不變)
+    // 核心資料處理：鍵值淨化與安全讀取 (V6.0.17 核心)
     // ----------------------------------------------------------------------
     /**
      * 清理物件陣列中的所有鍵值，去除前後空白。
@@ -382,6 +380,7 @@
                 }
             }
             return newObj;
+            
         });
     }
 
@@ -448,7 +447,7 @@
     }
 
     // ----------------------------------------------------------------------
-    // 載入與登入
+    // 載入與登入 (V6.0.17 核心)
     // ----------------------------------------------------------------------
     function forceCacheClear() {
         showCustomConfirmation('確定要清除所有 App 快取並強制更新版本嗎？ (需要重新登入)', '強制更新', () => {
@@ -548,7 +547,7 @@
     }
 
     // ----------------------------------------------------------------------
-    // 模板管理邏輯 (不變)
+    // 模板管理邏輯 (V6.0.17 核心)
     // ----------------------------------------------------------------------
     function openSettingsModal() {
         document.getElementById('settingsModal').classList.add('show');
@@ -660,7 +659,7 @@
     }
 
     // ----------------------------------------------------------------------
-    // 交易登錄與刪除 (V6.0.16: 移除參照邏輯)
+    // 交易登錄與刪除 (V6.0.17 核心)
     // ----------------------------------------------------------------------
     
     function updateTemplateSelector() {
@@ -682,7 +681,6 @@
         });
         
         select.selectedIndex = 0;
-        // 不再需要呼叫 autoFillPaymentDate
     }
 
     function submitData() {
@@ -691,7 +689,7 @@
         const note = document.getElementById('note').value;
         const targetMonth = document.getElementById('billMonthInput').value; 
         
-        // V6.0.16: 直接從選定的模板中獲取 paymentDate
+        // 直接從選定的模板中獲取 paymentDate
         const selectedBankName = document.getElementById('bankSelector').value;
         const template = allTemplates.find(t => getCleanValue(t, TEMPLATE_KEYS.BANK) === selectedBankName);
         const paymentDate = template ? getCleanValue(template, TEMPLATE_KEYS.PAYMENT_DATE) : '-'; // 獲取扣款日
@@ -780,7 +778,7 @@
     }
 
     // ----------------------------------------------------------------------
-    // V6.0.14 NEW: 帳單逾期警示邏輯 (V6.0.16: 修正錯別字)
+    // V6.0.22 FIX: 回溯 V6.0.17 核心，並使用 <br> 實現兩行分離
     // ----------------------------------------------------------------------
     function createOverdueAlert() {
         const today = new Date();
@@ -789,12 +787,6 @@
         const currentMonth = parseInt(yearMonth.substring(4, 6)); // 1-12
         
         let overdueBanks = [];
-
-        // 只檢查當前日期是否在選定的月份
-        if (today.getFullYear() * 100 + (today.getMonth() + 1) !== currentYear * 100 + currentMonth) {
-            document.getElementById('alertContainer').innerHTML = '';
-            return; 
-        }
 
         allTemplates.forEach(template => {
             const billDateStr = getCleanValue(template, TEMPLATE_KEYS.BILL_DATE); 
@@ -809,7 +801,6 @@
             
             // 1. 檢查交易是否已登錄
             const isLogged = allData.some(record => 
-                // V6.0.15 FIX: 使用 record.bank (來自POST payload) 進行匹配
                 record.bank === bankName && 
                 String(record.month).trim() === yearMonth
             );
@@ -822,12 +813,16 @@
 
         const alertContainer = document.getElementById('alertContainer');
         if (overdueBanks.length > 0) {
+            
+            // V6.0.22: 使用 V6.0.17 的單一列表，並強制分行
             const bankList = overdueBanks.join('、');
+            
             const alertHtml = `
                 <div class="overdue-alert">
                     <span class="alert-icon">⚠️</span>
                     <div class="alert-text">
-                        <strong>${bankList}</strong> 尚未完成帳單登錄，請盡快登<strong>錄</strong>避免延遲繳費。
+                        <strong>${bankList}</strong><br>
+                        尚未完成帳單登錄，請盡快登錄避免延遲繳費。
                     </div>
                 </div>
             `;
@@ -839,7 +834,7 @@
 
 
     // ----------------------------------------------------------------------
-    // 明細列表顯示 (Template Driven) V6.0.16
+    // 明細列表顯示 (V6.0.17 核心)
     // ----------------------------------------------------------------------
     function filterData() {
         const selectedMonth = document.getElementById('monthSelector').value;
@@ -849,7 +844,7 @@
             document.getElementById('alertContainer').innerHTML = ''; // 清除警示
             listContainer.innerHTML = '<div class="list-message">請先點擊「設定」新增銀行。</div>';
             document.getElementById('totalAmount').textContent = `$0`;
-            document.getElementById('count').textContent = `${allTemplates.length} 筆銀行`;
+            document.getElementById('count').textContent = `0 筆銀行`;
             return;
         }
 
@@ -868,7 +863,7 @@
             const firstChar = templateBankName.charAt(0) || 'E';
             const logoHtml = `<div class="t-logo">${firstChar}</div>`;
             
-            // V6.0.15 FIX: 修正查找匹配紀錄的邏輯，使用 record.bank (來自POST payload) 進行匹配
+            // 修正查找匹配紀錄的邏輯，使用 record.bank (來自POST payload) 進行匹配
             const matchingRecord = currentMonthData.find(record => record.bank === templateBankName); 
 
             let amountDisplay;
