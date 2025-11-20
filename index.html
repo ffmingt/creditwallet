@@ -332,7 +332,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version">v6.0.33</span>
+                <span class="app-version">v6.0.34</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -604,7 +604,14 @@
              return;
         }
 
-        allTemplates.forEach(t => {
+        // 🔴 V6.0.34: 設置面板的列表也依照結帳日排序
+        const sortedTemplates = [...allTemplates].sort((a, b) => {
+            const billA = parseInt(getCleanValue(a, TEMPLATE_KEYS.BILL_DATE));
+            const billB = parseInt(getCleanValue(b, TEMPLATE_KEYS.BILL_DATE));
+            return billA - billB;
+        });
+
+        sortedTemplates.forEach(t => {
             const bankName = getCleanValue(t, TEMPLATE_KEYS.BANK);
             const billDate = getCleanValue(t, TEMPLATE_KEYS.BILL_DATE);
             const paymentDate = getCleanValue(t, TEMPLATE_KEYS.PAYMENT_DATE);
@@ -682,6 +689,7 @@
 
     function deleteTemplate(templateIndex) {
         showCustomConfirmation('確定要刪除這個銀行模板嗎？', '刪除確認', async () => {
+            
             const deleteObj = { 
                 password: USER_PASSWORD, 
                 action: 'template_delete',
@@ -717,8 +725,16 @@
              select.innerHTML = '<option value="" disabled selected>請先在「設定」中新增銀行</option>';
              return;
         }
+        
+        // 🔴 V6.0.34: 記帳輸入框的下拉列表也依照結帳日排序
+        const sortedTemplates = [...allTemplates].sort((a, b) => {
+            const billA = parseInt(getCleanValue(a, TEMPLATE_KEYS.BILL_DATE));
+            const billB = parseInt(getCleanValue(b, TEMPLATE_KEYS.BILL_DATE));
+            return billA - billB;
+        });
 
-        allTemplates.forEach(t => {
+
+        sortedTemplates.forEach(t => {
             const bankName = getCleanValue(t, TEMPLATE_KEYS.BANK);
 
             const option = document.createElement('option');
@@ -844,7 +860,14 @@
         
         let overdueBanks = [];
 
-        allTemplates.forEach(template => {
+        // 🔴 V6.0.34: 排序後的模板陣列用於警示檢查
+        const sortedTemplates = [...allTemplates].sort((a, b) => {
+            const billA = parseInt(getCleanValue(a, TEMPLATE_KEYS.BILL_DATE));
+            const billB = parseInt(getCleanValue(b, TEMPLATE_KEYS.BILL_DATE));
+            return billA - billB;
+        });
+
+        sortedTemplates.forEach(template => {
             const billDateStr = getCleanValue(template, TEMPLATE_KEYS.BILL_DATE); 
             const bankName = getCleanValue(template, TEMPLATE_KEYS.BANK);
 
@@ -890,7 +913,7 @@
 
 
     // ----------------------------------------------------------------------
-    // 明細列表顯示 (V6.0.31: 新增表情符號邏輯)
+    // 明細列表顯示 (V6.0.34: 新增結帳日排序)
     // ----------------------------------------------------------------------
     function filterData() {
         const selectedMonth = document.getElementById('monthSelector').value;
@@ -905,13 +928,23 @@
             return;
         }
 
+        // 🔴 V6.0.34 NEW: 依照結帳日排序模板 (從小到大)
+        const sortedTemplates = [...allTemplates].sort((a, b) => {
+            const billA = parseInt(getCleanValue(a, TEMPLATE_KEYS.BILL_DATE));
+            const billB = parseInt(getCleanValue(b, TEMPLATE_KEYS.BILL_DATE));
+            // 處理非數字情況，確保不會崩潰 (雖然前面有驗證，但還是防禦性編程)
+            if (isNaN(billA) || isNaN(billB)) return 0; 
+            return billA - billB; // 數字小的排前面
+        });
+
+
         // 篩選出當前月份的交易紀錄
         const currentMonthData = allData.filter(item => String(item.month).trim() === selectedMonth);
         
         let totalLoggedAmount = 0;
         let html = '';
         
-        allTemplates.forEach(template => {
+        sortedTemplates.forEach(template => {
             const templateBankName = getCleanValue(template, TEMPLATE_KEYS.BANK);
             const templateBillDate = getCleanValue(template, TEMPLATE_KEYS.BILL_DATE);
             const templatePaymentDate = getCleanValue(template, TEMPLATE_KEYS.PAYMENT_DATE); 
