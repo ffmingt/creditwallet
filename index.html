@@ -22,7 +22,21 @@
         /* 主介面樣式 */
         .hero { padding: 20px 24px; }
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        
+        /* 新增：App 標題和版本號群組 */
+        .app-title-group {
+            display: flex;
+            align-items: flex-end; 
+            gap: 8px;
+        }
         .app-title { font-size: 24px; font-weight: 800; }
+        .app-version {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-sub); 
+            margin-bottom: 2px;
+        }
+
         .header-actions { display: flex; align-items: center; gap: 8px; }
         select#monthSelector { border: none; background: transparent; font-size: 16px; font-weight: 600; color: #5a67d8; outline: none; text-align: right; }
         .btn-logout { background: #fff; color: #FF3B30; border: 1px solid #FF3B30; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; }
@@ -51,9 +65,9 @@
         .tags-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
         .tag-date { font-size: 12px; color: #4299e1; background: #ebf8ff; padding: 3px 8px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; }
         .t-note { font-size: 13px; color: var(--text-sub); }
-        .t-amount-group { display: flex; align-items: center; gap: 15px; } /* 新增容器 */
+        .t-amount-group { display: flex; align-items: center; gap: 15px; } 
         .t-amount { font-size: 18px; font-weight: 700; }
-        .btn-delete { color: #FF3B30; background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.7; padding: 0 5px; } /* 刪除按鈕樣式 */
+        .btn-delete { color: #FF3B30; background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.7; padding: 0 5px; } 
         .loading-state { text-align: center; padding: 40px; color: var(--text-sub); font-size: 14px; }
     </style>
 </head>
@@ -71,7 +85,10 @@
 
     <div class="hero">
         <div class="header-row">
-            <div class="app-title">帳單管家</div>
+            <div class="app-title-group">
+                <div class="app-title">帳單管家</div>
+                <span class="app-version">v5.1.1</span>
+            </div>
             <div class="header-actions">
                 <select id="monthSelector" onchange="filterData()"></select>
                 <button class="btn-logout" onclick="logout()">登出</button>
@@ -216,7 +233,7 @@
         errorMsg.textContent = '';
 
         USER_PASSWORD = pass;
-        loadData(true); // 呼叫 loadData 並傳遞 true 表示這是第一次登入/驗證
+        loadData(true); 
 
     }
 
@@ -224,7 +241,6 @@
         const container = document.getElementById('listContainer');
         const loginBtn = document.getElementById('loginBtn');
 
-        // 只在不是第一次登入時顯示載入狀態，避免覆蓋登入中的文字
         if (!isInitialLogin) {
             container.innerHTML = '<div class="loading-state">☁️ 正在重新載入資料...</div>';
         }
@@ -238,10 +254,8 @@
                     throw new Error(data.error);
                 }
                 
-                // 成功讀取
                 localStorage.setItem('myBillAppPassword', USER_PASSWORD);
                 
-                // 處理登入成功後的畫面轉換
                 if (isInitialLogin) {
                     const overlay = document.getElementById('loginOverlay');
                     overlay.style.opacity = '0';
@@ -259,13 +273,16 @@
                     loginBtn.disabled = false;
                     loginBtn.innerText = '解鎖';
                     const errorMsg = document.getElementById('loginError');
+                    
                     if (err.message && err.message.includes("密碼")) {
                         errorMsg.textContent = '❌ 密碼錯誤';
                         localStorage.removeItem('myBillAppPassword');
                     } else if (err.message && err.message.includes("工作表名稱錯誤")) {
-                        errorMsg.innerHTML = `⚠️ 連線錯誤：請檢查 GAS 中的 <b>SHEET_NAME</b> 是否為 <b>${err.message.split('：')[1]}</b>`;
+                        // 如果 GAS 拋出工作表錯誤訊息，則顯示
+                        const sheetName = err.message.split('：')[1];
+                        errorMsg.innerHTML = `⚠️ 連線錯誤：請檢查 GAS 中的 <b>SHEET_NAME</b> 是否為 <b>${sheetName}</b>`;
                     } else {
-                        errorMsg.innerHTML = '⚠️ 伺服器連線失敗';
+                        errorMsg.innerHTML = '⚠️ 伺服器連線失敗或 GAS 尚未部署';
                     }
                  } else {
                     container.innerHTML = '<div class="loading-state">⚠️ 載入失敗</div>';
@@ -287,7 +304,6 @@
         btn.disabled = true;
         btn.innerText = '加密上傳中...';
 
-        // 確保視圖切換到剛記帳的月份
         document.getElementById('monthSelector').value = targetMonth;
 
         const tempObj = { 
@@ -322,7 +338,7 @@
     function filterData() {
         const selectedMonth = document.getElementById('monthSelector').value;
         
-        // 🚨 最終的月份過濾修正: 強制轉為字串並移除空白
+        // 最終月份過濾修正: 強制轉為字串並移除空白
         const filtered = allData.filter(item => String(item.month).trim() === selectedMonth);
         
         let total = 0;
@@ -387,7 +403,6 @@
     function initMonthDropdown(id) {
         const select = document.getElementById(id);
         const date = new Date();
-        // 初始化月份選擇器，從下個月開始倒數 20 個月
         date.setMonth(date.getMonth()+1);
         for(let i=0; i<20; i++) {
             const currentMonth = date.getMonth();
