@@ -222,7 +222,7 @@
         <div class="header-row">
             <div class="app-title-group">
                 <div class="app-title">帳單管家</div>
-                <span class="app-version" onclick="forceCacheClear()">v6.0.5</span>
+                <span class="app-version" onclick="forceCacheClear()">v6.0.6</span>
             </div>
             <div class="header-actions">
                 <button class="btn-setting" onclick="openSettingsModal()">設定</button>
@@ -543,16 +543,25 @@
     // ----------------------------------------------------------------------
     // 交易登錄與刪除
     // ----------------------------------------------------------------------
-    // 💡 V6.0.5 FIX: 修正自動填充扣款日期的比對邏輯，使用 Aggressive Normalization
+    
+    // 🚨 V6.0.6 終極字串清理函數
+    function cleanString(str) {
+        if (typeof str !== 'string') str = String(str);
+        return str
+            .replace(/\s/g, '') // 移除所有標準空白字元
+            .replace(/[\u200B-\u200D\uFEFF]/g, '') // 移除零寬度空格等特殊不可見字元
+            .toLowerCase();
+    }
+    
+    // V6.0.6 修正：確保自動填充扣款日期的比對邏輯，使用終極字串清理
     function autoFillPaymentDate() {
         const selectedBankName = document.getElementById('bankSelector').value;
         const paymentDateInput = document.getElementById('paymentDateDisplay');
         
-        // 🚨 這裡必須對選中的值和模板名稱都進行正規化
-        const normalizedSelectedBank = String(selectedBankName).replace(/\s/g, '').toLowerCase();
+        const normalizedSelectedBank = cleanString(selectedBankName);
 
         const template = allTemplates.find(t => 
-             String(t.BankName).replace(/\s/g, '').toLowerCase() === normalizedSelectedBank
+             cleanString(t.BankName) === normalizedSelectedBank
         );
 
         if (template) {
@@ -574,7 +583,6 @@
 
         allTemplates.forEach(t => {
             const option = document.createElement('option');
-            // 選項值保持原樣，但在比對時進行正規化
             option.value = t.BankName; 
             option.text = t.BankName;
             select.appendChild(option);
@@ -685,7 +693,7 @@
     // ----------------------------------------------------------------------
     // 明細列表顯示 (Template Driven)
     // ----------------------------------------------------------------------
-    // 💡 V6.0.5 FIX: 修正資料過濾比對邏輯，使用 Aggressive Normalization
+    // 💡 V6.0.6 修正：確保所有比對都使用 cleanString
     function filterData() {
         const selectedMonth = document.getElementById('monthSelector').value;
         const listContainer = document.getElementById('listContainer');
@@ -697,18 +705,18 @@
             return;
         }
 
-        const currentMonthData = allData.filter(item => String(item.month).trim() === selectedMonth);
+        // 🚨 月份比對：對從試算表讀取的月份資料也進行清理
+        const currentMonthData = allData.filter(item => cleanString(item.month) === selectedMonth);
         
         let totalLoggedAmount = 0;
         let html = '';
         
         allTemplates.forEach(template => {
-            // 🚨 關鍵修正：對模板名稱進行Aggressive Normalization
-            const normalizedTemplateBankName = String(template.BankName).replace(/\s/g, '').toLowerCase(); 
+            const templateBankName = cleanString(template.BankName); 
             
-            // 🚨 關鍵修正：對交易紀錄的銀行名稱進行Aggressive Normalization
+            // 🚨 銀行名稱比對：對交易紀錄的銀行名稱也進行清理
             const matchingRecord = currentMonthData.find(record => 
-                String(record.bank).replace(/\s/g, '').toLowerCase() === normalizedTemplateBankName
+                cleanString(record.bank) === templateBankName
             );
 
             let amountDisplay;
