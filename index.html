@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V12.9</title>
+    <title>My Wallet V12.5</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- V12.5 Base Style (Unchanged) --- */
+        /* --- V12.5 Style System --- */
         :root { 
             --bg-body: #F9FAFB; 
             --primary: #4F46E5; 
@@ -28,7 +28,7 @@
         .login-input { width:240px; padding:15px; border:1px solid #E5E7EB; border-radius:16px; font-size:24px; text-align:center; outline:none; margin:20px 0; letter-spacing:8px; background:white; box-shadow: var(--shadow); }
         .login-input:focus { border-color: var(--primary); }
 
-        /* Buttons */
+        /* Buttons & Loading */
         .btn-submit { 
             width: 100%; background: #1F2937; color: white; border: none; 
             padding: 15px; border-radius: 14px; font-size: 16px; font-weight: 600; 
@@ -44,7 +44,7 @@
             border-radius: 50%; border-top-color: #fff; 
             animation: spin 0.8s linear infinite; display: none; 
         }
-        .btn-loading .spinner { display: block; } 
+        .btn-loading .spinner { display: inline-block; } 
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .btn-icon { background:white; border:1px solid #E5E7EB; padding:8px 12px; border-radius:12px; font-size:13px; font-weight:600; color:#555; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.1s; cursor: pointer; }
@@ -80,6 +80,7 @@
         
         .total-card { background: var(--primary-gradient); border-radius: 28px; padding: 25px; color: white; box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.4); position: relative; overflow: hidden; transition: all 0.3s ease; }
         .crypto-bg { background: var(--crypto-gradient) !important; box-shadow: 0 20px 25px -5px rgba(5, 150, 105, 0.4) !important; }
+        
         .total-amount { font-size: 42px; font-weight: 800; margin: 5px 0; letter-spacing: -1px; }
         .total-amount-group { display: flex; flex-direction: column; margin-top: 5px; }
         .total-amount-main { font-size: 42px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
@@ -123,8 +124,8 @@
         .t-content { flex: 1; min-width: 0; }
         .t-bank { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
         .t-amount { font-size: 18px; font-weight: 800; color: var(--text-main); text-align: right; }
-        .c-rate { font-size: 11px; color: #9CA3AF; margin-left: 4px; }
-        .c-usd-tag { display: inline-block; background: #FEF3C7; color: #D97706; padding: 2px 6px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-top: 2px; }
+        .c-sub-value { font-size: 12px; color: #059669; font-weight: 600; text-align: right; margin-top: 3px; font-family: monospace; }
+        .c-rate { font-size: 11px; color: #9CA3AF; font-weight: 400; margin-left: 3px; }
         .badge-todo { font-size: 12px; font-weight: 600; color: #6B7280; background: #E5E7EB; padding: 4px 10px; border-radius: 20px; }
 
         .alert-box { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-text); padding: 16px; border-radius: 16px; margin-bottom: 20px; font-size: 14px; line-height: 1.6; display: flex; align-items: flex-start; gap: 12px; width: 100%; box-sizing: border-box; }
@@ -152,6 +153,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
+<!-- 🟡 Enable Touch Feedback -->
 <body ontouchstart="">
 
     <div id="cloudStatus"><div class="status-icon"><div class="spin-circle"></div></div><span id="cloudText">雲端同步中...</span></div>
@@ -159,7 +161,7 @@
 
     <!-- Login -->
     <div id="loginOverlay">
-        <div style="font-size:50px; margin-bottom:10px; cursor:default;" onclick="handleLockClick()">🔒</div>
+        <div style="font-size:50px; margin-bottom:10px;">🔒</div>
         <div style="font-weight:800; font-size:22px;">App Hub</div>
         <input type="password" id="passwordInput" class="login-input" placeholder="••••" maxlength="8" inputmode="numeric">
         <button id="loginBtn" class="btn-submit" onclick="verifyLogin()" style="width:240px;">
@@ -184,7 +186,6 @@
                 <div class="app-ver">v1.5</div>
             </div>
         </div>
-        <div id="hubRateBar" class="rate-bar" style="margin-top:20px;">Loading Rate...</div>
     </div>
 
     <!-- Wallet -->
@@ -353,7 +354,6 @@
         </div>
     </div>
 
-    <!-- Generic Alert Modal -->
     <div id="alertModal" class="modal-overlay">
         <div class="modal-box" style="display:block; padding:24px;">
             <div id="alertMsg" style="font-size:16px; color:#333; margin-bottom:20px; line-height:1.5;"></div>
@@ -382,20 +382,6 @@ const API_URL = "https://script.google.com/macros/s/AKfycby60jdswu4PguQ0YNMpYdfd
 
 let USER_PASSWORD = "";
 let GLOBAL_DATA = { wallet: {data:[], templates:[]}, crypto: {data:[], methods:[], rate: 32.5} };
-let lockTaps = 0;
-
-// 🟡 Hidden Tool
-function handleLockClick() {
-    lockTaps++;
-    if(lockTaps >= 3) {
-        if(confirm('⚠️ 確定要清除快取並重新整理? (此操作可修復顯示異常)')) {
-            localStorage.clear();
-            location.reload();
-        }
-        lockTaps = 0;
-    }
-    setTimeout(() => lockTaps = 0, 1000);
-}
 
 const Nav = {
     open: function(appId) {
@@ -415,22 +401,26 @@ const SyncManager = {
     add: function(payload) { this.queue.push(payload); if (!this.isSyncing) { this.totalTasks = this.queue.length; this.completed = 0; } else { this.totalTasks++; } this.updateUI(); this.process(); },
     updateUI: function() { const pending = this.queue.length; if (pending > 0) { const current = this.totalTasks - pending + 1; CloudStatus.set('syncing', `同步中 (${current}/${this.totalTasks})...`); } else { CloudStatus.set('success'); this.totalTasks = 0; this.completed = 0; } },
     process: async function() {
-        if (this.isSyncing || this.queue.length === 0) {
-            if(this.queue.length === 0 && this.isSyncing) {
-                this.isSyncing = false;
-                setTimeout(() => loadData(), 2000);
-            }
-            return;
-        }
+        if (this.isSyncing || this.queue.length === 0) return;
         this.isSyncing = true;
         while (this.queue.length > 0) {
             this.updateUI(); const currentTask = this.queue[0];
-            try { await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...currentTask, password: USER_PASSWORD }) }); this.queue.shift(); this.completed++; await new Promise(r => setTimeout(r, 300)); } 
-            catch (e) { console.error("Sync Failed:", e); CloudStatus.set('error'); this.isSyncing = false; return; }
+            let success = false;
+            for(let i=0; i<3; i++) { // Retry 3 times
+                try {
+                    await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...currentTask, password: USER_PASSWORD }) });
+                    success = true; break;
+                } catch(e) { await new Promise(r => setTimeout(r, 1500)); }
+            }
+            
+            if(success) {
+                this.queue.shift(); this.completed++;
+                await new Promise(r => setTimeout(r, 500)); 
+            } else {
+                CloudStatus.set('error'); this.isSyncing = false; return;
+            }
         }
-        this.isSyncing = false; 
-        this.updateUI();
-        setTimeout(() => loadData(), 2000);
+        this.isSyncing = false; this.updateUI(); DataLoader.load(); 
     }
 };
 
@@ -450,74 +440,56 @@ const CloudStatus = {
     }
 };
 
-// 🟢 Function restored to global scope
-async function loadData(isInit=false, isManual=false) {
-    try {
-        if(isManual) CloudStatus.set('syncing', '資料更新中...');
-        const res = await fetch(`${API_URL}?password=${encodeURIComponent(USER_PASSWORD)}`);
-        const json = await res.json();
-        if(json.error) throw new Error(json.error);
-        
-        // 🟢 Auto-Login Save
-        if(!json.error) localStorage.setItem('myBillPass', USER_PASSWORD);
+const DataLoader = {
+    load: async function(isInit=false, isManual=false) {
+        try {
+            if(isManual) CloudStatus.set('syncing', '資料更新中...');
+            const res = await fetch(`${API_URL}?password=${encodeURIComponent(USER_PASSWORD)}`);
+            const json = await res.json();
+            if(json.error) throw new Error(json.error);
+            
+            GLOBAL_DATA = {
+                wallet: {
+                    data: mapNormalize(json.wallet.data).reverse(),
+                    templates: mapNormalize(json.wallet.templates)
+                },
+                crypto: {
+                    data: mapNormalize(json.crypto.data),
+                    methods: json.crypto.methods,
+                    rate: json.crypto.rate
+                }
+            };
+            
+            // 🟢 Fix: 成功載入後，儲存密碼
+            localStorage.setItem('myBillPass', USER_PASSWORD);
 
-        GLOBAL_DATA = {
-            wallet: {
-                data: mapNormalize(json.wallet.data).reverse(),
-                templates: mapNormalize(json.wallet.templates)
-            },
-            crypto: {
-                data: mapNormalize(json.crypto.data),
-                methods: json.crypto.methods,
-                rate: json.crypto.rate
+            if(isInit) {
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('app-hub').classList.remove('hidden-layer');
             }
-        };
-
-        if(isInit) {
-            document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('app-hub').classList.remove('hidden-layer');
-        }
-        
-        if(!document.getElementById('app-wallet').classList.contains('hidden-layer')) WalletApp.render();
-        if(!document.getElementById('app-crypto').classList.contains('hidden-layer')) CryptoApp.render();
-        
-        const rate = GLOBAL_DATA.crypto.rate || '--.--';
-        document.getElementById('cryptoSettingsRate').innerText = `🇺🇸 1 USD ≈ ${rate} TWD`;
-        document.getElementById('hubRateBar').innerText = `🇺🇸 USD/TWD ≈ ${rate}`;
-        
-        setBtnLoading('loginBtn', false);
-        if(isManual) CloudStatus.set('success', '資料已更新');
-
-    } catch(e) {
-        if(isInit) {
-            document.getElementById('loginError').innerText = e.message.includes("密碼") ? '❌ 密碼錯誤' : '⚠️ 連線失敗';
+            if(!document.getElementById('app-wallet').classList.contains('hidden-layer')) WalletApp.render();
+            if(!document.getElementById('app-crypto').classList.contains('hidden-layer')) CryptoApp.render();
+            
             setBtnLoading('loginBtn', false);
-        } else {
-            if(isManual) CloudStatus.set('error');
+            if(isManual) CloudStatus.set('success', '資料已更新');
+
+        } catch(e) {
+            if(isInit) {
+                document.getElementById('loginError').innerText = e.message.includes("密碼") ? '❌ 密碼錯誤' : '⚠️ 連線失敗';
+                setBtnLoading('loginBtn', false);
+            } else {
+                CloudStatus.set('error');
+            }
         }
     }
-}
+};
 
 function verifyLogin() {
     USER_PASSWORD = document.getElementById('passwordInput').value;
     if(!USER_PASSWORD) return;
     setBtnLoading('loginBtn', true, '驗證中...');
-    loadData(true);
+    DataLoader.load(true);
 }
-
-// 🟢 Auto Login Trigger
-document.addEventListener('DOMContentLoaded', () => {
-    const p = localStorage.getItem('myBillPass');
-    if(p) { 
-        document.getElementById('passwordInput').value = p; 
-        verifyLogin(true); 
-    }
-    initMonthSelect('w-list-month'); 
-    initMonthSelect('w-input-month');
-    const curr = getCurrentMonthVal();
-    document.getElementById('w-input-month').value = curr;
-    document.getElementById('w-list-month').value = curr;
-});
 
 // --- App 1: Wallet Logic ---
 const WalletApp = {
@@ -603,12 +575,7 @@ const WalletApp = {
         this.render();
         
         document.getElementById('w-amount').value=''; document.getElementById('w-note').value='';
-        setBtnLoading('w-submit', true, '排程中...'); 
-        setTimeout(() => {
-             setBtnLoading('w-submit', false);
-             CloudStatus.set('syncing');
-        }, 1000);
-
+        setBtnLoading('w-submit', true, '排程中...'); setTimeout(() => setBtnLoading('w-submit', false), 500);
         SyncManager.add({ appName:'wallet', action:'post', bank, amount:amt, note, month, paymentDate: tpl?tpl.paymentdate:'-' });
     },
     askDelete: function(uuid, bank) {
@@ -658,6 +625,7 @@ const CryptoApp = {
         const methods = GLOBAL_DATA.crypto.methods;
         const rate = GLOBAL_DATA.crypto.rate;
         
+        // 🟢 Fix: Force rebuild selector every render to show new methods
         const sel = document.getElementById('c-method');
         const currentVal = sel.value;
         sel.innerHTML = '<option disabled selected>選擇管道</option>';
@@ -752,14 +720,20 @@ const CryptoApp = {
         const val = document.getElementById('newCryptoMethod').value;
         if(!val) return showToast('⚠️ 請輸入名稱');
         setBtnLoading('btnAddCryptoMethod', true, '新增中...');
+        
         GLOBAL_DATA.crypto.methods.push(val);
         this.renderSettingsList();
-        this.render(); 
+        this.render(); // 🟢 Fix: Refresh main list dropdown immediately
         document.getElementById('newCryptoMethod').value = '';
         
         CloudStatus.set('syncing');
         fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, appName:'crypto', action:'config_add', methodName:val}) })
-        .then(() => { setBtnLoading('btnAddCryptoMethod', false); CloudStatus.set('success'); DataLoader.load(); });
+        .then(() => { 
+            setBtnLoading('btnAddCryptoMethod', false); 
+            CloudStatus.set('success'); 
+            // 🟢 Fix: Reload data and update list if modal is still open
+            DataLoader.load().then(() => CryptoApp.renderSettingsList()); 
+        });
     },
     deleteMethod: function(name) {
         customConfirm(`刪除 ${name}?`, () => {
@@ -841,4 +815,31 @@ function deleteTemplate(idx) {
         fetch(API_URL, {
             method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
             body:JSON.stringify({password:USER_PASSWORD, appName:'wallet', action:'template_delete', templateIndex:idx})
-        }).then(()=>setTimeout(() => { DataLoader.load().then(() => renderTem
+        }).then(()=>setTimeout(() => { DataLoader.load().then(() => renderTemplateList()); CloudStatus.set('success'); }, 1000));
+    });
+}
+function openEditTemplateModal(index, bank, bill, pay) { document.getElementById('editIndex').value = index; document.getElementById('editBankName').value = bank; document.getElementById('editBill').value = bill; document.getElementById('editPay').value = pay; openModal('editTemplateModal'); }
+function renderTemplateList() {
+    const d = document.getElementById('templateList'); d.innerHTML='';
+    const sorted = [...GLOBAL_DATA.wallet.templates].sort((a,b) => (parseInt(a.billdate)||0) - (parseInt(b.billdate)||0));
+    sorted.forEach(t => {
+        const n = t.bankname; const b = t.billdate; const p = t.paymentdate;
+        const row = document.createElement('div'); row.className='setup-row';
+        row.innerHTML = `<div><div style="font-weight:700">${n}</div><div style="font-size:12px;color:#888;">結帳日 ${b} / 扣款日 ${p}</div></div><div style="display:flex; gap:5px;"><button class="btn-setup-action" style="color:#4F46E5;" onclick="openEditTemplateModal(${t.templateindex}, '${n}', '${b}', '${p}')">✎ 編輯</button><button class="btn-setup-action" style="color:#EF4444;" onclick="deleteTemplate(${t.templateindex})">🗑️ 刪除</button></div>`;
+        d.appendChild(row);
+    });
+}
+
+// Core: Map Normalize
+function mapNormalize(arr) {
+    if(!Array.isArray(arr)) return [];
+    const keyMap = { '銀行名稱': 'bankname', 'bankname': 'bankname', '結帳日': 'billdate', 'billdate': 'billdate', '扣款日': 'paymentdate', 'paymentdate': 'paymentdate', '銀行': 'bank', 'bank': 'bank', '金額': 'amount', 'amount': 'amount', '備註': 'note', 'note': 'note', '月份': 'month', 'month': 'month', 'uuid': 'uuid', 'UUID': 'uuid', '日期': 'date', 'date': 'date', '管道': 'method', 'method': 'method', '台幣成本': 'cost_twd', 'cost_twd': 'cost_twd', 'cost': 'cost_twd', '外幣金額': 'amount_usd', 'amount_usd': 'amount_usd', '幣別': 'type', 'type': 'type' };
+    return arr.map(obj => { const newObj = {}; for(let k in obj) { const cleanKey = k.trim(); const mappedKey = keyMap[cleanKey] || cleanKey.toLowerCase(); newObj[mappedKey] = obj[k]; } return newObj; });
+}
+function getVal(t,k) { return t[k.toLowerCase()] || '-'; } 
+function strColor(s) { let h=0;for(let i=0;i<s.length;i++)h=s.charCodeAt(i)+((h<<5)-h); return '#'+("00000"+(h&0xFFFFFF).toString(16)).substr(-6); }
+function getCurrentMonthVal() { const d=new Date(); return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`; }
+function initMonthSelect(id) { const s=document.getElementById(id),d=new Date(); d.setMonth(d.getMonth()+1); for(let i=0;i<24;i++){ const v=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`; const o=document.createElement('option'); o.value=v; o.text=`${d.getFullYear()} / ${String(d.getMonth()+1).padStart(2,'0')}`; s.appendChild(o); d.setMonth(d.getMonth()-1); } }
+</script>
+</body>
+</html>
