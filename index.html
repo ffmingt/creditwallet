@@ -3,1239 +3,857 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V6.0</title>
+    <title>My Wallet V7.1 (Pro)</title>
+    <!-- 引入 Chart.js 用於圖表顯示 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- 樣式區 --- */
-        /* 🔴 V6.0.33 NEW: 定義微動浮動動畫 */
-        @keyframes float {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-5px); } /* 上移 5 像素 */
-            100% { transform: translateY(0); }
-        }
-
+        /* --- 核心變數與重置 --- */
         :root { 
-            --bg-color: #F8F9FD; 
-            --card-bg: #FFFFFF; 
+            --bg-color: #F3F4F6; 
+            --card-bg: rgba(255, 255, 255, 0.9); 
+            --primary-color: #667eea;
             --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            --text-main: #2D3748; 
-            --text-sub: #718096; 
-            --input-bg: #EDF2F7; 
+            --text-main: #1F2937; 
+            --text-sub: #6B7280; 
+            --danger: #EF4444;
+            --success: #10B981;
+            --radius: 20px;
         }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             background-color: var(--bg-color); 
             color: var(--text-main); 
             margin: 0; 
             padding-bottom: 150px; 
-            /* 🔴 V6.0.35 NEW: 禁用文字選取，提升 App 質感 */
             user-select: none;
             -webkit-user-select: none; 
         }
-        
-        /* 登入遮罩 */
+
+        /* --- 通用動畫 --- */
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-6px); } 100% { transform: translateY(0px); } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- 登入遮罩 --- */
         #loginOverlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #f8f9fd; z-index: 99999; /* 高層級 */
-            display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 30px; box-sizing: border-box; transition: opacity 0.3s; 
+            background: rgba(243, 244, 246, 0.98); backdrop-filter: blur(10px);
+            z-index: 99999; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; padding: 30px; transition: opacity 0.3s; 
         }
-        .login-box { width: 100%; max-width: 320px; text-align: center; background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
-        .login-title { font-size: 22px; font-weight: 800; margin-bottom: 10px; color: #333; }
+        .login-box { width: 100%; max-width: 320px; text-align: center; }
         .login-input { 
-            width: 100%; padding: 15px; background: #edf2f7; border: none; border-radius: 12px; 
+            width: 100%; padding: 15px; background: white; border: 2px solid transparent; border-radius: var(--radius); 
             font-size: 24px; text-align: center; outline: none; margin: 20px 0; 
-            letter-spacing: 4px; font-weight: bold; 
-            /* V6.0.36 NEW: 焦點效果優化 */
-            transition: box-shadow 0.2s;
+            letter-spacing: 8px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s;
         }
-        .login-input:focus {
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.5); /* 經典主題顏色外框 */
-        }
+        .login-input:focus { border-color: var(--primary-color); transform: translateY(-2px); }
 
-        .login-btn { width: 100%; padding: 15px; background: var(--primary-gradient); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .login-btn:active { transform: scale(0.95); }
-        .login-btn:disabled { opacity: 0.7; cursor: not-allowed; }
-        .error-msg { color: #ff4757; font-size: 13px; margin-top: 15px; min-height: 20px; }
-
-        /* 主介面樣式 */
-        .hero { padding: 20px 24px; }
+        /* --- 主介面 --- */
+        .hero { padding: 20px 24px; animation: fadeIn 0.5s ease; }
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        
-        /* App 標題和版本號群組 */
-        .app-title-group { display: flex; align-items: flex-end; gap: 8px; }
-        .app-title { font-size: 24px; font-weight: 800; }
-        .app-version {
-            font-size: 14px;
-            font-weight: 600;
-            color: #764ba2; 
-            margin-bottom: 2px;
-        }
+        .app-title { font-size: 26px; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .app-version { font-size: 12px; color: var(--text-sub); font-weight: 600; background: #E5E7EB; padding: 2px 6px; border-radius: 6px; vertical-align: middle; }
 
-        .header-actions { display: flex; align-items: center; gap: 8px; }
-        
-        /* 月份選擇器調整: 移到明細列表區 */
-        select#monthSelector { 
-            border: none; 
-            background: transparent; 
-            font-size: 18px; 
-            font-weight: 700; 
-            color: var(--text-main); 
-            outline: none; 
-            margin-left: 10px;
-            flex-grow: 1; 
-            text-align: right;
-        }
+        .btn-icon { background: white; border: none; padding: 8px 12px; border-radius: 12px; font-size: 13px; font-weight: 600; color: var(--text-main); box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s; }
+        .btn-icon:active { transform: scale(0.95); }
+        .btn-logout { color: var(--danger); }
 
-        .btn-logout { background: #fff; color: #FF3B30; border: 1px solid #FF3B30; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; }
-        
-        .btn-setting { 
-            background: #fff; 
-            color: var(--text-main); 
-            border: 1px solid #ddd; 
-            padding: 6px 14px; 
-            border-radius: 20px; 
-            font-size: 13px; 
-            font-weight: 600; 
-            cursor: pointer;
-        }
-
+        /* --- 總覽卡片 (Glassmorphism) --- */
         .total-card { 
             background: var(--primary-gradient); 
-            border-radius: 24px; 
-            padding: 30px 25px; 
-            color: white; 
-            /* V6.0.31: 陰影加深，增加立體感 */
-            box-shadow: 0 15px 30px -5px rgba(102, 126, 234, 0.6); 
-            position: relative; 
-            overflow: hidden; 
+            border-radius: 28px; padding: 30px 25px; color: white; 
+            box-shadow: 0 20px 40px -10px rgba(102, 126, 234, 0.5); 
+            position: relative; overflow: hidden; 
         }
-        .card-label { font-size: 13px; opacity: 0.8; letter-spacing: 1px; margin-bottom: 8px; }
-        .total-amount { font-size: 42px; font-weight: 700; letter-spacing: -1px; }
-        
-        /* V6.0.33 UPDATE: 增加浮動動畫 */
-        .spending-status {
-            position: absolute;
-            top: 35px; 
-            right: 25px; 
-            font-size: 50px; 
-            opacity: 0.9;
-            pointer-events: none; 
-            transition: transform 0.3s ease;
-            line-height: 1; 
-            animation: float 3s ease-in-out infinite; 
+        .total-card::before {
+            content: ''; position: absolute; top: -50%; right: -20%; width: 200px; height: 200px;
+            background: rgba(255,255,255,0.1); border-radius: 50%; pointer-events: none;
         }
-        .spending-status:hover {
-            transform: scale(1.1) rotate(-5deg); 
-        }
+        .card-label { font-size: 14px; opacity: 0.9; margin-bottom: 5px; font-weight: 500; }
+        .total-amount { font-size: 46px; font-weight: 800; letter-spacing: -1px; text-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .spending-status { position: absolute; top: 30px; right: 25px; font-size: 45px; animation: float 3s ease-in-out infinite; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2)); }
 
+        /* --- 圖表區 --- */
+        .chart-container {
+            margin: 20px 24px 0;
+            background: white;
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            display: none; /* 預設隱藏，有資料才顯示 */
+            animation: slideUp 0.4s ease;
+        }
+        .chart-wrapper { position: relative; height: 200px; width: 100%; display: flex; justify-content: center;}
 
-        .input-section { padding: 0 24px; margin-top: 10px; }
-        .input-group { background: var(--card-bg); border-radius: 20px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 15px; }
-        .bill-month-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 5px; }
-        .bill-month-label { font-size: 14px; color: var(--text-sub); font-weight: 600; }
-        select#billMonthInput { border: none; background: #EDF2F7; padding: 6px 12px; border-radius: 8px; font-size: 15px; font-weight: 600; color: var(--text-main); outline: none; }
-        .form-row { display: flex; gap: 12px; }
-        .form-col { flex: 1; display: flex; flex-direction: column; gap: 5px; position: relative; }
-        label { font-size: 12px; color: var(--text-sub); font-weight: 600; margin-left: 4px; }
-        input, select.form-select { width: 100%; background: var(--input-bg); border: none; padding: 14px; border-radius: 12px; font-size: 16px; color: var(--text-main); box-sizing: border-box; outline: none; appearance: none; }
+        /* --- 輸入區 --- */
+        .input-section { padding: 0 24px; margin-top: 20px; }
+        .glass-panel { 
+            background: var(--card-bg); backdrop-filter: blur(10px);
+            border-radius: var(--radius); padding: 20px; 
+            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05); border: 1px solid rgba(255,255,255,0.5);
+        }
         
-        .btn-submit { width: 100%; background: var(--text-main); color: white; border: none; padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.1s; }
-        .btn-submit:disabled { opacity: 0.6; }
+        .bill-month-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        select.clean-select { border: none; background: transparent; font-size: 16px; font-weight: 700; color: var(--primary-color); outline: none; text-align: right; }
+
+        .form-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; margin-bottom: 12px; }
+        label { font-size: 12px; color: var(--text-sub); font-weight: 600; margin-bottom: 4px; display: block; margin-left: 4px; }
         
-        /* 明細列表區 */
+        .custom-input { width: 100%; background: #F9FAFB; border: 1px solid #E5E7EB; padding: 14px; border-radius: 14px; font-size: 16px; color: var(--text-main); outline: none; transition: 0.2s; -webkit-appearance: none; }
+        .custom-input:focus { background: white; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+        
+        .btn-main { 
+            width: 100%; background: var(--text-main); color: white; border: none; 
+            padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 600; 
+            cursor: pointer; margin-top: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); 
+            transition: transform 0.1s, opacity 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px;
+        }
+        .btn-main:active { transform: scale(0.98); }
+        .btn-main:disabled { opacity: 0.6; cursor: wait; }
+
+        /* --- 列表區 --- */
         .list-section { padding: 30px 24px; }
-        .section-title { 
-            font-size: 18px; 
-            font-weight: 700; 
-            margin-bottom: 15px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-        }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .section-title { font-size: 18px; font-weight: 800; }
         
-        .section-title span:first-child { 
-            font-size: 18px; 
-            font-weight: 700; 
-            line-height: 1.2;
-        }
-
-        /* NEW: 逾期提醒區塊樣式 (V6.0.17 base) */
-        .overdue-alert {
-            background-color: #fef2f2; /* Light red/pink background */
-            border: 1px solid #f4c2c2;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center; /* 使用 center 讓單行文字居中 */
-            gap: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-        .alert-icon {
-            color: #ef4444; /* Dark red for icon */
-            font-size: 24px;
-        }
-        .alert-text {
-            font-size: 15px;
-            font-weight: 600; /* V6.0.17 默認的粗體 */
-            color: #ef4444;
-            line-height: 1.4;
-        }
-
-
-        /* 列表項目 */
         .transaction-item { 
-            background: var(--card-bg); border-radius: 16px; padding: 12px 18px; 
-            margin-bottom: 12px; 
-            display: grid; 
-            grid-template-columns: 35px 2fr 1fr auto; 
-            gap: 15px; 
-            align-items: center; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            background: white; border-radius: 18px; padding: 16px; 
+            margin-bottom: 12px; display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03); transition: transform 0.2s;
+            animation: slideUp 0.3s ease backwards;
+            cursor: pointer; /* 點擊可填入 */
+            border: 1px solid transparent;
+        }
+        .transaction-item:active { transform: scale(0.98); background: #f9fafb; }
+        
+        /* 未登錄的樣式 */
+        .transaction-item.unlogged-item {
+            background: #fff;
+            border: 1px dashed #e5e7eb;
         }
 
-        /* 銀行 Logo */
-        .t-logo {
-            width: 35px; height: 35px; border-radius: 50%;
-            background: var(--primary-gradient); /* 保持使用主題漸變色 */
-            color: white;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 16px; font-weight: 700;
+        .t-icon { 
+            width: 42px; height: 42px; border-radius: 14px; 
+            background: #EEF2FF; color: var(--primary-color);
+            display: flex; justify-content: center; align-items: center; 
+            font-size: 18px; font-weight: 700; flex-shrink: 0;
         }
+        .t-content { flex-grow: 1; }
+        .t-title { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
+        .t-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+        .badge { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600; }
+        .badge.bill { background: #E0F2FE; color: #0284C7; }
+        .badge.pay { background: #DCFCE7; color: #16A34A; }
+        .t-note { font-size: 12px; color: var(--text-sub); width: 100%; margin-top: 4px; font-style: italic;}
+
+        .t-amount-box { text-align: right; flex-shrink: 0; }
+        .t-amount { font-size: 18px; font-weight: 800; color: var(--text-main); }
         
-        /* 銀行資訊區 (Logo 旁邊) */
-        .t-info { 
-            display: flex; flex-direction: column; 
-            gap: 8px; 
-            min-width: 150px;
-        }
-        .t-bank { font-size: 16px; font-weight: 700; color: var(--text-main); line-height: 1.2;}
-        
-        /* 標籤/日期區 */
-        .stacked-dates {
-            display: flex;
-            flex-direction: column; 
-            gap: 4px; 
-        }
-        .date-line {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .tag-date { 
-            padding: 0; 
-            background: none !important;
-            font-weight: 500;
-            color: var(--text-sub);
-            font-size: 13px; 
-        }
-        /* 保持標籤顏色：藍色/綠色 */
-        .tag-bill-date { color: #5a67d8; font-weight: 600; } 
-        .tag-payment-date { color: #38a169; font-weight: 600; } 
-        
-        /* 備註 */
-        .t-note { 
-            font-size: 13px; 
-            color: var(--text-sub); 
-            margin-top: 4px; 
-            font-style: italic; 
+        /* 未登錄的紅標 */
+        .status-badge-unlogged {
+            font-size: 13px; color: #EF4444; background: #FEF2F2;
+            padding: 6px 10px; border-radius: 8px; font-weight: 600; display: inline-block;
         }
 
-        /* 金額區 (右側) */
-        .t-amount-group { 
-            display: flex; 
-            align-items: center; 
-            justify-content: flex-end; 
-            gap: 15px; 
-        } 
-        .t-amount { font-size: 18px; font-weight: 700; white-space: nowrap; }
-        .btn-delete { color: #FF3B30; background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.7; padding: 0 5px; margin-left: 10px; } 
-        
-        .unlogged { color: #E53E3E; font-weight: 600; font-size: 16px;} 
-        .unlogged-bg { background: #fffafa; } 
-        .list-message { color: var(--text-sub); text-align: center; padding: 20px; font-size: 15px; }
+        .btn-del-sm { background: none; border: none; color: #FDA4AF; font-size: 18px; padding: 0 0 0 10px; cursor: pointer; }
 
+        /* --- Skeleton Loading --- */
+        .skeleton { background: #E5E7EB; border-radius: 8px; animation: pulse 1.5s infinite; }
+        .skeleton-text { height: 16px; margin-bottom: 6px; width: 60%; }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
 
-        /* ─── Custom Modal Styles ─── */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5); z-index: 999999; /* 較高的層級，用於設定視窗 */
-            display: none; justify-content: center; align-items: center;
+        /* --- Toast Notification --- */
+        #toast {
+            visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center;
+            border-radius: 50px; padding: 12px 20px; position: fixed; z-index: 99999; left: 50%; bottom: 30px;
+            transform: translateX(-50%); font-size: 14px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); opacity: 0; transition: opacity 0.3s, bottom 0.3s;
         }
-        /* V6.0.23 FIX: 確保 CustomModal 永遠在最上層 */
-        #customModal {
-            z-index: 9999999; /* 極高層級，覆蓋所有其他視窗 */
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+
+        /* --- Overdue Alert --- */
+        .alert-box {
+            background: #FEF2F2; border: 1px solid #FEE2E2; color: #991B1B; padding: 15px; 
+            border-radius: 16px; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 10px;
+            font-size: 14px; line-height: 1.5;
         }
-        .modal-overlay.show { display: flex; }
-        .modal-overlay .modal-box {
-            background: white; border-radius: 12px;
-            padding: 25px; width: 80%; max-width: 400px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            transform: scale(0.9); opacity: 0; transition: all 0.2s ease-in-out;
-            max-height: 80vh; overflow-y: auto;
+
+        /* --- Modal Styles --- */
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); z-index: 10000; 
+            display: none; justify-content: center; align-items: center; 
         }
-        .modal-overlay.show .modal-box { transform: scale(1); opacity: 1; }
-        .modal-title { font-size: 18px; font-weight: 700; color: var(--text-main); margin-bottom: 10px; }
-        .modal-message { font-size: 15px; color: #555; margin-bottom: 20px; line-height: 1.5; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
-        .modal-btn { padding: 10px 18px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.1s; }
-        .modal-btn.primary { background: var(--text-main); color: white; }
-        .modal-btn.secondary { background: #E2E8F0; color: var(--text-main); }
-        .modal-btn.danger { background: #FF3B30; color: white; }
+        .modal-overlay.show { display: flex; animation: fadeIn 0.2s; }
+        .modal-box { 
+            background: white; width: 85%; max-width: 400px; border-radius: 24px; padding: 25px; 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); transform: scale(0.95); transition: 0.2s;
+            max-height: 85vh; overflow-y: auto;
+        }
+        .modal-overlay.show .modal-box { transform: scale(1); }
+        .modal-header { font-size: 20px; font-weight: 800; margin-bottom: 20px; color: var(--text-main); }
+        .modal-actions { margin-top: 25px; display: flex; justify-content: flex-end; gap: 10px; }
+        .m-btn { padding: 10px 20px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; }
+        .m-btn.primary { background: var(--text-main); color: white; }
+        .m-btn.secondary { background: #F3F4F6; color: var(--text-main); }
         
-        /* 設置面板專用 */
-        #templateList { margin-top: 15px; }
-        .template-item { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 12px 0; border-bottom: 1px solid #eee;
-        }
-        .template-name { font-weight: 600; flex-grow: 1; }
-        .template-dates { font-size: 12px; color: var(--text-sub); text-align: right; margin-right: 10px; }
-        .template-actions { display: flex; gap: 5px; align-items: center; }
-        /* 🔴 V6.0.37 NEW: 編輯按鈕樣式 */
-        .btn-edit { 
-            color: #5a67d8; 
-            background: none; 
-            border: none; 
-            font-size: 1rem; 
-            cursor: pointer; 
-            opacity: 0.8; 
-            padding: 5px;
-            transition: opacity 0.1s;
-        }
-        .btn-edit:hover { opacity: 1; }
-        /* 刪除按鈕樣式 */
-        .template-item .btn-delete { font-size: 1rem; padding: 4px 8px; }
+        /* 設定面板列表 */
+        .setup-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
+        .setup-info { font-size: 14px; color: var(--text-sub); margin-top: 2px; }
     </style>
 </head>
 <body>
 
+    <!-- 登入層 -->
     <div id="loginOverlay">
         <div class="login-box">
-            <div class="login-title">安全鎖定 🔒</div>
-            <div style="color:#888; font-size:14px; margin-bottom:10px;">請輸入密碼以存取資料</div>
-            
-            <input 
-                type="password" 
-                id="passwordInput" 
-                class="login-input" 
-                placeholder="••••" 
-                maxlength="8"
-                inputmode="numeric" 
-                oninput="checkAutoLogin(this)"
-            >
-            <button id="loginBtn" class="login-btn" onclick="verifyLogin()">解鎖</button>
-            <div id="loginError" class="error-msg"></div>
+            <div style="font-size: 40px; margin-bottom: 10px;">🔒</div>
+            <div class="app-title" style="font-size: 22px; margin-bottom: 5px;">Welcome Back</div>
+            <div style="color:#888; font-size:14px;">請輸入密碼以解鎖</div>
+            <input type="password" id="passwordInput" class="login-input" placeholder="••••" maxlength="8" inputmode="numeric">
+            <button id="loginBtn" class="btn-main" onclick="verifyLogin()">解鎖進入</button>
+            <div id="loginError" style="color: var(--danger); margin-top: 15px; font-size: 13px; min-height: 20px;"></div>
         </div>
     </div>
-    
+
+    <!-- 通用模態視窗 -->
     <div id="customModal" class="modal-overlay">
         <div class="modal-box">
-            <div id="modalTitle" class="modal-title"></div>
-            <div id="modalMessage" class="modal-message"></div>
-            <div class="modal-actions" id="modalActions">
-                </div>
+            <div id="modalTitle" class="modal-header">標題</div>
+            <div id="modalMessage" style="line-height:1.6; color: #4B5563;">內容</div>
+            <div class="modal-actions" id="modalActions"></div>
         </div>
     </div>
-    
+
+    <!-- 設定模態視窗 -->
     <div id="settingsModal" class="modal-overlay">
         <div class="modal-box">
-            <div class="modal-title">帳單資料設定</div>
+            <div class="modal-header">銀行/卡別設定</div>
             
-            <div class="input-group" style="padding: 15px; margin-bottom: 20px;">
-                <div class="form-col">
-                    <label>銀行/卡別名稱</label>
-                    <input type="text" id="newTemplateBank" placeholder="例如：中信 LinePay">
+            <div class="glass-panel" style="padding: 15px; background: #F9FAFB; box-shadow: none; border: 1px solid #E5E7EB; margin-bottom: 20px;">
+                <label>新增銀行</label>
+                <input type="text" id="newTemplateBank" class="custom-input" style="margin-bottom: 10px; background:white;" placeholder="例如：中信 LinePay">
+                <div class="form-grid">
+                    <div><label>結帳日</label><input type="number" id="newTemplateBillDate" class="custom-input" style="background:white;" placeholder="日"></div>
+                    <div><label>扣款日</label><input type="number" id="newTemplatePaymentDate" class="custom-input" style="background:white;" placeholder="日"></div>
                 </div>
-                <div class="form-row">
-                    <div class="form-col">
-                        <label>結帳日 (幾號)</label>
-                        <input type="number" id="newTemplateBillDate" placeholder="例如：5">
-                    </div>
-                    <div class="form-col">
-                        <label>扣款日 (幾號)</label>
-                        <input type="number" id="newTemplatePaymentDate" placeholder="例如：20">
-                    </div>
-                </div>
-                <button class="btn-submit" style="margin-top: 5px;" onclick="addTemplate()">＋ 新增銀行</button>
+                <button class="btn-main" style="padding: 10px; font-size: 14px;" onclick="addTemplate()">＋ 新增</button>
             </div>
             
-            <div class="modal-title" style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">已儲存的銀行</div>
-            <div id="templateList">
-                <div class="list-message" id="templateListLoading">載入中...</div>
-            </div>
-
-            <div class="modal-actions" style="margin-top: 20px;">
-                <button class="modal-btn secondary" onclick="closeSettingsModal()">關閉</button>
+            <div style="font-weight:700; font-size: 14px; margin-bottom: 10px; color: var(--text-sub);">已儲存列表</div>
+            <div id="templateList"></div>
+            <div class="modal-actions">
+                <button class="m-btn secondary" onclick="closeSettingsModal()">關閉</button>
             </div>
         </div>
     </div>
     
+    <!-- 編輯模態視窗 -->
     <div id="editTemplateModal" class="modal-overlay">
         <div class="modal-box">
-            <div class="modal-title">編輯銀行資訊</div>
-            <div class="input-group" style="padding: 15px; margin-bottom: 20px;">
-                <div class="form-col">
-                    <label>銀行/卡別名稱</label>
-                    <input type="hidden" id="editTemplateIndex"> 
-                    <input type="text" id="editTemplateBank" placeholder="例如：中信 LinePay"> 
-                </div>
-                <div class="form-row">
-                    <div class="form-col">
-                        <label>結帳日 (幾號)</label>
-                        <input type="number" id="editTemplateBillDate" placeholder="例如：5">
-                    </div>
-                    <div class="form-col">
-                        <label>扣款日 (幾號)</label>
-                        <input type="number" id="editTemplatePaymentDate" placeholder="例如：20">
-                    </div>
-                </div>
-                <button class="modal-btn primary" id="saveEditBtn" onclick="saveTemplateEdit()">儲存修改</button>
+            <div class="modal-header">編輯銀行</div>
+            <input type="hidden" id="editTemplateIndex">
+            <label>銀行名稱</label>
+            <input type="text" id="editTemplateBank" class="custom-input" style="margin-bottom: 15px;">
+            <div class="form-grid">
+                <div><label>結帳日</label><input type="number" id="editTemplateBillDate" class="custom-input"></div>
+                <div><label>扣款日</label><input type="number" id="editTemplatePaymentDate" class="custom-input"></div>
             </div>
-            
-            <div class="modal-actions" style="margin-top: 0;">
-                <button class="modal-btn secondary" onclick="closeEditModal()">取消</button>
+            <div class="modal-actions">
+                <button class="m-btn secondary" onclick="closeEditModal()">取消</button>
+                <button class="m-btn primary" id="saveEditBtn" onclick="saveTemplateEdit()">儲存</button>
             </div>
         </div>
     </div>
 
-
+    <!-- 主畫面 -->
     <div class="hero">
         <div class="header-row">
-            <div class="app-title-group">
-                <div class="app-title">帳單管家</div>
-                <span class="app-version">v6.0.45</span>
+            <div>
+                <span class="app-title">My Wallet</span> 
+                <span class="app-version">V7.1</span>
             </div>
-            <div class="header-actions">
-                <button class="btn-setting" onclick="openSettingsModal()">設定</button>
-                <button class="btn-logout" onclick="logout()">登出</button>
+            <div style="display:flex; gap:8px;">
+                <button class="btn-icon" onclick="openSettingsModal()">⚙️ 設定</button>
+                <button class="btn-icon btn-logout" onclick="logout()">登出</button>
             </div>
         </div>
+
         <div class="total-card">
-            <div class="card-label">本月總支出 (已登錄)</div>
+            <div class="card-label">本月總支出</div>
             <div class="total-amount" id="totalAmount">$0</div>
-            <span id="spendingStatus" class="spending-status"></span>
+            <div class="card-label" style="margin-top: 5px; font-size: 12px; opacity: 0.7;" id="countLabel">0 筆紀錄</div>
+            <span id="spendingStatus" class="spending-status">😊</span>
+        </div>
+    </div>
+
+    <!-- 圖表區 -->
+    <div class="chart-container" id="chartContainer">
+        <div class="chart-wrapper">
+            <canvas id="expenseChart"></canvas>
         </div>
     </div>
 
     <div class="input-section">
-        <div class="input-group">
+        <div class="glass-panel">
             <div class="bill-month-row">
-                <span class="bill-month-label">記帳月份</span>
-                <select id="billMonthInput"></select>
+                <span style="font-weight:600; color:var(--text-sub);">記帳月份</span>
+                <select id="billMonthInput" class="clean-select"></select>
             </div>
-            <div class="form-row">
-                <div class="form-col" style="flex: 3;">
-                    <label>銀行 / 卡別</label>
-                    <select id="bankSelector" class="form-select"></select>
+
+            <div class="form-grid" style="grid-template-columns: 2fr 1.5fr;">
+                <div>
+                    <label>選擇銀行</label>
+                    <select id="bankSelector" class="custom-input" style="padding: 14px 10px;"></select>
                 </div>
-                <div class="form-col" style="flex: 2;">
+                <div>
                     <label>金額</label>
-                    <input type="number" id="amount" inputmode="decimal" placeholder="$0">
+                    <input type="number" id="amount" class="custom-input" inputmode="decimal" placeholder="$0">
                 </div>
             </div>
-            
-            <div class="form-row">
-                <div class="form-col" style="flex: 5;">
-                    <label>備註 (選填)</label>
-                    <input type="text" id="note" placeholder="消費項目...">
-                </div>
+
+            <div>
+                <label>備註 (選填)</label>
+                <input type="text" id="note" class="custom-input" placeholder="消費項目...">
             </div>
-            <button class="btn-submit" id="submitBtn" onclick="submitData()">＋ 確認記帳</button>
+
+            <button class="btn-main" id="submitBtn" onclick="submitData()">
+                <span>＋</span> 確認記帳
+            </button>
         </div>
     </div>
 
     <div class="list-section">
-        <div class="section-title">
-            <span>明細列表</span>
-            <select id="monthSelector" onchange="filterData()"></select>
-            
-            <button 
-                style="background: #e2e8f0; color: var(--text-main); border: none; padding: 4px 8px; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; margin-right: 5px;" 
-                onclick="loadData()" 
-                title="強制重新載入"
-            >
-                &#x21BB; </button>
-            
-            <span style="font-size:12px; font-weight:normal; background:#eee; padding:4px 8px; border-radius:10px;" id="count">0 間銀行</span>
+        <div class="section-header">
+            <div class="section-title">帳單明細</div>
+            <div style="display:flex; align-items:center; gap: 10px;">
+                <select id="monthSelector" class="clean-select" style="font-size: 14px; color: var(--text-main);" onchange="filterData()"></select>
+                <button onclick="loadData()" style="background:white; border:none; border-radius:50%; width:30px; height:30px; box-shadow:0 2px 5px rgba(0,0,0,0.1); cursor:pointer;">↻</button>
+            </div>
         </div>
+
         <div id="alertContainer"></div>
         <div id="listContainer"></div>
     </div>
 
+    <!-- Toast 通知 -->
+    <div id="toast">提示訊息</div>
+
 <script>
     // ==========================================
-    // 🔴 你的專屬網址 
+    // 🔴 請替換為你的 Google Apps Script 網址
     const API_URL = "https://script.google.com/macros/s/AKfycby60jdswu4PguQ0YNMpYdfdOewU-YscwRvOpcVxZhV7KNpwhVzSO7tJ8vNx1fPmw_tjGw/exec";
     // ==========================================
 
     let allData = []; 
     let allTemplates = []; 
     let USER_PASSWORD = "";
-    
-    // 鎖定標題欄位的中文 Key (標準鍵)
-    const TEMPLATE_KEYS = {
-        BANK: '銀行名稱', 
-        BILL_DATE: '結帳日',
-        PAYMENT_DATE: '扣款日' 
-    };
+    let expenseChart = null; // Chart instance
 
+    const TEMPLATE_KEYS = { BANK: '銀行名稱', BILL_DATE: '結帳日', PAYMENT_DATE: '扣款日' };
+
+    // 初始化
     document.addEventListener('DOMContentLoaded', () => {
         const savedPass = localStorage.getItem('myBillAppPassword');
-        
         initMonthDropdown('monthSelector'); 
         initMonthDropdown('billMonthInput');
         setDefaultInputMonth();
-        
+
+        // 自動聚焦
+        document.getElementById('passwordInput').addEventListener('input', (e) => {
+            if(e.target.value.length === 8) verifyLogin();
+        });
+
         if(savedPass) {
             document.getElementById('passwordInput').value = savedPass;
             verifyLogin(true); 
         }
     });
-    
-    // ----------------------------------------------------------------------
-    // 核心資料處理：鍵值淨化與安全讀取 (V6.0.17 核心)
-    // ----------------------------------------------------------------------
-    /**
-     * 清理物件陣列中的所有鍵值，去除前後空白。
-     */
-    function normalizeKeys(dataArray) {
-        if (!Array.isArray(dataArray)) return dataArray;
-        return dataArray.map(obj => {
-            if (typeof obj !== 'object' || obj === null) return obj;
-            const newObj = {};
-            for (const key in obj) {
-                if (Object.prototype.hasOwnProperty.call(obj, key)) {
-                    const cleanKey = typeof key === 'string' ? key.trim() : key;
-                    newObj[cleanKey] = obj[key];
-                }
-            }
-            return newObj;
-            
-        });
+
+    // Toast 通知功能
+    function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.className = "show";
+        toast.innerText = message;
+        setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
     }
 
-    /**
-     * 安全地從模板/紀錄物件中讀取值，並處理中/英文鍵名 fallback。
-     */
-    function getCleanValue(template, key) {
-        if (!template) return '-';
-
-        // 1. 嘗試標準化後/用戶設定的中文鍵 (e.g., '扣款日')
-        let value = template[key];
-        if (value !== undefined && value !== null && value !== '') return value;
-
-        // 2. 嘗試 GAS 傳輸使用的英文鍵 ( fallback 檢查)
-        let englishKey = '';
-        if (key === TEMPLATE_KEYS.PAYMENT_DATE) englishKey = 'PaymentDate';
-        else if (key === TEMPLATE_KEYS.BILL_DATE) englishKey = 'BillDate';
-        else if (key === TEMPLATE_KEYS.BANK) englishKey = 'BankName';
-        
-        if (englishKey) {
-            value = template[englishKey];
-            if (value !== undefined && value !== null && value !== '') return value;
-        }
-
-        return '-';
-    }
-
-
-    // ----------------------------------------------------------------------
-    // 核心：自訂彈窗系統 (V6.0.23 核心)
-    // ----------------------------------------------------------------------
-    function showCustomDialog(title, message, buttons) {
-        const modal = document.getElementById('customModal');
-        document.getElementById('modalTitle').innerText = title;
-        document.getElementById('modalMessage').innerHTML = message;
-        const actions = document.getElementById('modalActions');
-        actions.innerHTML = ''; 
-
-        buttons.forEach(btn => {
-            const button = document.createElement('button');
-            button.className = 'modal-btn ' + (btn.class || 'primary');
-            button.innerText = btn.text;
-            button.onclick = () => {
-                modal.classList.remove('show');
-                if (btn.action) {
-                    btn.action();
-                }
-            };
-            actions.appendChild(button);
-        });
-
-        modal.classList.add('show');
-    }
-
-    function showCustomAlert(message, title = '系統提示') {
-        showCustomDialog(title, message, [{ text: '確定', class: 'primary' }]);
-    }
-
-    function showCustomConfirmation(message, title, onConfirm) {
-        showCustomDialog(title, message, [
-            { text: '取消', class: 'secondary' },
-            { text: '確定', class: 'primary', action: onConfirm }
-        ]);
-    }
-
-    // ----------------------------------------------------------------------
-    // 載入與登入 (V6.0.25 核心)
-    // ----------------------------------------------------------------------
-    
-    // 🔴 V6.0.36 NEW: 自動提交檢查
-    function checkAutoLogin(input) {
-        if (input.value.length === 8) {
-            verifyLogin();
-        }
-    }
-
-    function logout() {
-        // V6.0.25: 保持簡潔的登出提示，並執行強制清除快取/重新載入
-        showCustomConfirmation('確定要登出嗎？下次需要重新輸入密碼。', '登出確認', () => {
-            localStorage.removeItem('myBillAppPassword');
-            // 強制重新載入頁面，確保載入最新的 HTML 檔案和清除所有 App 快取
-            location.reload(true); 
-        });
-    }
-
-    function verifyLogin(isAutoLogin = false) {
-        const pass = document.getElementById('passwordInput').value;
-        const errorMsg = document.getElementById('loginError');
-        const btn = document.getElementById('loginBtn');
-
-        if(!pass) { errorMsg.textContent = '請輸入密碼'; return; }
-        // V6.0.36 FIX: 防止在驗證過程中重複觸發
-        if (btn.disabled) return;
-
-        btn.disabled = true;
-        btn.innerText = isAutoLogin ? '自動登入中...' : '驗證中...';
-        errorMsg.textContent = '';
-
-        USER_PASSWORD = pass;
-        loadData(true); 
-    }
-
+    // 核心資料讀取
     async function loadData(isInitialLogin = false) {
         const container = document.getElementById('listContainer');
         const loginBtn = document.getElementById('loginBtn');
 
         if (!isInitialLogin) {
-            container.innerHTML = '<div class="loading-state">☁️ 正在重新載入資料...</div>';
+            container.innerHTML = `
+                <div class="transaction-item"><div class="skeleton" style="width:40px; height:40px;"></div><div style="flex:1"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text" style="width:40%"></div></div></div>
+                <div class="transaction-item"><div class="skeleton" style="width:40px; height:40px;"></div><div style="flex:1"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text" style="width:40%"></div></div></div>
+            `;
         }
-        
-        const url = `${API_URL}?password=${encodeURIComponent(USER_PASSWORD)}`;
 
         try {
-            const res = await fetch(url);
+            const res = await fetch(`${API_URL}?password=${encodeURIComponent(USER_PASSWORD)}`);
             const data = await res.json();
-            
-            if(data.error) { throw new Error(data.error); }
-            
+
+            if(data.error) throw new Error(data.error);
+
             localStorage.setItem('myBillAppPassword', USER_PASSWORD);
-            
+
             if (isInitialLogin) {
                 const overlay = document.getElementById('loginOverlay');
                 overlay.style.opacity = '0';
                 setTimeout(() => { overlay.style.display = 'none'; }, 300);
             }
 
-            allData = normalizeKeys(data.data).reverse(); 
-            allTemplates = normalizeKeys(data.templates); 
-            
-            if (data.template_error) {
-                showCustomAlert(data.template_error, '警告');
-            }
+            allData = normalizeKeys(data.data).reverse();
+            allTemplates = normalizeKeys(data.templates);
 
-            updateTemplateSelector(); 
-            filterData(); 
-            
-            loginBtn.disabled = false;
-            loginBtn.innerText = '解鎖';
+            updateTemplateSelector();
+            filterData();
+
+            loginBtn.disabled = false; 
+            loginBtn.innerText = '解鎖進入';
 
         } catch(err) {
-             console.error(err);
-             if (isInitialLogin) {
+            console.error(err);
+            if(isInitialLogin) {
                 loginBtn.disabled = false;
-                loginBtn.innerText = '解鎖';
-                const errorMsg = document.getElementById('loginError');
-                
-                if (err.message && err.message.includes("密碼")) {
-                    errorMsg.textContent = '❌ 密碼錯誤';
-                    localStorage.removeItem('myBillAppPassword');
-                } else if (err.message) {
-                    errorMsg.innerHTML = `⚠️ 連線或工作表錯誤：${err.message}`;
-                } else {
-                    errorMsg.innerHTML = '⚠️ 伺服器連線失敗或 GAS 尚未部署';
-                }
-             } else {
-                container.innerHTML = '<div class="loading-state">⚠️ 載入失敗</div>';
-             }
+                loginBtn.innerText = '解鎖進入';
+                document.getElementById('loginError').textContent = err.message.includes("密碼") ? '❌ 密碼錯誤' : '⚠️ 連線失敗';
+                if(err.message.includes("密碼")) localStorage.removeItem('myBillAppPassword');
+            } else {
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-sub);">⚠️ 載入失敗，請重試</div>';
+            }
         }
     }
 
-    // ----------------------------------------------------------------------
-    // 模板管理邏輯 (V6.0.37: 增加編輯功能)
-    // ----------------------------------------------------------------------
-    function openSettingsModal() {
-        document.getElementById('settingsModal').classList.add('show');
-        renderTemplateList();
-    }
-    
-    function closeSettingsModal() {
-        document.getElementById('settingsModal').classList.remove('show');
-    }
-    
-    function closeEditModal() {
-        document.getElementById('editTemplateModal').classList.remove('show');
-    }
+    // 資料篩選與渲染 (包含圖表 + 未登錄邏輯)
+    function filterData() {
+        const selectedMonth = document.getElementById('monthSelector').value;
+        const listContainer = document.getElementById('listContainer');
+        const chartContainer = document.getElementById('chartContainer');
 
-    function renderTemplateList() {
-        const container = document.getElementById('templateList');
-        container.innerHTML = '';
-        
         if (allTemplates.length === 0) {
-             container.innerHTML = '<div class="list-message">尚未新增任何銀行</div>';
-             return;
+            listContainer.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">尚未設定銀行，請點選右上角設定</div>';
+            updateTotalDisplay(0, 0);
+            chartContainer.style.display = 'none';
+            return;
         }
 
-        // 🔴 V6.0.34: 設置面板的列表也依照結帳日排序
+        // 1. 排序模板
         const sortedTemplates = [...allTemplates].sort((a, b) => {
-            const billA = parseInt(getCleanValue(a, TEMPLATE_KEYS.BILL_DATE));
-            const billB = parseInt(getCleanValue(b, TEMPLATE_KEYS.BILL_DATE));
-            return billA - billB;
+            return (parseInt(getCleanValue(a, TEMPLATE_KEYS.BILL_DATE)) || 0) - (parseInt(getCleanValue(b, TEMPLATE_KEYS.BILL_DATE)) || 0);
         });
 
-        sortedTemplates.forEach(t => {
-            const bankName = getCleanValue(t, TEMPLATE_KEYS.BANK);
-            const billDate = getCleanValue(t, TEMPLATE_KEYS.BILL_DATE);
-            const paymentDate = getCleanValue(t, TEMPLATE_KEYS.PAYMENT_DATE);
-            // 這裡的 t.templateIndex 實際上是 GAS 傳回的物件中包含的 index 欄位，它代表工作表中的行號
-            const templateIndex = t.templateIndex; 
+        const currentMonthData = allData.filter(item => String(item.month).trim() === selectedMonth);
+        
+        let totalAmount = 0;
+        let loggedCount = 0;
+        let html = '';
+        let chartLabels = [];
+        let chartData = [];
+        let chartColors = [];
 
-            const div = document.createElement('div');
-            div.className = 'template-item';
-            div.innerHTML = `
-                <span class="template-name">${bankName}</span>
-                <span class="template-dates">結帳日: ${billDate}日 / 扣款日: ${paymentDate}日</span>
-                <div class="template-actions">
-                    <button class="btn-edit" onclick="openEditModal(${templateIndex}, '${bankName.replace(/'/g, "\\'")}', '${billDate}', '${paymentDate}')">&#9998;</button>
-                    <button class="btn-delete" onclick="deleteTemplate(${templateIndex})">×</button>
+        // 2. 迭代模板
+        sortedTemplates.forEach(template => {
+            const bankName = getCleanValue(template, TEMPLATE_KEYS.BANK);
+            const billDate = getCleanValue(template, TEMPLATE_KEYS.BILL_DATE);
+            const paymentDate = getCleanValue(template, TEMPLATE_KEYS.PAYMENT_DATE);
+            
+            const matchingRecord = currentMonthData.find(r => r.bank === bankName);
+            const firstChar = bankName.charAt(0);
+
+            let rightContent = '';
+            let itemClass = 'transaction-item';
+            let clickAction = '';
+
+            if (matchingRecord) {
+                // 已登錄
+                const amount = Number(matchingRecord.amount);
+                totalAmount += amount;
+                loggedCount++;
+                
+                rightContent = `
+                    <div class="t-amount-box">
+                        <div class="t-amount">$${amount.toLocaleString()}</div>
+                    </div>
+                    <button class="btn-del-sm" onclick="event.stopPropagation(); deleteRecord(${matchingRecord.rowIndex})">×</button>
+                `;
+                
+                chartLabels.push(bankName);
+                chartData.push(amount);
+                chartColors.push(stringToColor(bankName));
+                
+                // 點擊可帶入資料
+                clickAction = `fillInput('${bankName}', '${amount}', '${matchingRecord.note || ''}')`;
+
+            } else {
+                // 未登錄
+                itemClass += ' unlogged-item';
+                rightContent = `
+                    <div class="t-amount-box">
+                        <span class="status-badge-unlogged">⚠️ 尚未登錄</span>
+                    </div>
+                `;
+                // 點擊自動選取銀行
+                clickAction = `fillInput('${bankName}', '', '')`;
+            }
+
+            html += `
+                <div class="${itemClass}" onclick="${clickAction}" title="點擊可快速記帳">
+                    <div class="t-icon">${firstChar}</div>
+                    <div class="t-content">
+                        <div class="t-title">${bankName}</div>
+                        <div class="t-meta">
+                            <span class="badge bill">結 ${billDate}</span>
+                            <span class="badge pay">扣 ${paymentDate}</span>
+                        </div>
+                        ${matchingRecord && matchingRecord.note ? `<div class="t-note">“${matchingRecord.note}”</div>` : ''}
+                    </div>
+                    ${rightContent}
                 </div>
             `;
-            container.appendChild(div);
         });
-    }
-    
-    /**
-     * 開啟編輯模態視窗並預填資料
-     * @param {number} index - 模板在 Google Sheet 上的行號 (templateIndex)
-     * @param {string} bank - 銀行名稱
-     * @param {string} billDate - 結帳日
-     * @param {string} paymentDate - 扣款日
-     */
-    function openEditModal(index, bank, billDate, paymentDate) {
-        document.getElementById('editTemplateIndex').value = index;
-        document.getElementById('editTemplateBank').value = bank;
-        document.getElementById('editTemplateBillDate').value = billDate;
-        document.getElementById('editTemplatePaymentDate').value = paymentDate;
-        
-        document.getElementById('editTemplateModal').classList.add('show');
-    }
-    
-    // 儲存編輯後的模板
-    async function saveTemplateEdit() {
-        const index = document.getElementById('editTemplateIndex').value;
-        const bank = document.getElementById('editTemplateBank').value.trim();
-        const billDate = document.getElementById('editTemplateBillDate').value.trim();
-        const paymentDate = document.getElementById('editTemplatePaymentDate').value.trim();
-        
-        if (!bank || !billDate || !paymentDate) {
-            showCustomAlert('請填寫所有欄位', '輸入錯誤');
-            return;
-        }
 
-        if (isNaN(billDate) || isNaN(paymentDate) || billDate < 1 || billDate > 31 || paymentDate < 1 || paymentDate > 31) {
-            showCustomAlert('結帳日和扣款日必須是 1 到 31 之間的數字。', '輸入錯誤');
-            return;
-        }
+        listContainer.innerHTML = html;
+        updateTotalDisplay(totalAmount, loggedCount);
+        checkOverdue(selectedMonth);
 
-        // 🔴 V6.0.37: 重複名稱檢查 (排除自身)
-        const isDuplicateTemplate = allTemplates.some(template => 
-            getCleanValue(template, TEMPLATE_KEYS.BANK) === bank &&
-            // 檢查是否為當前編輯的行號 (如果不是當前行號且名稱重複，則視為重複)
-            template.templateIndex != index 
-        );
-        
-        if (isDuplicateTemplate) {
-            showCustomAlert('銀行名稱已存在。請使用不同的名稱。', '重複名稱警告');
-            return;
-        }
-
-        const btn = document.getElementById('saveEditBtn');
-        const originalText = btn.innerText;
-        btn.disabled = true;
-        btn.innerText = '儲存中...';
-
-        const templateObj = { 
-            password: USER_PASSWORD,
-            action: 'template_update', // 🔴 V6.0.37 NEW ACTION
-            templateIndex: index,
-            BankName: bank, 
-            BillDate: billDate, 
-            PaymentDate: paymentDate
-        };
-        
-        try {
-            await fetch(API_URL, {
-                method: 'POST', mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(templateObj)
-            });
-            
-            setTimeout(() => {
-                closeEditModal();
-                loadData(); 
-                btn.disabled = false;
-                btn.innerText = originalText;
-            }, 500); 
-
-        } catch(e) {
-            showCustomAlert('修改請求失敗，請檢查網路。', '錯誤');
-            btn.disabled = false;
-            btn.innerText = originalText;
+        // 渲染圖表
+        if (totalAmount > 0) {
+            chartContainer.style.display = 'block';
+            renderChart(chartLabels, chartData, chartColors);
+        } else {
+            chartContainer.style.display = 'none';
         }
     }
 
-
-    async function addTemplate() {
-        const bank = document.getElementById('newTemplateBank').value.trim();
-        const billDate = document.getElementById('newTemplateBillDate').value.trim();
-        const paymentDate = document.getElementById('newTemplatePaymentDate').value.trim();
+    // 點擊列表填入輸入框
+    function fillInput(bank, amount, note) {
+        const bankSelect = document.getElementById('bankSelector');
+        const amountInput = document.getElementById('amount');
+        const noteInput = document.getElementById('note');
         
-        if (!bank || !billDate || !paymentDate) {
-            showCustomAlert('請填寫所有欄位', '輸入錯誤');
-            return;
-        }
-
-        if (isNaN(billDate) || isNaN(paymentDate) || billDate < 1 || billDate > 31 || paymentDate < 1 || paymentDate > 31) {
-            showCustomAlert('結帳日和扣款日必須是 1 到 31 之間的數字。', '輸入錯誤');
-            return;
-        }
-
-        // 🔴 V6.0.29：重複模板名稱檢查 (新增時)
-        const isDuplicateTemplate = allTemplates.some(template => 
-            getCleanValue(template, TEMPLATE_KEYS.BANK) === bank
-        );
+        bankSelect.value = bank;
+        amountInput.value = amount;
+        noteInput.value = note;
         
-        if (isDuplicateTemplate) {
-            showCustomAlert('銀行名稱已存在。請使用不同的名稱，或修改現有模板。', '重複名稱警告');
-            return;
-        }
-
-
-        const btn = document.querySelector('#settingsModal .btn-submit');
-        const originalText = btn.innerText;
-        btn.disabled = true;
-        btn.innerText = '新增中...';
-
-        const templateObj = { 
-            password: USER_PASSWORD,
-            action: 'template_create',
-            BankName: bank, BillDate: billDate, PaymentDate: paymentDate
-        };
-        
-        try {
-            await fetch(API_URL, {
-                method: 'POST', mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(templateObj)
-            });
-            
-            setTimeout(() => {
-                document.getElementById('newTemplateBank').value = '';
-                document.getElementById('newTemplateBillDate').value = '';
-                document.getElementById('newTemplatePaymentDate').value = '';
-                loadData(); 
-                btn.disabled = false;
-                btn.innerText = originalText;
-            }, 500); 
-
-        } catch(e) {
-            showCustomAlert('新增請求失敗，請檢查網路。', '錯誤');
-            btn.disabled = false;
-            btn.innerText = originalText;
-        }
+        // 滑動到輸入區
+        document.querySelector('.input-section').scrollIntoView({ behavior: 'smooth' });
+        // 若無金額則聚焦
+        if(!amount) amountInput.focus();
     }
 
-    function deleteTemplate(templateIndex) {
-        showCustomConfirmation('確定要刪除這個銀行模板嗎？', '刪除確認', async () => {
-            
-            const deleteObj = { 
-                password: USER_PASSWORD, 
-                action: 'template_delete',
-                templateIndex: templateIndex
-            };
-            
-            try {
-                await fetch(API_URL, {
-                    method: 'POST', mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(deleteObj)
-                });
-                
-                setTimeout(() => {
-                    loadData(); 
-                }, 500); 
+    // 渲染 Chart.js
+    function renderChart(labels, data, colors) {
+        const ctx = document.getElementById('expenseChart').getContext('2d');
+        if (expenseChart) expenseChart.destroy();
 
-            } catch(e) {
-                showCustomAlert('刪除請求失敗，請檢查網路。', '錯誤');
+        expenseChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: colors,
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (ctx) => ' $' + ctx.parsed.toLocaleString() } }
+                }
             }
         });
     }
 
-    // ----------------------------------------------------------------------
-    // 交易登錄與刪除 (V6.0.24 核心: 新增重複提交檢查)
-    // ----------------------------------------------------------------------
-    
-    function updateTemplateSelector() {
-        const select = document.getElementById('bankSelector');
-        select.innerHTML = '<option value="" disabled selected>請選擇銀行/卡別</option>';
-
-        if (allTemplates.length === 0) {
-             select.innerHTML = '<option value="" disabled selected>請先在「設定」中新增銀行</option>';
-             return;
-        }
-        
-        // 🔴 V6.0.34: 記帳輸入框的下拉列表也依照結帳日排序
-        const sortedTemplates = [...allTemplates].sort((a, b) => {
-            const billA = parseInt(getCleanValue(a, TEMPLATE_KEYS.BILL_DATE));
-            const billB = parseInt(getCleanValue(b, TEMPLATE_KEYS.BILL_DATE));
-            return billA - billB;
-        });
-
-
-        sortedTemplates.forEach(t => {
-            const bankName = getCleanValue(t, TEMPLATE_KEYS.BANK);
-
-            const option = document.createElement('option');
-            option.value = bankName;
-            option.text = bankName;
-            select.appendChild(option);
-        });
-        
-        select.selectedIndex = 0;
-    }
-
+    // 送出資料
     function submitData() {
         const bank = document.getElementById('bankSelector').value;
         const amount = document.getElementById('amount').value;
         const note = document.getElementById('note').value;
-        const targetMonth = document.getElementById('billMonthInput').value; 
-        
-        // 1. 基礎驗證
-        if(!bank || !amount) { showCustomAlert('請選擇銀行並輸入金額', '輸入錯誤'); return; } 
+        const targetMonth = document.getElementById('billMonthInput').value;
 
-        // 直接從選定的模板中獲取 paymentDate
-        const selectedBankName = document.getElementById('bankSelector').value;
-        const template = allTemplates.find(t => getCleanValue(t, TEMPLATE_KEYS.BANK) === selectedBankName);
-        const paymentDate = template ? getCleanValue(template, TEMPLATE_KEYS.PAYMENT_DATE) : '-'; 
+        if(!bank || !amount) { showCustomAlert('請選擇銀行並輸入金額', '缺少資料'); return; }
         
-        if (paymentDate === '-') {
-             showCustomAlert('請確認已選擇有效的卡別並設定扣款日。', '輸入錯誤');
-             return;
+        // 檢查重複
+        const isUpdate = allData.some(r => r.bank === bank && String(r.month).trim() === targetMonth);
+        // 若是覆蓋模式(因為點擊了列表)，這裡可以放寬檢查，或提示覆蓋。
+        // 這邊簡化邏輯：如果是重複，顯示提示，但如果是透過 fillInput 修改，建議刪除舊的再新增較為安全(因 Google Sheet row index 問題)。
+        // 為了安全起見，這裡維持重複檢查。若要修改，請先點擊刪除舊紀錄。
+        if (isUpdate) {
+            // 如果是修改，先不擋，交由後端處理或提示使用者刪除。
+            // 為了體驗，這裡只是一個簡單提示。
+            const proceed = confirm('此銀行本月已有紀錄，確定要新增一筆(可能造成重複)嗎？\n若要修改金額，建議先刪除舊紀錄。');
+            if(!proceed) return;
         }
-        
-        // 🔴 V6.0.24：重複登錄檢查
-        const isDuplicate = allData.some(record => 
-            record.bank === bank && 
-            String(record.month).trim() === targetMonth
-        );
-        
-        if (isDuplicate) {
-            showCustomAlert('此銀行本月帳單已登錄！若需修改，請先刪除原有記錄再重新登錄。', '重複登錄警告');
-            return; 
-        }
+
+        const template = allTemplates.find(t => getCleanValue(t, TEMPLATE_KEYS.BANK) === bank);
+        const paymentDate = template ? getCleanValue(template, TEMPLATE_KEYS.PAYMENT_DATE) : '-';
 
         const btn = document.getElementById('submitBtn');
-        const originalText = btn.innerText;
+        const originalText = btn.innerHTML;
         btn.disabled = true;
-        btn.innerText = '加密上傳中...';
+        btn.innerHTML = '🚀 處理中...';
 
-        document.getElementById('monthSelector').value = targetMonth;
+        const payload = { password: USER_PASSWORD, action: 'post', bank, amount: Number(amount), note, paymentDate, month: targetMonth };
 
-        const tempObj = { 
-            password: USER_PASSWORD,
-            action: 'post',
-            bank, amount: Number(amount), note, paymentDate, month: targetMonth
-        };
-        
         fetch(API_URL, {
-            method: 'POST',
-            mode: 'no-cors',
+            method: 'POST', mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(tempObj)
+            body: JSON.stringify(payload)
         }).then(() => {
-            
             setTimeout(() => {
-                loadData(); 
+                showToast('✅ 記帳成功');
+                document.getElementById('monthSelector').value = targetMonth; 
+                loadData();
                 btn.disabled = false;
-                btn.innerText = originalText;
+                btn.innerHTML = originalText;
                 document.getElementById('amount').value = '';
                 document.getElementById('note').value = '';
-                document.getElementById('bankSelector').selectedIndex = 0; 
-            }, 1000); 
-
+            }, 800);
         }).catch(() => {
-            showCustomAlert('上傳請求失敗，請檢查網路。', '錯誤');
+            showCustomAlert('連線異常，請檢查網路', '錯誤');
             btn.disabled = false;
-            btn.innerText = originalText;
+            btn.innerHTML = originalText;
         });
     }
 
-    async function deleteRecord(rowIndex) {
-        showCustomConfirmation('確定要刪除這筆交易紀錄嗎？', '確認刪除', async () => {
-            
-            const deleteObj = { 
-                password: USER_PASSWORD, 
-                action: 'delete',
-                rowIndex: rowIndex
-            };
-
-            const btn = document.getElementById('submitBtn');
-            const originalText = btn.innerText;
-            btn.disabled = true;
-            btn.innerText = '刪除中...';
-
-            try {
-                await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(deleteObj)
-                });
-                
-                setTimeout(() => {
-                    loadData(); 
-                    btn.disabled = false;
-                    btn.innerText = originalText;
-                }, 1000); 
-
-            } catch(error) {
-                showCustomAlert('刪除請求失敗，請檢查網路。', '錯誤');
-                btn.disabled = false;
-                btn.innerText = originalText;
-                loadData();
-            }
+    // 刪除資料
+    function deleteRecord(rowIndex) {
+        showCustomConfirmation('確定刪除這筆紀錄嗎？', '刪除確認', () => {
+            showToast('🗑️ 正在刪除...');
+            fetch(API_URL, {
+                method: 'POST', mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: USER_PASSWORD, action: 'delete', rowIndex })
+            }).then(() => {
+                setTimeout(loadData, 800);
+            });
         });
     }
 
-    // ----------------------------------------------------------------------
-    // 警示邏輯 (V6.0.32: 復原提醒文本)
-    // ----------------------------------------------------------------------
-    function createOverdueAlert() {
-        const today = new Date();
-        const yearMonth = document.getElementById('monthSelector').value; 
-        const currentYear = parseInt(yearMonth.substring(0, 4));
-        const currentMonth = parseInt(yearMonth.substring(4, 6)); // 1-12
+    // --- 輔助功能 ---
+    
+    function updateTotalDisplay(total, count) {
+        const el = document.getElementById('totalAmount');
+        el.textContent = `$${total.toLocaleString()}`;
+        document.getElementById('countLabel').textContent = `已登錄 ${count} 筆`;
         
-        let overdueBanks = [];
+        const status = document.getElementById('spendingStatus');
+        if(total > 20000) status.innerText = '💸';
+        else if(total > 10000) status.innerText = '😱';
+        else if(total > 5000) status.innerText = '🤔';
+        else status.innerText = '😊';
+    }
 
-        // 🔴 V6.0.34: 排序後的模板陣列用於警示檢查
-        const sortedTemplates = [...allTemplates].sort((a, b) => {
-            const billA = parseInt(getCleanValue(a, TEMPLATE_KEYS.BILL_DATE));
-            const billB = parseInt(getCleanValue(b, TEMPLATE_KEYS.BILL_DATE));
-            return billA - billB;
+    function checkOverdue(yearMonth) {
+        const today = new Date();
+        const y = parseInt(yearMonth.substring(0, 4));
+        const m = parseInt(yearMonth.substring(4, 6));
+        let overdue = [];
+
+        allTemplates.forEach(t => {
+            const billDay = parseInt(getCleanValue(t, TEMPLATE_KEYS.BILL_DATE));
+            if(!billDay) return;
+            
+            const cutoff = new Date(y, m - 1, billDay + 1);
+            const bankName = getCleanValue(t, TEMPLATE_KEYS.BANK);
+            const isLogged = allData.some(r => r.bank === bankName && String(r.month).trim() === yearMonth);
+
+            if (today >= cutoff && !isLogged) overdue.push(bankName);
         });
 
-        sortedTemplates.forEach(template => {
-            const billDateStr = getCleanValue(template, TEMPLATE_KEYS.BILL_DATE); 
-            const bankName = getCleanValue(template, TEMPLATE_KEYS.BANK);
-
-            if (billDateStr === '-' || bankName === '-') return;
-
-            const billDate = parseInt(billDateStr);
-            
-            // 截止日期設定為 結帳日 + 1 天 
-            const cutoffDate = new Date(currentYear, currentMonth - 1, billDate + 1); 
-            
-            // 1. 檢查交易是否已登錄
-            const isLogged = allData.some(record => 
-                record.bank === bankName && 
-                String(record.month).trim() === yearMonth
-            );
-
-            // 2. 檢查結帳日是否已過 AND 尚未登錄
-            if (today >= cutoffDate && !isLogged) {
-                overdueBanks.push(bankName);
-            }
-        });
-
-        const alertContainer = document.getElementById('alertContainer');
-        if (overdueBanks.length > 0) {
-            
-            // V6.0.22: 使用 V6.0.17 的單一列表，並強制分行
-            const bankList = overdueBanks.join('、');
-            
-            const alertHtml = `
-                <div class="overdue-alert">
-                    <span class="alert-icon">⚠️</span>
-                    <div class="alert-text">
-                        <strong>${bankList}</strong><br>
-                        尚未完成帳單登錄，請盡快登錄避免延遲繳費。
+        const container = document.getElementById('alertContainer');
+        if(overdue.length > 0) {
+            container.innerHTML = `
+                <div class="alert-box">
+                    <span style="font-size:20px">⚠️</span>
+                    <div>
+                        <strong>逾期提醒</strong><br>
+                        ${overdue.join('、')} 尚未登錄帳單，請盡快確認。
                     </div>
+                </div>`;
+        } else {
+            container.innerHTML = '';
+        }
+    }
+
+    // 設定相關
+    function updateTemplateSelector() {
+        const select = document.getElementById('bankSelector');
+        select.innerHTML = '<option value="" disabled selected>請選擇銀行</option>';
+        
+        if (allTemplates.length === 0) return;
+        
+        const sorted = [...allTemplates].sort((a,b) => 
+             (parseInt(getCleanValue(a, TEMPLATE_KEYS.BILL_DATE))||0) - (parseInt(getCleanValue(b, TEMPLATE_KEYS.BILL_DATE))||0)
+        );
+        
+        sorted.forEach(t => {
+            const name = getCleanValue(t, TEMPLATE_KEYS.BANK);
+            const opt = document.createElement('option');
+            opt.value = name; opt.text = name;
+            select.appendChild(opt);
+        });
+    }
+
+    function addTemplate() {
+        const bank = document.getElementById('newTemplateBank').value.trim();
+        const bill = document.getElementById('newTemplateBillDate').value;
+        const pay = document.getElementById('newTemplatePaymentDate').value;
+        if(!bank || !bill || !pay) return showCustomAlert('請填寫完整', '錯誤');
+        
+        simplePost({ action: 'template_create', BankName: bank, BillDate: bill, PaymentDate: pay }, '新增');
+    }
+
+    function saveTemplateEdit() {
+        const idx = document.getElementById('editTemplateIndex').value;
+        const bank = document.getElementById('editTemplateBank').value;
+        const bill = document.getElementById('editTemplateBillDate').value;
+        const pay = document.getElementById('editTemplatePaymentDate').value;
+        
+        simplePost({ action: 'template_update', templateIndex: idx, BankName: bank, BillDate: bill, PaymentDate: pay }, '修改');
+        closeEditModal();
+    }
+    
+    function deleteTemplate(idx) {
+        showCustomConfirmation('刪除此銀行模板？', '確認', () => {
+            simplePost({ action: 'template_delete', templateIndex: idx }, '刪除');
+        });
+    }
+
+    function simplePost(data, actionName) {
+        const fullData = { password: USER_PASSWORD, ...data };
+        showToast(`⏳ ${actionName}中...`);
+        fetch(API_URL, {
+            method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(fullData)
+        }).then(() => {
+            setTimeout(() => {
+                loadData();
+                document.getElementById('newTemplateBank').value = '';
+                document.getElementById('newTemplateBillDate').value = '';
+                document.getElementById('newTemplatePaymentDate').value = '';
+                showToast(`✅ ${actionName}完成`);
+            }, 1000);
+        });
+    }
+    
+    // 渲染設定列表
+    function renderTemplateList() {
+        const div = document.getElementById('templateList');
+        div.innerHTML = '';
+        allTemplates.forEach(t => {
+            const bank = getCleanValue(t, TEMPLATE_KEYS.BANK);
+            const row = document.createElement('div');
+            row.className = 'setup-item';
+            row.innerHTML = `
+                <div>
+                    <div style="font-weight:600">${bank}</div>
+                    <div class="setup-info">結帳 ${getCleanValue(t, TEMPLATE_KEYS.BILL_DATE)} / 扣款 ${getCleanValue(t, TEMPLATE_KEYS.PAYMENT_DATE)}</div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-icon" onclick="openEditModal(${t.templateIndex}, '${bank}', '${getCleanValue(t, TEMPLATE_KEYS.BILL_DATE)}', '${getCleanValue(t, TEMPLATE_KEYS.PAYMENT_DATE)}')">✎</button>
+                    <button class="btn-icon" style="color:#EF4444" onclick="deleteTemplate(${t.templateIndex})">×</button>
                 </div>
             `;
-            alertContainer.innerHTML = alertHtml;
-        } else {
-            alertContainer.innerHTML = '';
-        }
+            div.appendChild(row);
+        });
     }
 
+    // 模態視窗控制
+    function openSettingsModal() { document.getElementById('settingsModal').classList.add('show'); renderTemplateList(); }
+    function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('show'); }
+    function openEditModal(idx, bank, bill, pay) {
+        document.getElementById('editTemplateIndex').value = idx;
+        document.getElementById('editTemplateBank').value = bank;
+        document.getElementById('editTemplateBillDate').value = bill;
+        document.getElementById('editTemplatePaymentDate').value = pay;
+        document.getElementById('editTemplateModal').classList.add('show');
+    }
+    function closeEditModal() { document.getElementById('editTemplateModal').classList.remove('show'); }
 
-    // ----------------------------------------------------------------------
-    // 明細列表顯示 (V6.0.34: 新增結帳日排序)
-    // ----------------------------------------------------------------------
-    function filterData() {
-        const selectedMonth = document.getElementById('monthSelector').value;
-        const listContainer = document.getElementById('listContainer');
-        
-        if (allTemplates.length === 0) {
-            document.getElementById('alertContainer').innerHTML = ''; // 清除警示
-            listContainer.innerHTML = '<div class="list-message">請先點擊「設定」新增銀行。</div>';
-            document.getElementById('totalAmount').textContent = `$0`;
-            document.getElementById('count').textContent = `0 間銀行`; 
-            document.getElementById('spendingStatus').innerHTML = '&#128522;'; // 😊 Relaxed/Happy (Default for $0)
-            return;
-        }
-
-        // 🔴 V6.0.34 NEW: 依照結帳日排序模板 (從小到大)
-        const sortedTemplates = [...allTemplates].sort((a, b) => {
-            const billA = parseInt(getCleanValue(a, TEMPLATE_KEYS.BILL_DATE));
-            const billB = parseInt(getCleanValue(b, TEMPLATE_KEYS.BILL_DATE));
-            // 處理非數字情況，確保不會崩潰 (雖然前面有驗證，但還是防禦性編程)
-            if (isNaN(billA) || isNaN(billB)) return 0; 
-            return billA - billB; // 數字小的排前面
+    // Utils
+    function verifyLogin(isAuto=false) {
+        USER_PASSWORD = document.getElementById('passwordInput').value;
+        const btn = document.getElementById('loginBtn');
+        if(!USER_PASSWORD) return;
+        btn.disabled = true; btn.innerText = '驗證中...';
+        loadData(true);
+    }
+    function logout() {
+        showCustomConfirmation('確定要登出嗎？', '登出', () => {
+            localStorage.removeItem('myBillAppPassword');
+            location.reload();
         });
-
-
-        // 篩選出當前月份的交易紀錄
-        const currentMonthData = allData.filter(item => String(item.month).trim() === selectedMonth);
-        
-        let totalLoggedAmount = 0;
-        let html = '';
-        
-        sortedTemplates.forEach(template => {
-            const templateBankName = getCleanValue(template, TEMPLATE_KEYS.BANK);
-            const templateBillDate = getCleanValue(template, TEMPLATE_KEYS.BILL_DATE);
-            const templatePaymentDate = getCleanValue(template, TEMPLATE_KEYS.PAYMENT_DATE); 
-
-            // Logo 佔位符
-            const firstChar = templateBankName.charAt(0) || 'E';
-            const logoHtml = `<div class="t-logo">${firstChar}</div>`;
-            
-            // 修正查找匹配紀錄的邏輯，使用 record.bank (來自POST payload) 進行匹配
-            const matchingRecord = currentMonthData.find(record => record.bank === templateBankName); 
-
-            let amountDisplay;
-            let infoTags;
-            let deleteButton = '';
-            
-            // 結帳日標籤 
-            const billTag = `<span class="tag-date tag-bill-date">結帳日: ${templateBillDate}日</span>`;
-            
-            // 扣款日標籤 
-            const paymentTag = `<span class="tag-date tag-payment-date">扣款日: ${templatePaymentDate}日</span>`;
-            
-            if (matchingRecord) {
-                // 已登錄
-                const loggedAmount = Number(matchingRecord.amount);
-                totalLoggedAmount += loggedAmount;
-                
-                amountDisplay = `<div class="t-amount">$${loggedAmount.toLocaleString()}</div>`;
-                deleteButton = `<button class="btn-delete" onclick="deleteRecord(${matchingRecord.rowIndex})">×</button>`;
-                
-                // 垂直堆疊日期
-                infoTags = `
-                    <div class="stacked-dates">
-                        <div class="date-line">${billTag}</div>
-                        <div class="date-line">${paymentTag}</div>
-                    </div>
-                `;
-                // V6.0.14: 移除備註前綴
-                if (matchingRecord.note) {
-                    infoTags += `<div class="t-note">${matchingRecord.note}</div>`;
-                }
-
-            } else {
-                // 未登錄
-                amountDisplay = `<div class="unlogged">-</div>`;
-                
-                // 垂直堆疊日期
-                infoTags = `
-                    <div class="stacked-dates">
-                        <div class="date-line">${billTag}</div>
-                        <div class="date-line">${paymentTag}</div>
-                    </div>
-                `;
-            }
-
-            html += `
-                <div class="transaction-item">
-                    ${logoHtml}
-                    <div class="t-info">
-                        <div class="t-bank">${templateBankName}</div>
-                        ${infoTags}
-                    </div>
-                    <div class="t-amount-group">
-                        ${amountDisplay}
-                    </div>
-                    ${deleteButton}
-                </div>`;
+    }
+    function normalizeKeys(arr) {
+        if (!Array.isArray(arr)) return [];
+        return arr.map(obj => {
+            const n = {};
+            for (let k in obj) n[k.trim()] = obj[k];
+            return n;
         });
-        
-        document.getElementById('totalAmount').textContent = `$${totalLoggedAmount.toLocaleString()}`;
-        document.getElementById('count').textContent = `${allTemplates.length} 間銀行`;
-        listContainer.innerHTML = html;
-        
-        // 🔴 V6.0.27 NEW: 根據總金額設定表情符號
-        const statusElement = document.getElementById('spendingStatus');
-        let emoji = '&#128522;'; // 😊 Relaxed/Happy (Default for $0 or low)
-
-        if (totalLoggedAmount > 10000) {
-            emoji = '&#128552;'; // 😨 Excessive
-        } else if (totalLoggedAmount > 5000) {
-            emoji = '&#128528;s'; // 😐 Moderate
-        } 
-        
-        statusElement.innerHTML = emoji;
-        
-        // 呼叫警示檢查
-        createOverdueAlert();
+    }
+    function getCleanValue(t, k) {
+        if (!t) return '-';
+        if (t[k] != null) return t[k];
+        const map = { [TEMPLATE_KEYS.BANK]: 'BankName', [TEMPLATE_KEYS.BILL_DATE]: 'BillDate', [TEMPLATE_KEYS.PAYMENT_DATE]: 'PaymentDate' };
+        return t[map[k]] || '-';
     }
     
-    // ----------------------------------------------------------------------
-    // 輔助函式 (格式化修正 YYYYMM) (不變)
-    // ----------------------------------------------------------------------
+    function stringToColor(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+        return '#' + "00000".substring(0, 6 - c.length) + c;
+    }
+
     function setDefaultInputMonth() {
-        const inputSelect = document.getElementById('billMonthInput');
-        const viewSelect = document.getElementById('monthSelector');
-        const date = new Date();
-        const val = `${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}`;
-        inputSelect.value = val; viewSelect.value = val;
+        const d = new Date();
+        const v = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`;
+        document.getElementById('billMonthInput').value = v;
+        document.getElementById('monthSelector').value = v;
     }
-    
     function initMonthDropdown(id) {
-        const select = document.getElementById(id);
-        const date = new Date();
-        date.setMonth(date.getMonth()+1);
-        for(let i=0; i<20; i++) {
-            const currentMonth = date.getMonth();
-            const currentYear = date.getFullYear();
-            const val = `${currentYear}${String(currentMonth+1).padStart(2,'0')}`;
-            const opt = document.createElement('option'); 
-            opt.value = val; 
-            opt.text = `${currentYear}年 ${String(currentMonth+1).padStart(2,'0')}月`;
-            select.appendChild(opt); 
-            date.setMonth(date.getMonth()-1);
+        const s = document.getElementById(id);
+        const d = new Date();
+        d.setMonth(d.getMonth()+1);
+        for(let i=0; i<24; i++) {
+            const v = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`;
+            const opt = document.createElement('option');
+            opt.value = v; opt.text = `${d.getFullYear()} / ${String(d.getMonth()+1).padStart(2,'0')}`;
+            s.appendChild(opt);
+            d.setMonth(d.getMonth()-1);
         }
+    }
+
+    function showCustomAlert(msg, title) {
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalMessage').innerText = msg;
+        document.getElementById('modalActions').innerHTML = `<button class="m-btn primary" onclick="document.getElementById('customModal').classList.remove('show')">確定</button>`;
+        document.getElementById('customModal').classList.add('show');
+    }
+    function showCustomConfirmation(msg, title, callback) {
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalMessage').innerText = msg;
+        const actions = document.getElementById('modalActions');
+        actions.innerHTML = '';
+        const cancel = document.createElement('button'); cancel.className = 'm-btn secondary'; cancel.innerText = '取消';
+        cancel.onclick = () => document.getElementById('customModal').classList.remove('show');
+        const ok = document.createElement('button'); ok.className = 'm-btn primary'; ok.innerText = '確定';
+        ok.onclick = () => { document.getElementById('customModal').classList.remove('show'); callback(); };
+        actions.append(cancel, ok);
+        document.getElementById('customModal').classList.add('show');
     }
 </script>
 </body>
