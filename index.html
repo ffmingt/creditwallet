@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V12.7</title>
+    <title>My Wallet V12.8</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- V12.7 Style System (Based on V12.5) --- */
+        /* --- V12.8 Style System --- */
         :root { 
             --bg-body: #F9FAFB; 
             --primary: #4F46E5; 
@@ -44,7 +44,7 @@
             border-radius: 50%; border-top-color: #fff; 
             animation: spin 0.8s linear infinite; display: none; 
         }
-        .btn-loading .spinner { display: inline-block; } 
+        .btn-loading .spinner { display: block; } 
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .btn-icon { background:white; border:1px solid #E5E7EB; padding:8px 12px; border-radius:12px; font-size:13px; font-weight:600; color:#555; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.1s; cursor: pointer; }
@@ -80,7 +80,6 @@
         
         .total-card { background: var(--primary-gradient); border-radius: 28px; padding: 25px; color: white; box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.4); position: relative; overflow: hidden; transition: all 0.3s ease; }
         .crypto-bg { background: var(--crypto-gradient) !important; box-shadow: 0 20px 25px -5px rgba(5, 150, 105, 0.4) !important; }
-        
         .total-amount { font-size: 42px; font-weight: 800; margin: 5px 0; letter-spacing: -1px; }
         .total-amount-group { display: flex; flex-direction: column; margin-top: 5px; }
         .total-amount-main { font-size: 42px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
@@ -153,6 +152,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
+<!-- 🟡 Enable Touch Feedback -->
 <body ontouchstart="">
 
     <div id="cloudStatus"><div class="status-icon"><div class="spin-circle"></div></div><span id="cloudText">雲端同步中...</span></div>
@@ -160,6 +160,7 @@
 
     <!-- Login -->
     <div id="loginOverlay">
+        <!-- 🟡 隱藏功能：點擊鎖頭 3 次清除快取 -->
         <div style="font-size:50px; margin-bottom:10px; cursor:default;" onclick="handleLockClick()">🔒</div>
         <div style="font-weight:800; font-size:22px;">App Hub</div>
         <input type="password" id="passwordInput" class="login-input" placeholder="••••" maxlength="8" inputmode="numeric">
@@ -384,7 +385,7 @@ let USER_PASSWORD = "";
 let GLOBAL_DATA = { wallet: {data:[], templates:[]}, crypto: {data:[], methods:[], rate: 32.5} };
 let lockTaps = 0;
 
-// 🟡 隱藏功能：連點鎖頭3次清除快取
+// 🟡 隱藏功能：點擊鎖頭3次清除快取
 function handleLockClick() {
     lockTaps++;
     if(lockTaps >= 3) {
@@ -416,10 +417,10 @@ const SyncManager = {
     updateUI: function() { const pending = this.queue.length; if (pending > 0) { const current = this.totalTasks - pending + 1; CloudStatus.set('syncing', `同步中 (${current}/${this.totalTasks})...`); } else { CloudStatus.set('success'); this.totalTasks = 0; this.completed = 0; } },
     process: async function() {
         if (this.isSyncing || this.queue.length === 0) {
-            // 🟢 Fix 2: Queue empty -> Delay then reload
             if(this.queue.length === 0 && this.isSyncing) {
                 this.isSyncing = false;
-                setTimeout(() => DataLoader.load(), 2000); // 2s delay for GAS lock release
+                // 🟢 Fix: Delay reload to allow GAS release lock
+                setTimeout(() => loadData(), 2000);
             }
             return;
         }
@@ -429,11 +430,10 @@ const SyncManager = {
             try { await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...currentTask, password: USER_PASSWORD }) }); this.queue.shift(); this.completed++; await new Promise(r => setTimeout(r, 300)); } 
             catch (e) { console.error("Sync Failed:", e); CloudStatus.set('error'); this.isSyncing = false; return; }
         }
-        // Finished
         this.isSyncing = false; 
         this.updateUI();
-        // 🟢 Fix 2: 2s Delay before reload
-        setTimeout(() => DataLoader.load(), 2000);
+        // 🟢 Fix: Delay reload
+        setTimeout(() => loadData(), 2000);
     }
 };
 
@@ -453,63 +453,62 @@ const CloudStatus = {
     }
 };
 
-const DataLoader = {
-    load: async function(isInit=false, isManual=false) {
-        try {
-            if(isManual) CloudStatus.set('syncing', '資料更新中...');
-            const res = await fetch(`${API_URL}?password=${encodeURIComponent(USER_PASSWORD)}`);
-            const json = await res.json();
-            if(json.error) throw new Error(json.error);
-            
-            // 🟢 Fix 1: Auto-Login Save (On Success)
-            if(!json.error) localStorage.setItem('myBillPass', USER_PASSWORD);
+// 🟢 Restore loadData as standalone function
+async function loadData(isInit=false, isManual=false) {
+    try {
+        if(isManual) CloudStatus.set('syncing', '資料更新中...');
+        const res = await fetch(`${API_URL}?password=${encodeURIComponent(USER_PASSWORD)}`);
+        const json = await res.json();
+        if(json.error) throw new Error(json.error);
+        
+        // 🟢 Fix: Save password on success
+        if(!json.error) localStorage.setItem('myBillPass', USER_PASSWORD);
 
-            GLOBAL_DATA = {
-                wallet: {
-                    data: mapNormalize(json.wallet.data).reverse(),
-                    templates: mapNormalize(json.wallet.templates)
-                },
-                crypto: {
-                    data: mapNormalize(json.crypto.data),
-                    methods: json.crypto.methods,
-                    rate: json.crypto.rate
-                }
-            };
-
-            if(isInit) {
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('app-hub').classList.remove('hidden-layer');
+        GLOBAL_DATA = {
+            wallet: {
+                data: mapNormalize(json.wallet.data).reverse(),
+                templates: mapNormalize(json.wallet.templates)
+            },
+            crypto: {
+                data: mapNormalize(json.crypto.data),
+                methods: json.crypto.methods,
+                rate: json.crypto.rate
             }
-            // Refresh Views
-            if(!document.getElementById('app-wallet').classList.contains('hidden-layer')) WalletApp.render();
-            if(!document.getElementById('app-crypto').classList.contains('hidden-layer')) CryptoApp.render();
-            
-            // Update Rates
-            const rate = GLOBAL_DATA.crypto.rate || '--.--';
-            document.getElementById('cryptoSettingsRate').innerText = `🇺🇸 1 USD ≈ ${rate} TWD`;
-            
+        };
+
+        if(isInit) {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('app-hub').classList.remove('hidden-layer');
+        }
+        // Refresh Views
+        if(!document.getElementById('app-wallet').classList.contains('hidden-layer')) WalletApp.render();
+        if(!document.getElementById('app-crypto').classList.contains('hidden-layer')) CryptoApp.render();
+        
+        // Update Rates
+        const rate = GLOBAL_DATA.crypto.rate || '--.--';
+        document.getElementById('cryptoSettingsRate').innerText = `🇺🇸 1 USD ≈ ${rate} TWD`;
+        
+        setBtnLoading('loginBtn', false);
+        if(isManual) CloudStatus.set('success', '資料已更新');
+
+    } catch(e) {
+        if(isInit) {
+            document.getElementById('loginError').innerText = e.message.includes("密碼") ? '❌ 密碼錯誤' : '⚠️ 連線失敗';
             setBtnLoading('loginBtn', false);
-            if(isManual) CloudStatus.set('success', '資料已更新');
-
-        } catch(e) {
-            if(isInit) {
-                document.getElementById('loginError').innerText = e.message.includes("密碼") ? '❌ 密碼錯誤' : '⚠️ 連線失敗';
-                setBtnLoading('loginBtn', false);
-            } else {
-                if(isManual) CloudStatus.set('error');
-            }
+        } else {
+            if(isManual) CloudStatus.set('error');
         }
     }
-};
+}
 
 function verifyLogin() {
     USER_PASSWORD = document.getElementById('passwordInput').value;
     if(!USER_PASSWORD) return;
     setBtnLoading('loginBtn', true, '驗證中...');
-    DataLoader.load(true);
+    loadData(true);
 }
 
-// 🟢 Fix 1: Auto-Login Check on Load
+// 🟢 Fix: Auto Login Check
 document.addEventListener('DOMContentLoaded', () => {
     const p = localStorage.getItem('myBillPass');
     if(p) { 
@@ -599,7 +598,8 @@ const WalletApp = {
         this.render();
         
         document.getElementById('w-amount').value=''; document.getElementById('w-note').value='';
-        setBtnLoading('w-submit', true, '排程中...'); setTimeout(() => setBtnLoading('w-submit', false), 500);
+        setBtnLoading('w-submit', true, '排程中...'); 
+        setTimeout(() => setBtnLoading('w-submit', false), 500);
         SyncManager.add({ appName:'wallet', action:'post', bank, amount:amt, note, month, paymentDate: tpl?tpl.paymentdate:'-' });
     },
     askDelete: function(uuid, bank) {
@@ -649,6 +649,7 @@ const CryptoApp = {
         const methods = GLOBAL_DATA.crypto.methods;
         const rate = GLOBAL_DATA.crypto.rate;
         
+        // 🟢 Fix: Force rebuild selector
         const sel = document.getElementById('c-method');
         const currentVal = sel.value;
         sel.innerHTML = '<option disabled selected>選擇管道</option>';
@@ -658,8 +659,8 @@ const CryptoApp = {
 
         const totalTwd = data.reduce((sum, r) => sum + Number(r.cost_twd || r.cost), 0);
         const displayTotal = this.showInUsd ? `$${Math.round(totalTwd/rate).toLocaleString()} USD` : `$${totalTwd.toLocaleString()} TWD`;
-        document.getElementById('c-total-twd').innerText = `$${totalTwd.toLocaleString()} TWD`;
-        document.getElementById('c-total-usd').innerText = `≈ $${Math.round(totalTwd/rate).toLocaleString()} USD`;
+        document.getElementById('c-total').innerText = displayTotal;
+        document.getElementById('c-rate-display').innerText = `Ex: ${rate}`;
 
         let html = '';
         data.forEach(r => {
@@ -677,7 +678,8 @@ const CryptoApp = {
                 const calcRate = (amt > 0) ? (cost / amt).toFixed(2) : '0.00';
                 rightSide += `<div class="c-sub-value">≈ $${amt.toLocaleString()} USD <span class="c-rate">(@${calcRate})</span></div>`;
             }
-            html += `<div class="t-card" onclick="CryptoApp.askDelete('${r.uuid}')"><div class="t-icon">🪙</div><div class="t-content"><div class="t-bank">${r.method}</div><div style="font-size:12px;color:#888">${subInfo} ${r.note ? '- '+r.note : ''}</div></div><div>${rightSide}</div></div>`;
+            let icon = r.type === 'USD' ? '🇺🇸' : '🪙';
+            html += `<div class="t-card" onclick="CryptoApp.askDelete('${r.uuid}')"><div class="t-icon">${icon}</div><div class="t-content"><div class="t-bank">${r.method}</div><div style="font-size:12px;color:#888">${subInfo} ${r.note ? '- '+r.note : ''}</div></div><div>${rightSide}</div></div>`;
         });
         document.getElementById('c-list').innerHTML = html;
     },
@@ -798,14 +800,4 @@ function openModal(id) { document.getElementById(id).classList.add('show'); }
 // --- Template Logic ---
 function addTemplate() {
     const b=document.getElementById('newBank').value, bill=document.getElementById('newBill').value, pay=document.getElementById('newPay').value;
-    if(!b||!bill||!pay) return showToast('⚠️ 請填寫完整');
-    document.getElementById('newBank').value=''; document.getElementById('newBill').value=''; document.getElementById('newPay').value='';
-    setBtnLoading('btnAddTemp', true, '排程中...');
-    CloudStatus.set('syncing');
-    fetch(API_URL, {
-        method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({password:USER_PASSWORD, appName:'wallet', action:'template_create', BankName:b, BillDate:bill, PaymentDate:pay})
-    }).then(() => setTimeout(()=>{ DataLoader.load().then(() => { renderTemplateList(); setBtnLoading('btnAddTemp', false); CloudStatus.set('success'); }); },1000));
-}
-function saveTemplateEdit() {
-    c
+    if(!b|
