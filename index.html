@@ -3,30 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>App Hub V10.0</title>
+    <title>My Wallet V11.9</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- V10.0 System Styles --- */
+        /* --- V11.9 Style System --- */
         :root { 
             --bg-body: #F9FAFB; 
             --primary: #4F46E5; 
             --primary-gradient: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-            --text-main: #1F2937; 
-            --text-sub: #6B7280; 
-            --danger: #EF4444;
-            --success: #10B981;
-            --warning-bg: #FFF7ED;
-            --warning-border: #FED7AA;
-            --warning-text: #9A3412;
+            --crypto-gradient: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            --text-main: #1F2937; --text-sub: #6B7280; 
+            --danger: #EF4444; --success: #10B981;
+            --warning-bg: #FFF7ED; --warning-border: #FED7AA; --warning-text: #9A3412;
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
         
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; padding-bottom: 140px; user-select: none; -webkit-user-select: none; }
 
-        /* 🟡 全局元件 (Global) */
-        .hidden-layer { display: none !important; } /* 用於切換頁面 */
-        
+        .hidden-layer { display: none !important; }
+
+        /* 1. Login Screen */
+        #loginOverlay { 
+            position: fixed; top:0; left:0; width:100%; height:100%; 
+            background: rgba(249,250,251,0.98); backdrop-filter: blur(5px); 
+            z-index: 99999; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; transition: opacity 0.3s; 
+        }
+        .login-input { width:240px; padding:15px; border:1px solid #E5E7EB; border-radius:16px; font-size:24px; text-align:center; outline:none; margin:20px 0; letter-spacing:8px; background:white; box-shadow: var(--shadow); }
+        .login-input:focus { border-color: var(--primary); }
+
+        /* Buttons & Loading */
+        .btn-submit { 
+            width: 100%; background: #1F2937; color: white; border: none; 
+            padding: 15px; border-radius: 14px; font-size: 16px; font-weight: 600; 
+            margin-top: 10px; display: flex; justify-content: center; align-items: center; 
+            cursor: pointer; transition: transform 0.1s, background-color 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        }
+        .btn-submit:active { transform: scale(0.96); background-color: #000; }
+        .btn-submit:disabled { background: #6B7280; opacity: 0.8; cursor: not-allowed; }
+
+        .spinner { 
+            width: 18px; height: 18px; min-width: 18px; 
+            margin-right: 8px; border: 2px solid rgba(255,255,255,0.3); 
+            border-radius: 50%; border-top-color: #fff; 
+            animation: spin 0.8s linear infinite; 
+            display: none; 
+        }
+        .btn-loading .spinner { display: block; } /* 改為 block 確保顯示 */
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .btn-icon { background:white; border:1px solid #E5E7EB; padding:8px 12px; border-radius:12px; font-size:13px; font-weight:600; color:#555; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.1s; cursor: pointer; }
+        .btn-icon:active { transform:scale(0.95); background: #f3f4f6; }
+
+        /* Cloud Status */
         #cloudStatus {
             position: fixed; top: 20px; left: 50%; 
             transform: translateX(-50%) translateY(-200%); opacity: 0;
@@ -34,26 +64,85 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             display: flex; align-items: center; gap: 8px;
             font-size: 13px; font-weight: 600; color: var(--text-main);
-            z-index: 100000; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 200000; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
             pointer-events: none;
         }
         #cloudStatus.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         #cloudStatus.syncing { color: var(--primary); border: 1px solid #E0E7FF; }
         #cloudStatus.success { color: var(--success); border: 1px solid #D1FAE5; }
         #cloudStatus.error { color: var(--danger); border: 1px solid #FEE2E2; pointer-events: auto; cursor: pointer; }
-
         .status-icon { width: 16px; height: 16px; display: flex; justify-content: center; align-items: center; }
         .spin-circle { width: 14px; height: 14px; border: 2px solid #E0E7FF; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Layout & Cards */
+        .hero { padding: 20px 24px 10px 24px; }
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .app-title { font-size: 24px; font-weight: 800; color: #111; }
+        
+        .total-card { background: var(--primary-gradient); border-radius: 28px; padding: 25px; color: white; box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.4); position: relative; overflow: hidden; transition: all 0.3s ease; }
+        .crypto-bg { background: var(--crypto-gradient) !important; box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.4) !important; }
+        .total-amount { font-size: 42px; font-weight: 800; margin: 5px 0; letter-spacing: -1px; }
+        .card-content { position: relative; z-index: 2; }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
+        .card-sub { font-size: 13px; opacity: 0.8; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; }
+        .status-emoji { position:absolute; top:30px; right:25px; font-size:48px; animation: float 3s ease-in-out infinite; pointer-events: none; z-index: 1; }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
-        #loginOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(249,250,251,0.98); backdrop-filter: blur(5px); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.3s; }
-        .login-input { width:240px; padding:15px; border:1px solid #E5E7EB; border-radius:16px; font-size:24px; text-align:center; outline:none; margin:20px 0; letter-spacing:8px; background:white; box-shadow: var(--shadow); }
-        .login-input:focus { border-color: var(--primary); }
+        /* Wallet Chart Drawer */
+        .btn-chart-toggle { background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; backdrop-filter: blur(5px); }
+        .chart-drawer { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease; margin-top: 0; position: relative; z-index: 2; }
+        .chart-drawer.open { max-height: 280px; opacity: 1; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; }
+        .chart-wrapper { position: relative; height: 200px; width: 100%; display: flex; justify-content: center; }
 
-        .btn-icon { background:white; border:1px solid #E5E7EB; padding:8px 12px; border-radius:12px; font-size:13px; font-weight:600; color:#555; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.1s; cursor: pointer; }
-        .btn-icon:active { transform:scale(0.95); background: #f3f4f6; }
+        /* Inputs */
+        .input-panel { margin: 20px 24px 0; padding: 24px; background: white; border-radius: 24px; box-shadow: var(--shadow); border: 1px solid #F3F4F6; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        .form-label { font-size: 12px; font-weight: 600; color: var(--text-sub); margin-bottom: 6px; display: block; }
+        .styled-input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid #E5E7EB; background: #F9FAFB; font-size: 16px; color: #333; outline: none; -webkit-appearance: none; }
+        .styled-input:disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }
+        .segment-control { display: flex; background: #F3F4F6; padding: 4px; border-radius: 14px; margin-bottom: 15px; }
+        .segment-btn { flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 600; color: #6B7280; border-radius: 10px; cursor: pointer; transition: 0.2s; }
+        .segment-btn.active { background: white; color: #1F2937; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
+        /* Lists */
+        .list-section { padding: 30px 24px; }
+        .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #EEE; }
+        .list-title { font-size: 18px; font-weight: 800; color: var(--text-main); }
+        .month-selector { border: none; background: transparent; font-size: 15px; font-weight: 600; color: var(--text-main); text-align: right; outline: none; cursor: pointer; }
+        .refresh-btn { border: none; background: white; border-radius: 50%; width: 32px; height: 32px; margin-left: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 16px; transition: transform 0.2s; }
+        .refresh-btn:active { transform: rotate(180deg); }
+
+        .t-card { background: white; border-radius: 18px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow); border: 1px solid #E5E7EB; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.1s; }
+        .t-card:active { transform: scale(0.98); background: #f9fafb; }
+        .t-card.logged { border: 1px solid #E5E7EB; }
+        .t-card.logged::before { content:''; position:absolute; left:0; top:0; bottom:0; width:5px; background: var(--success); }
+        .t-card.unlogged { background: #F9FAFB; border: 1px dashed #D1D5DB; opacity: 0.95; }
+        .t-card.unlogged .t-icon { background: #E5E7EB; color: #9CA3AF; }
+        .t-icon { width: 42px; height: 42px; border-radius: 12px; background: #F3F4F6; color: #374151; font-size: 18px; font-weight: 700; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+        .t-content { flex: 1; min-width: 0; }
+        .t-bank { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
+        .t-amount { font-size: 18px; font-weight: 800; color: var(--text-main); text-align: right; }
+        .c-rate { font-size: 11px; color: #9CA3AF; margin-left: 4px; }
+        .c-usd-tag { display: inline-block; background: #FEF3C7; color: #D97706; padding: 2px 6px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-top: 2px; }
+        .badge-todo { font-size: 12px; font-weight: 600; color: #6B7280; background: #E5E7EB; padding: 4px 10px; border-radius: 20px; }
+
+        .alert-box { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-text); padding: 16px; border-radius: 16px; margin-bottom: 20px; font-size: 14px; line-height: 1.6; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); width: 100%; box-sizing: border-box; }
+        .alert-icon { font-size: 20px; margin-top: -2px; flex-shrink: 0; }
+        .alert-content { flex: 1; }
+        .alert-title { font-weight: 700; margin-bottom: 2px; display: block; color: #7C2D12; }
+
+        /* App Hub Specific */
+        #app-hub { padding: 20px 24px; animation: fadeIn 0.4s ease; }
+        .hub-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; width: 100%; }
+        .hub-title { font-size: 28px; font-weight: 800; color: var(--text-main); margin: 0; }
+        .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .app-card { background: white; border-radius: 24px; padding: 20px; box-shadow: var(--shadow); border: 1px solid transparent; display: flex; flex-direction: column; justify-content: space-between; height: 140px; cursor: pointer; position: relative; transition: transform 0.1s; }
+        .app-card:active { transform: scale(0.96); background: #F3F4F6; }
+        .app-icon { font-size: 32px; margin-bottom: 10px; }
+        .app-name { font-size: 16px; font-weight: 700; color: var(--text-main); }
+        .app-ver { position: absolute; bottom: 15px; right: 15px; font-size: 11px; color: #9CA3AF; font-weight: 500; background: #F3F4F6; padding: 2px 6px; border-radius: 6px; }
+
+        /* Modals */
         .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: 10000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
         .modal-box { background: white; width: 85%; max-width: 380px; border-radius: 24px; padding: 0; transform: scale(0.95); transition: 0.2s; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -69,413 +158,646 @@
         .btn-setup-action:active { opacity: 0.6; transform: scale(0.95); }
         #toast { visibility: hidden; background: #333; color: #fff; padding: 12px 24px; border-radius: 50px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 99999; opacity:0; transition:0.3s; }
         #toast.show { visibility: visible; opacity: 1; bottom: 40px; }
-
-        /* 🟡 V10.0 Hub (主選單) 樣式 */
-        #app-hub { padding: 20px 24px; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .hub-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .hub-title { font-size: 28px; font-weight: 800; color: var(--text-main); }
-        
-        .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        
-        /* APP 卡片 */
-        .app-card {
-            background: white; border-radius: 24px; padding: 20px;
-            box-shadow: var(--shadow); border: 1px solid transparent;
-            display: flex; flex-direction: column; justify-content: space-between;
-            height: 140px; cursor: pointer; position: relative;
-            transition: transform 0.1s, box-shadow 0.1s;
-        }
-        .app-card:active { transform: scale(0.96); background: #F3F4F6; }
-        
-        .app-icon { font-size: 32px; margin-bottom: 10px; }
-        .app-name { font-size: 16px; font-weight: 700; color: var(--text-main); }
-        .app-ver { 
-            position: absolute; bottom: 15px; right: 15px; 
-            font-size: 11px; color: #9CA3AF; font-weight: 500; 
-            background: #F3F4F6; padding: 2px 6px; border-radius: 6px;
-        }
-
-        /* 🟡 V9.0 Wallet 內部樣式 (維持不變) */
-        #app-wallet { animation: fadeIn 0.3s ease; }
-        .hero { padding: 20px 24px 10px 24px; }
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .app-title { font-size: 24px; font-weight: 800; color: #111; }
-        
-        .total-card { background: var(--primary-gradient); border-radius: 28px; padding: 25px; color: white; box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.4); position: relative; overflow: hidden; transition: all 0.3s ease; }
-        .total-card::after { content:''; position:absolute; top:-50%; right:-20%; width:250px; height:250px; background:radial-gradient(circle, rgba(255,255,255,0.15), transparent 70%); border-radius:50%; pointer-events:none; }
-        .card-content { position: relative; z-index: 2; }
-        .total-amount { font-size: 42px; font-weight: 800; margin: 5px 0; letter-spacing: -1px; }
-        .status-emoji { position:absolute; top:30px; right:25px; font-size:48px; animation: float 3s ease-in-out infinite; pointer-events: none; z-index: 1; }
-        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
-        .card-sub { font-size: 13px; opacity: 0.8; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; }
-        .btn-chart-toggle { background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; backdrop-filter: blur(5px); transition: background 0.2s, transform 0.1s; }
-        .btn-chart-toggle:active { background: rgba(255, 255, 255, 0.4); transform: scale(0.95); }
-        .chart-drawer { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease; margin-top: 0; position: relative; z-index: 2; }
-        .chart-drawer.open { max-height: 280px; opacity: 1; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; }
-        .chart-wrapper { position: relative; height: 200px; width: 100%; display: flex; justify-content: center; }
-
-        .input-panel { margin: 20px 24px 0; padding: 24px; background: white; border-radius: 24px; box-shadow: var(--shadow); border: 1px solid #F3F4F6; }
-        .grid-2 { display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 12px; margin-bottom: 12px; }
-        .form-label { font-size: 12px; font-weight: 600; color: var(--text-sub); margin-bottom: 6px; display: block; }
-        .styled-input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid #E5E7EB; background: #F9FAFB; font-size: 16px; color: #333; outline: none; -webkit-appearance: none; }
-        .styled-input:disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }
-        .btn-submit { width: 100%; background: #1F2937; color: white; border: none; padding: 15px; border-radius: 14px; font-size: 16px; font-weight: 600; margin-top: 10px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s, box-shadow 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-submit:active { transform: scale(0.96); background-color: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .btn-submit:disabled { background: #6B7280; opacity: 0.8; cursor: not-allowed; transform: none; }
-        .spinner { width: 18px; height: 18px; margin-right: 8px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; display: none; }
-        .btn-loading .spinner { display: inline-block; }
-
-        .list-section { padding: 30px 24px; }
-        .t-card { background: white; border-radius: 18px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow); border: 1px solid transparent; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.1s; }
-        .t-card:active { transform: scale(0.98); background: #f9fafb; }
-        .t-card.logged { border: 1px solid #E5E7EB; }
-        .t-card.logged::before { content:''; position:absolute; left:0; top:0; bottom:0; width:5px; background: var(--success); }
-        .t-card.unlogged { background: #F9FAFB; border: 1px dashed #D1D5DB; opacity: 0.95; }
-        .t-card.unlogged .t-icon { background: #E5E7EB; color: #9CA3AF; }
-        .t-icon { width: 42px; height: 42px; border-radius: 12px; background: #F3F4F6; color: #374151; font-size: 18px; font-weight: 700; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
-        .t-content { flex: 1; min-width: 0; }
-        .t-bank { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
-        .t-amount { font-size: 18px; font-weight: 800; color: var(--text-main); text-align: right; }
-        .badge-todo { font-size: 12px; font-weight: 600; color: #6B7280; background: #E5E7EB; padding: 4px 10px; border-radius: 20px; }
-        .alert-box { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-text); padding: 16px; border-radius: 16px; margin-bottom: 20px; font-size: 14px; line-height: 1.6; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .alert-icon { font-size: 20px; margin-top: -2px; }
-        .alert-title { font-weight: 700; margin-bottom: 2px; display: block; color: #7C2D12; }
     </style>
 </head>
 <body>
 
-    <!-- 全局元件 -->
     <div id="cloudStatus"><div class="status-icon"><div class="spin-circle"></div></div><span id="cloudText">雲端同步中...</span></div>
     <div id="toast"></div>
 
-    <!-- 1. 登入層 -->
+    <!-- Login -->
     <div id="loginOverlay">
         <div style="font-size:50px; margin-bottom:10px;">🔒</div>
         <div style="font-weight:800; font-size:22px;">App Hub</div>
         <input type="password" id="passwordInput" class="login-input" placeholder="••••" maxlength="8" inputmode="numeric">
-        <button id="loginBtn" class="btn-submit" onclick="verifyLogin()" style="width:240px;"><div class="spinner"></div> <span class="btn-text">解鎖</span></button>
+        <button id="loginBtn" class="btn-submit" onclick="verifyLogin()" style="width:240px;">
+            <div class="spinner"></div><span class="btn-text">解鎖</span>
+        </button>
         <div id="loginError" style="color:var(--danger); margin-top:20px; min-height:20px;"></div>
     </div>
 
-    <!-- 2. 主選單 (Hub) -->
+    <!-- Hub -->
     <div id="app-hub" class="hidden-layer">
         <div class="hub-header">
             <div class="hub-title">Apps</div>
             <button class="btn-icon" onclick="logout()" style="color:var(--danger);">登出</button>
         </div>
-        
         <div class="app-grid">
-            <!-- My Wallet 卡片 -->
-            <div class="app-card" onclick="openWallet()">
-                <div>
-                    <div class="app-icon">💰</div>
-                    <div class="app-name">My Wallet</div>
-                </div>
+            <div class="app-card" onclick="Nav.open('wallet')">
+                <div><div class="app-icon">💰</div><div class="app-name">My Wallet</div></div>
                 <div class="app-ver">v9.0</div>
             </div>
-            
-            <!-- 預留給未來的 App -->
-            <!-- <div class="app-card" style="opacity:0.5; cursor:default;">
-                <div><div class="app-icon">📝</div><div class="app-name">Notes</div></div>
-                <div class="app-ver">Coming Soon</div>
-            </div> -->
+            <div class="app-card" onclick="Nav.open('crypto')">
+                <div><div class="app-icon">🪙</div><div class="app-name">Crypto</div></div>
+                <div class="app-ver">v1.0</div>
+            </div>
         </div>
     </div>
 
-    <!-- 3. 記帳 App 容器 (Wallet V9.0) -->
+    <!-- Wallet -->
     <div id="app-wallet" class="hidden-layer">
-        
-        <!-- Modals (Wallet Scoped) -->
-        <div id="actionModal" class="modal-overlay">
-            <div class="modal-box" style="display:block; padding:24px;">
-                <div style="text-align:center; margin-bottom:20px;">
-                    <div id="actionTitle" style="font-size:18px; font-weight:800;"></div>
-                    <div id="actionSubtitle" style="font-size:14px; color:#6B7280; margin-top:5px;"></div>
-                </div>
-                <button class="action-btn btn-edit" id="btnActionEdit">✏️ 修改 / 填入</button>
-                <button class="action-btn btn-delete" id="btnActionDelete">🗑️ 刪除紀錄</button>
-                <button class="action-btn" style="background:white; color:#888; margin-bottom:0;" onclick="closeModal('actionModal')">取消</button>
-            </div>
-        </div>
-
-        <div id="settingsModal" class="modal-overlay">
-            <div class="modal-box">
-                <div class="modal-header">
-                    <div style="font-size:18px; font-weight:800; margin-bottom:15px;">銀行設定</div>
-                    <div style="background:#F9FAFB; padding:15px; border-radius:16px;">
-                        <input type="text" id="newBank" class="styled-input" placeholder="銀行名稱 (例: 中信)" style="margin-bottom:10px; background:white;">
-                        <div class="grid-2">
-                            <input type="number" id="newBill" class="styled-input" placeholder="結帳日" style="background:white;">
-                            <input type="number" id="newPay" class="styled-input" placeholder="扣款日" style="background:white;">
-                        </div>
-                        <button id="btnAddTemp" class="btn-submit" onclick="addTemplate()" style="padding:10px; font-size:14px;"><div class="spinner"></div><span class="btn-text">＋ 新增</span></button>
-                    </div>
-                    <div style="font-size:12px; color:#999; margin-top:15px; font-weight:700;">已儲存的銀行</div>
-                </div>
-                <div class="modal-content-scroll"><div id="templateList"></div></div>
-                <div class="modal-footer"><button class="btn-submit" onclick="closeModal('settingsModal')" style="background:#F3F4F6; color:#333; margin-top:0;">關閉</button></div>
-            </div>
-        </div>
-
-        <div id="editTemplateModal" class="modal-overlay">
-            <div class="modal-box" style="display:block; padding:24px;">
-                <div style="font-size:18px; font-weight:800; margin-bottom:15px;">編輯銀行資訊</div>
-                <input type="hidden" id="editIndex">
-                <label class="form-label">銀行名稱 (不可修改)</label>
-                <input type="text" id="editBankName" class="styled-input" style="margin-bottom:15px;" disabled>
-                <div class="grid-2">
-                    <div><label class="form-label">結帳日</label><input type="number" id="editBill" class="styled-input"></div>
-                    <div><label class="form-label">扣款日</label><input type="number" id="editPay" class="styled-input"></div>
-                </div>
-                <div style="display:flex; gap:10px; margin-top:15px;">
-                    <button class="btn-submit" onclick="closeModal('editTemplateModal')" style="background:#F3F4F6; color:#333; margin-top:0;">取消</button>
-                    <button id="btnSaveEdit" class="btn-submit" onclick="saveTemplateEdit()" style="margin-top:0;"><div class="spinner"></div> <span class="btn-text">儲存</span></button>
-                </div>
-                <div style="font-size:12px; color:#999; margin-top:15px; text-align:center;">如需修改銀行名稱，請刪除後重新新增。</div>
-            </div>
-        </div>
-
-        <div id="confirmModal" class="modal-overlay">
-            <div class="modal-box" style="display:block; padding:24px;">
-                <div id="confirmMsg" style="font-size:16px; color:#333; margin-bottom:20px; line-height:1.5;"></div>
-                <div style="display:flex; gap:10px; justify-content:flex-end;">
-                    <button class="action-btn" style="width:auto; background:#F3F4F6; margin:0;" onclick="closeModal('confirmModal')">取消</button>
-                    <button class="action-btn" style="width:auto; background:#1F2937; color:white; margin:0;" id="confirmBtnAction">確定</button>
-                </div>
-            </div>
-        </div>
-
         <div class="hero">
             <div class="header-row">
-                <div><span class="app-title">My Wallet</span> <span style="font-size:12px; background:#E5E7EB; padding:3px 6px; border-radius:6px; color:#555;">V9.0</span></div>
+                <div class="app-title">My Wallet</div>
                 <div style="display:flex; gap:8px;">
-                    <button class="btn-icon" onclick="openSettingsModal()">⚙️ 設定</button>
-                    <!-- 🟡 導航修正：這裡改成回首頁 -->
-                    <button class="btn-icon" onclick="goHome()" style="color:#4F46E5;">🏠 首頁</button>
+                    <button class="btn-icon" onclick="openWalletSettings()">⚙️ 設定</button>
+                    <button class="btn-icon" onclick="Nav.home()" style="color:#4F46E5;">🏠 首頁</button>
                 </div>
             </div>
             <div class="total-card">
                 <div class="card-content">
                     <div style="font-size:14px; opacity:0.9;">本月總支出</div>
-                    <div class="total-amount" id="totalAmount">$0</div>
+                    <div class="total-amount" id="w-total">$0</div>
                     <div class="card-footer">
-                        <div class="card-sub" id="countLabel">0 筆紀錄</div>
-                        <button class="btn-chart-toggle" onclick="toggleChart()"><span id="chartBtnIcon">📊</span> <span id="chartBtnText">分析</span></button>
+                        <div class="card-sub" id="w-count">0 筆紀錄</div>
+                        <button class="btn-chart-toggle" onclick="WalletApp.toggleChart()"><span id="chartBtnIcon">📊</span> 分析</button>
                     </div>
                 </div>
                 <div class="status-emoji" id="emojiStatus">😊</div>
-                <div class="chart-drawer" id="chartDrawer"><div class="chart-wrapper"><canvas id="expenseChart"></canvas></div></div>
+                <div class="chart-drawer" id="chartDrawer"><div style="position:relative; height:200px; display:flex; justify-content:center;"><canvas id="expenseChart"></canvas></div></div>
             </div>
         </div>
-
         <div class="input-panel">
             <div style="display:flex; justify-content:space-between; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
                 <span style="font-weight:600; color:#555;">記帳月份</span>
-                <select id="billMonthInput" style="border:none; font-size:16px; font-weight:700; color:var(--primary); outline:none; background:transparent;"></select>
+                <!-- 🟡 V9.0 邏輯：獨立的輸入選單 -->
+                <select id="w-input-month" style="border:none; font-size:16px; font-weight:700; color:var(--primary); outline:none; background:transparent;"></select>
             </div>
             <div class="grid-2">
-                <div><label class="form-label">銀行</label><select id="bankSelector" class="styled-input"></select></div>
-                <div><label class="form-label">金額</label><input type="number" id="amount" class="styled-input" placeholder="$0"></div>
+                <div><label class="form-label">銀行</label><select id="w-bank" class="styled-input"></select></div>
+                <div><label class="form-label">金額</label><input type="number" id="w-amount" class="styled-input" placeholder="$0"></div>
             </div>
-            <label class="form-label">備註</label>
-            <input type="text" id="note" class="styled-input" placeholder="選填...">
-            <button id="submitBtn" class="btn-submit" onclick="submitData()"><div class="spinner"></div> <span class="btn-text">＋ 確認記帳</span></button>
+            <label class="form-label">備註</label><input type="text" id="w-note" class="styled-input" placeholder="選填...">
+            <button id="w-submit" class="btn-submit" onclick="WalletApp.submit()">
+                <div class="spinner"></div> <span class="btn-text">＋ 確認記帳</span>
+            </button>
         </div>
-
         <div class="list-section">
-            <div class="list-header" style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                <div style="font-size:18px; font-weight:800;">帳單明細</div>
-                <div style="display:flex; gap:10px;">
-                    <select id="monthSelector" style="border:none; background:transparent; font-weight:600;" onchange="filterData()"></select>
-                    <button onclick="manualReload()" style="border:none; background:white; border-radius:50%; width:30px; height:30px; box-shadow:0 2px 5px rgba(0,0,0,0.1); cursor:pointer;">↻</button>
+            <div class="list-header">
+                <span class="list-title">帳單明細</span>
+                <div style="display:flex; align-items:center;">
+                    <!-- 🟡 V9.0 邏輯：獨立的列表選單 -->
+                    <select id="w-list-month" class="month-selector" onchange="WalletApp.render()"></select>
+                    <button class="refresh-btn" onclick="manualReload()">↻</button>
                 </div>
             </div>
             <div id="alertContainer"></div>
-            <div id="listContainer"></div>
+            <div id="w-list"></div>
+        </div>
+    </div>
+
+    <!-- Crypto -->
+    <div id="app-crypto" class="hidden-layer">
+        <div class="hero">
+            <div class="header-row">
+                <div class="app-title">Crypto</div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-icon" onclick="openCryptoSettings()">⚙️ 設定</button>
+                    <button class="btn-icon" onclick="Nav.home()" style="color:#4F46E5;">🏠 首頁</button>
+                </div>
+            </div>
+            <div class="total-card crypto-bg" onclick="CryptoApp.toggleTotalUnit()">
+                <div style="font-size:14px; opacity:0.9;">總投入成本</div>
+                <div class="total-amount" id="c-total">$0</div>
+                <div class="card-sub" id="c-rate-display">Ex: --.--</div>
+            </div>
+        </div>
+        <div class="input-panel">
+            <div class="segment-control">
+                <div class="segment-btn active" id="seg-twd" onclick="CryptoApp.setMode('twd')">🇹🇼 台幣入金</div>
+                <div class="segment-btn" id="seg-usd" onclick="CryptoApp.setMode('usd')">🇺🇸 外幣入金</div>
+            </div>
+            <div class="grid-2">
+                <div><label class="form-label">入金日期</label><input type="date" id="c-date" class="styled-input"></div>
+                <div><label class="form-label">入金管道</label><select id="c-method" class="styled-input"></select></div>
+            </div>
+            <div class="grid-2">
+                <div><label class="form-label">投入成本 (TWD)</label><input type="number" id="c-cost" class="styled-input" placeholder="台幣金額"></div>
+                <div id="c-usd-field" style="display:none;"><label class="form-label">換得金額 (U)</label><input type="number" id="c-usd" class="styled-input" placeholder="美金/U"></div>
+            </div>
+            <label class="form-label">備註</label><input type="text" id="c-note" class="styled-input" placeholder="選填...">
+            <button id="c-submit" class="btn-submit" onclick="CryptoApp.submit()">
+                <div class="spinner"></div> <span class="btn-text">＋ 新增紀錄</span>
+            </button>
+        </div>
+        <div class="list-section">
+            <div class="list-header">
+                <span class="list-title">投資紀錄</span>
+                <button class="refresh-btn" onclick="manualReload()">↻</button>
+            </div>
+            <div id="c-list"></div>
+        </div>
+    </div>
+
+    <!-- Modals (Action/Settings/Edit/Confirm) -->
+    <div id="actionModal" class="modal-overlay">
+        <div class="modal-box" style="display:block; padding:24px;">
+            <div style="text-align:center; margin-bottom:20px;">
+                <div id="actionTitle" style="font-size:18px; font-weight:800;"></div>
+                <div id="actionSubtitle" style="font-size:14px; color:#6B7280; margin-top:5px;"></div>
+            </div>
+            <button class="action-btn btn-edit" id="btnActionEdit">✏️ 修改 / 填入</button>
+            <button class="action-btn btn-delete" id="btnActionDelete">🗑️ 刪除紀錄</button>
+            <button class="action-btn" style="background:white; color:#888; margin-bottom:0;" onclick="closeModal('actionModal')">取消</button>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div style="font-size:18px; font-weight:800; margin-bottom:15px;">銀行設定</div>
+                <div style="background:#F9FAFB; padding:15px; border-radius:16px;">
+                    <input type="text" id="newBank" class="styled-input" placeholder="銀行名稱 (例: 中信)" style="margin-bottom:10px; background:white;">
+                    <div class="grid-2">
+                        <input type="number" id="newBill" class="styled-input" placeholder="結帳日" style="background:white;">
+                        <input type="number" id="newPay" class="styled-input" placeholder="扣款日" style="background:white;">
+                    </div>
+                    <button id="btnAddTemp" class="btn-submit" onclick="addTemplate()" style="padding:10px; font-size:14px;"><div class="spinner"></div><span class="btn-text">＋ 新增</span></button>
+                </div>
+                <div style="font-size:12px; color:#999; margin-top:15px; font-weight:700;">已儲存的銀行</div>
+            </div>
+            <div class="modal-content-scroll"><div id="templateList"></div></div>
+            <div class="modal-footer"><button class="btn-submit" onclick="closeModal('settingsModal')" style="background:#F3F4F6; color:#333; margin-top:0;">關閉</button></div>
+        </div>
+    </div>
+
+    <div id="cryptoSettingsModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div style="font-size:18px; font-weight:800; margin-bottom:15px;">入金管道設定</div>
+                <div style="background:#F9FAFB; padding:15px; border-radius:16px;">
+                    <label class="form-label">新增管道</label>
+                    <input type="text" id="newCryptoMethod" class="styled-input" placeholder="例如: MAX, 信用卡..." style="background:white;">
+                    <button id="btnAddCryptoMethod" class="btn-submit" onclick="CryptoApp.addMethod()" style="padding:10px; font-size:14px;"><div class="spinner"></div><span class="btn-text">＋ 新增</span></button>
+                </div>
+                <div style="font-size:12px; color:#999; margin-top:15px; font-weight:700;">已儲存管道</div>
+            </div>
+            <div class="modal-content-scroll"><div id="cryptoMethodList"></div></div>
+            <div class="modal-footer"><button class="btn-submit" onclick="closeModal('cryptoSettingsModal')" style="background:#F3F4F6; color:#333; margin-top:0;">關閉</button></div>
+        </div>
+    </div>
+
+    <div id="editTemplateModal" class="modal-overlay">
+        <div class="modal-box" style="display:block; padding:24px;">
+            <div style="font-size:18px; font-weight:800; margin-bottom:15px;">編輯銀行資訊</div>
+            <input type="hidden" id="editIndex">
+            <label class="form-label">銀行名稱 (不可修改)</label>
+            <input type="text" id="editBankName" class="styled-input" style="margin-bottom:15px;" disabled>
+            <div class="grid-2">
+                <div><label class="form-label">結帳日</label><input type="number" id="editBill" class="styled-input"></div>
+                <div><label class="form-label">扣款日</label><input type="number" id="editPay" class="styled-input"></div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="btn-submit" onclick="closeModal('editTemplateModal')" style="background:#F3F4F6; color:#333; margin-top:0;">取消</button>
+                <button id="btnSaveEdit" class="btn-submit" onclick="saveTemplateEdit()" style="margin-top:0;"><div class="spinner"></div> <span class="btn-text">儲存</span></button>
+            </div>
+            <div style="font-size:12px; color:#999; margin-top:15px; text-align:center;">如需修改銀行名稱，請刪除後重新新增。</div>
+        </div>
+    </div>
+
+    <div id="alertModal" class="modal-overlay">
+        <div class="modal-box" style="display:block; padding:24px;">
+            <div id="alertMsg" style="font-size:16px; color:#333; margin-bottom:20px; line-height:1.5;"></div>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button class="action-btn" style="width:auto; background:#1F2937; color:white; margin:0;" onclick="closeModal('alertModal')">確定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🟢 Confirm Modal (Unique Instance) -->
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-box" style="display:block; padding:24px;">
+            <div id="confirmMsg" style="font-size:16px; color:#333; margin-bottom:20px; line-height:1.5;"></div>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button class="action-btn" style="width:auto; background:#F3F4F6; margin:0;" onclick="closeModal('confirmModal')">取消</button>
+                <button class="action-btn" style="width:auto; background:#1F2937; color:white; margin:0;" id="confirmBtnAction">確定</button>
+            </div>
         </div>
     </div>
 
 <script>
-    // ==========================================
-    // 🔴 請替換為你的 GAS API 網址
-    const API_URL = "https://script.google.com/macros/s/AKfycby60jdswu4PguQ0YNMpYdfdOewU-YscwRvOpcVxZhV7KNpwhVzSO7tJ8vNx1fPmw_tjGw/exec";
-    // ==========================================
+// ==========================================
+// 🔴 請替換為你的 GAS API 網址
+const API_URL = "https://script.google.com/macros/s/AKfycby60jdswu4PguQ0YNMpYdfdOewU-YscwRvOpcVxZhV7KNpwhVzSO7tJ8vNx1fPmw_tjGw/exec";
+// ==========================================
 
-    let allData=[], allTemplates=[], USER_PASSWORD="", expenseChart=null, currentRenderedItems = []; 
-    const KEYS = { BANK:'銀行名稱', BILL:'結帳日', PAY:'扣款日' };
-    
-    const SyncManager = {
-        queue: [], isSyncing: false, totalTasks: 0, completed: 0,
-        add: function(payload) { this.queue.push(payload); if (!this.isSyncing) { this.totalTasks = this.queue.length; this.completed = 0; } else { this.totalTasks++; } this.updateUI(); this.process(); },
-        updateUI: function() { const pending = this.queue.length; if (pending > 0) { const current = this.totalTasks - pending + 1; CloudStatus.set('syncing', `同步中 (${current}/${this.totalTasks})...`); } else { CloudStatus.set('success'); this.totalTasks = 0; this.completed = 0; } },
-        process: async function() {
-            if (this.isSyncing || this.queue.length === 0) return;
-            this.isSyncing = true;
-            while (this.queue.length > 0) {
-                this.updateUI(); const currentTask = this.queue[0];
-                try { await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...currentTask, password: USER_PASSWORD }) }); this.queue.shift(); this.completed++; await new Promise(r => setTimeout(r, 300)); } 
-                catch (e) { console.error("Sync Failed:", e); CloudStatus.set('error'); this.isSyncing = false; return; }
-            }
-            this.isSyncing = false; this.updateUI(); loadData(); 
-        }
-    };
+let USER_PASSWORD = "";
+let GLOBAL_DATA = { wallet: {data:[], templates:[]}, crypto: {data:[], methods:[], rate: 32.5} };
 
-    const CloudStatus = {
-        el: document.getElementById('cloudStatus'), icon: document.querySelector('#cloudStatus .status-icon'), text: document.getElementById('cloudText'), timer: null,
-        set: function(state, customText) { clearTimeout(this.timer); this.el.className = 'show ' + state; if (state === 'success') { this.icon.innerHTML = '✅'; this.text.innerText = customText || '已儲存'; this.timer = setTimeout(() => { this.el.className = ''; }, 2000); } else if (state === 'syncing') { this.icon.innerHTML = '<div class="spin-circle"></div>'; this.text.innerText = customText || '雲端同步中...'; } else if (state === 'error') { this.icon.innerHTML = '❌'; this.text.innerText = '同步失敗 (點此重試)'; this.el.onclick = () => SyncManager.process(); } }
-    };
-
-    // 🟡 導航控制
-    function goHome() {
-        document.getElementById('app-wallet').classList.add('hidden-layer');
+const Nav = {
+    open: function(appId) {
+        document.querySelectorAll('.hidden-layer, #app-hub, #app-wallet, #app-crypto').forEach(el => el.classList.add('hidden-layer'));
+        document.getElementById('app-' + appId).classList.remove('hidden-layer');
+        if(appId === 'wallet') WalletApp.render();
+        if(appId === 'crypto') CryptoApp.render();
+    },
+    home: function() {
+        document.querySelectorAll('.hidden-layer, #app-wallet, #app-crypto').forEach(el => el.classList.add('hidden-layer'));
         document.getElementById('app-hub').classList.remove('hidden-layer');
     }
-    function openWallet() {
-        document.getElementById('app-hub').classList.add('hidden-layer');
-        document.getElementById('app-wallet').classList.remove('hidden-layer');
-        // 強制重繪一下圖表 (如果有的話) 避免寬度問題
-        if (allData.length > 0 && expenseChart) expenseChart.resize(); 
-    }
+};
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const p = localStorage.getItem('myBillPass');
-        initMonthSelect('monthSelector'); initMonthSelect('billMonthInput');
-        const curr = getCurrentMonthVal();
-        document.getElementById('billMonthInput').value = curr;
-        document.getElementById('monthSelector').value = curr;
-        document.getElementById('passwordInput').addEventListener('input', e=>{ if(e.target.value.length===8) verifyLogin(); });
-        if(p) { document.getElementById('passwordInput').value=p; verifyLogin(true); }
-    });
-
-    function setBtnLoading(btnId, isLoading, text) {
-        const btn = document.getElementById(btnId); const txtSpan = btn.querySelector('.btn-text');
-        if(isLoading) { btn.disabled = true; btn.classList.add('btn-loading'); if(txtSpan) { btn.dataset.orgText = txtSpan.innerText; txtSpan.innerText = text; } } 
-        else { btn.disabled = false; btn.classList.remove('btn-loading'); if(txtSpan && btn.dataset.orgText) { txtSpan.innerText = btn.dataset.orgText; } }
-    }
-
-    function showToast(m) { const t=document.getElementById('toast'); t.innerText=m; t.className='show'; setTimeout(()=>t.className='', 2500); }
-    function manualReload() { if (SyncManager.isSyncing) { showToast("⚠️ 雲端同步中，請稍後再刷新"); return; } CloudStatus.set('syncing', '資料更新中...'); loadData(false, true); }
-    function toggleChart() { const drawer = document.getElementById('chartDrawer'); const btnText = document.getElementById('chartBtnText'); const btnIcon = document.getElementById('chartBtnIcon'); if (drawer.classList.contains('open')) { drawer.classList.remove('open'); btnText.innerText = "分析"; btnIcon.innerText = "📊"; } else { drawer.classList.add('open'); btnText.innerText = "收起"; btnIcon.innerText = "🔼"; if(allData.length > 0) filterData(); } }
-
-    // 🟡 核心：verifyLogin 修改為進入 Hub
-    function verifyLogin(auto=false) { 
-        USER_PASSWORD=document.getElementById('passwordInput').value; 
-        if(USER_PASSWORD){ 
-            setBtnLoading('loginBtn', true, '安全驗證中...'); 
-            // 觸發資料預載，但 loadData 內部邏輯會處理 UI 切換
-            loadData(true); 
-        } 
-    }
-
-    async function loadData(isInit=false, isManual=false) {
-        const ctr = document.getElementById('listContainer');
-        if(isInit) {
-            // 這裡不做任何顯示，因為還在登入畫面，等待資料回來
-        } else {
-            // 手動刷新時顯示
-            ctr.innerHTML = '<div style="text-align:center; padding:20px; color:#aaa;">載入中...</div>';
+const SyncManager = {
+    queue: [], isSyncing: false, totalTasks: 0, completed: 0,
+    add: function(payload) { this.queue.push(payload); if (!this.isSyncing) { this.totalTasks = this.queue.length; this.completed = 0; } else { this.totalTasks++; } this.updateUI(); this.process(); },
+    updateUI: function() { const pending = this.queue.length; if (pending > 0) { const current = this.totalTasks - pending + 1; CloudStatus.set('syncing', `同步中 (${current}/${this.totalTasks})...`); } else { CloudStatus.set('success'); this.totalTasks = 0; this.completed = 0; } },
+    process: async function() {
+        if (this.isSyncing || this.queue.length === 0) return;
+        this.isSyncing = true;
+        while (this.queue.length > 0) {
+            this.updateUI(); const currentTask = this.queue[0];
+            try { await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...currentTask, password: USER_PASSWORD }) }); this.queue.shift(); this.completed++; await new Promise(r => setTimeout(r, 300)); } 
+            catch (e) { console.error("Sync Failed:", e); CloudStatus.set('error'); this.isSyncing = false; return; }
         }
-        
+        this.isSyncing = false; this.updateUI(); DataLoader.load(); 
+    }
+};
+
+const CloudStatus = {
+    el: document.getElementById('cloudStatus'), icon: document.querySelector('#cloudStatus .status-icon'), text: document.getElementById('cloudText'), timer: null,
+    set: function(state, customText) {
+        clearTimeout(this.timer); this.el.className = 'show ' + state;
+        if (state === 'success') {
+            this.icon.innerHTML = '✅'; this.text.innerText = customText || '已儲存';
+            this.timer = setTimeout(() => { this.el.className = ''; }, 2000);
+        } else if (state === 'syncing') {
+            this.icon.innerHTML = '<div class="spin-circle"></div>'; this.text.innerText = customText || '雲端同步中...';
+        } else if (state === 'error') {
+            this.icon.innerHTML = '❌'; this.text.innerText = '同步失敗 (點此重試)';
+            this.el.onclick = () => SyncManager.process();
+        }
+    }
+};
+
+const DataLoader = {
+    load: async function(isInit=false, isManual=false) {
         try {
+            if(isManual) CloudStatus.set('syncing', '資料更新中...');
             const res = await fetch(`${API_URL}?password=${encodeURIComponent(USER_PASSWORD)}`);
             const json = await res.json();
             if(json.error) throw new Error(json.error);
             
-            localStorage.setItem('myBillPass', USER_PASSWORD);
-            allData = normalize(json.data).reverse();
-            allTemplates = normalize(json.templates);
-            
+            GLOBAL_DATA = {
+                wallet: {
+                    data: mapNormalize(json.wallet.data).reverse(),
+                    templates: mapNormalize(json.wallet.templates)
+                },
+                crypto: {
+                    data: mapNormalize(json.crypto.data),
+                    methods: json.crypto.methods,
+                    rate: json.crypto.rate
+                }
+            };
+
             if(isInit) {
-                // 🟡 登入成功 -> 切換到 Hub
-                const overlay = document.getElementById('loginOverlay');
-                overlay.style.opacity = '0'; overlay.style.pointerEvents = 'none'; 
-                setTimeout(()=> {
-                    overlay.style.display='none';
-                    document.getElementById('app-hub').classList.remove('hidden-layer'); // 顯示 Hub
-                }, 300);
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('app-hub').classList.remove('hidden-layer');
             }
+            if(!document.getElementById('app-wallet').classList.contains('hidden-layer')) WalletApp.render();
+            if(!document.getElementById('app-crypto').classList.contains('hidden-layer')) CryptoApp.render();
             
-            updateBankSelect();
-            filterData();
             setBtnLoading('loginBtn', false);
-            
-            if(isManual) CloudStatus.set('success', '資料已更新'); 
+            if(isManual) CloudStatus.set('success', '資料已更新');
 
         } catch(e) {
-            console.error(e);
             if(isInit) {
                 document.getElementById('loginError').innerText = e.message.includes("密碼") ? '❌ 密碼錯誤' : '⚠️ 連線失敗';
-                setBtnLoading('loginBtn', false); 
-                if(e.message.includes("密碼")) localStorage.removeItem('myBillPass');
+                setBtnLoading('loginBtn', false);
             } else {
-                if(isManual) CloudStatus.set('error');
-                else ctr.innerHTML = '⚠️ 載入失敗';
+                CloudStatus.set('error');
             }
         }
     }
+};
 
-    function filterData() {
-        const m = document.getElementById('monthSelector').value;
-        const list = document.getElementById('listContainer');
-        // 注意：這裡要判斷如果是 Hub 模式，可能 list container 是隱藏的，但沒關係，我們還是渲染 HTML 準備好
-        if(allTemplates.length===0) { list.innerHTML='<div style="text-align:center; padding:30px; color:#999;">請先在「設定」新增銀行</div>'; return; }
+function verifyLogin() {
+    USER_PASSWORD = document.getElementById('passwordInput').value;
+    if(!USER_PASSWORD) return;
+    setBtnLoading('loginBtn', true, '驗證中...');
+    DataLoader.load(true);
+}
 
-        const sorted = [...allTemplates].sort((a,b) => (parseInt(getVal(a,KEYS.BILL))||0) - (parseInt(getVal(b,KEYS.BILL))||0));
-        const monthData = allData.filter(d => String(d.month).trim() === m);
-        let total=0, count=0, html='', cLabels=[], cData=[], cColors=[];
-        currentRenderedItems = [];
+// --- App 1: Wallet Logic ---
+const WalletApp = {
+    chart: null,
+    render: function() {
+        const listSel = document.getElementById('w-list-month');
+        if(listSel.innerHTML == "") this.initMonthSelect('w-list-month');
+        const inputSel = document.getElementById('w-input-month');
+        if(inputSel.innerHTML == "") this.initMonthSelect('w-input-month');
 
-        sorted.forEach((t, index) => {
-            const bank = getVal(t, KEYS.BANK); const bill = getVal(t, KEYS.BILL); const pay = getVal(t, KEYS.PAY);
-            const rec = monthData.find(r => r.bank === bank);
-            currentRenderedItems.push({ template: t, record: rec });
-            const itemIndex = currentRenderedItems.length - 1;
-            let cls='', right='';
+        const m = listSel.value;
+        const data = GLOBAL_DATA.wallet.data.filter(r => String(r.month).trim() === m);
+        const templates = GLOBAL_DATA.wallet.templates.sort((a,b) => (parseInt(a.billdate)||0) - (parseInt(b.billdate)||0));
+        
+        const sel = document.getElementById('w-bank');
+        const currentVal = sel.value;
+        sel.innerHTML = '<option disabled selected>選擇銀行</option>';
+        templates.forEach(t => sel.innerHTML += `<option value="${t.bankname}">${t.bankname}</option>`);
+        if(currentVal && currentVal !== '選擇銀行') sel.value = currentVal;
+
+        let html = '', total = 0, count = 0, cLabels=[], cData=[], cColors=[];
+        const now = new Date();
+        const year = parseInt(m.substring(0, 4));
+        const month = parseInt(m.substring(4, 6));
+        let alertList = [];
+
+        templates.forEach(t => {
+            const rec = data.find(r => r.bank === t.bankname);
+            let right = `<div class="badge-todo">待登錄</div>`, cls = 't-card unlogged', click = `WalletApp.fill('${t.bankname}')`;
+            
             if(rec) {
-                const amt = Number(rec.amount); total += amt; count++;
+                total += Number(rec.amount); count++;
                 cls = 't-card logged';
-                right = `<div class="t-amount">$${amt.toLocaleString()}</div>`;
-                cLabels.push(bank); cData.push(amt); cColors.push(strColor(bank));
+                right = `<div class="t-amount">$${Number(rec.amount).toLocaleString()}</div>`;
+                click = `WalletApp.askDelete('${rec.uuid}', '${rec.bank}')`;
+                cLabels.push(t.bankname); cData.push(rec.amount); cColors.push('#4F46E5');
             } else {
-                cls = 't-card unlogged'; right = `<div class="badge-todo">待登錄</div>`;
+                const billDay = parseInt(t.billdate);
+                if (billDay) {
+                    const cutoff = new Date(year, month - 1, billDay + 1);
+                    if (now > cutoff) alertList.push(t.bankname);
+                }
             }
-            html += `<div class="${cls}" onclick="handleItemClick(${itemIndex})"><div class="t-icon">${bank.charAt(0)}</div><div class="t-content"><div class="t-bank">${bank}</div><div style="font-size:12px; color:#888;">結帳日 ${bill} / 扣款日 ${pay}</div></div>${right}</div>`;
+            html += `<div class="${cls}" onclick="${click}"><div class="t-icon">${t.bankname.charAt(0)}</div><div class="t-content"><div class="t-bank">${t.bankname}</div><div style="font-size:12px;color:#888">結帳日 ${t.billdate} / 扣款日 ${t.paymentdate}</div></div>${right}</div>`;
         });
+        
+        document.getElementById('w-list').innerHTML = html;
+        document.getElementById('w-total').innerText = `$${total.toLocaleString()}`;
+        document.getElementById('w-count').innerText = `${count} 筆紀錄`;
+        
+        const alertContainer = document.getElementById('alertContainer');
+        if (alertList.length > 0) alertContainer.innerHTML = `<div class="alert-box"><span class="alert-icon">🔔</span><div class="alert-content"><span class="alert-title">待登錄提醒</span>${alertList.join('、')} 帳單已結帳，請核對並登錄金額。</div></div>`; 
+        else alertContainer.innerHTML = '';
 
-        list.innerHTML = html;
-        updateTotal(total, count);
-        checkOverdue(m);
-        const drawer = document.getElementById('chartDrawer');
-        if(total > 0 && (drawer.classList.contains('open') || expenseChart)) renderChart(cLabels, cData, cColors);
+        if(this.chart) this.chart.destroy();
+        const ctx = document.getElementById('expenseChart').getContext('2d');
+        this.chart = new Chart(ctx, { type:'doughnut', data:{labels:cLabels,datasets:[{data:cData,backgroundColor:['#4F46E5','#7C3AED','#EC4899','#F59E0B','#10B981'], borderWidth:2, borderColor:'rgba(255,255,255,0.2)'}]}, options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:true,position:'right',labels:{color:'white',boxWidth:10}}, tooltip:{backgroundColor:'rgba(255,255,255,0.9)',titleColor:'#333',bodyColor:'#333',callbacks:{label:(c)=>' $'+c.parsed.toLocaleString()}}}, layout:{padding:0}}});
+    },
+    submit: function() {
+        const bank = document.getElementById('w-bank').value;
+        const amt = document.getElementById('w-amount').value;
+        const note = document.getElementById('w-note').value;
+        const month = document.getElementById('w-input-month').value;
+        if(bank=="選擇銀行" || !amt) return showToast('⚠️ 請填寫完整');
+        
+        const isDup = GLOBAL_DATA.wallet.data.some(r => r.bank === bank && String(r.month).trim() === month);
+        if(isDup) customConfirm('此銀行本月已有紀錄，確定要新增嗎？', () => this.executeSubmit(bank, amt, note, month));
+        else this.executeSubmit(bank, amt, note, month);
+    },
+    executeSubmit: function(bank, amt, note, month) {
+        const tpl = GLOBAL_DATA.wallet.templates.find(t=>t.bankname===bank);
+        GLOBAL_DATA.wallet.data.unshift({bank, amount:amt, note, month, uuid: 'temp', paymentdate: tpl?tpl.paymentdate:'-'});
+        
+        document.getElementById('w-list-month').value = month;
+        this.render();
+        document.getElementById('w-amount').value=''; document.getElementById('w-note').value='';
+        
+        setBtnLoading('w-submit', true, '排程中...'); 
+        setTimeout(() => setBtnLoading('w-submit', false), 500);
+
+        SyncManager.add({ appName:'wallet', action:'post', bank, amount:amt, note, month, paymentDate: tpl?tpl.paymentdate:'-' });
+    },
+    askDelete: function(uuid, bank) {
+        document.getElementById('actionTitle').innerText = bank;
+        const rec = GLOBAL_DATA.wallet.data.find(r => r.uuid === uuid);
+        document.getElementById('actionSubtitle').innerText = rec ? `已登錄：$${Number(rec.amount).toLocaleString()}` : '';
+        
+        document.getElementById('btnActionEdit').onclick = () => { 
+            this.fill(bank); 
+            if(rec) { document.getElementById('w-amount').value = rec.amount; document.getElementById('w-note').value = rec.note; }
+            closeModal('actionModal'); 
+        };
+        document.getElementById('btnActionDelete').onclick = () => { 
+            closeModal('actionModal');
+            customConfirm(`確定要刪除 ${bank} 的紀錄嗎？`, () => {
+                if(uuid === 'temp') GLOBAL_DATA.wallet.data = GLOBAL_DATA.wallet.data.filter(r => r.bank !== bank);
+                else GLOBAL_DATA.wallet.data = GLOBAL_DATA.wallet.data.filter(r => r.uuid !== uuid);
+                this.render();
+                SyncManager.add({ appName:'wallet', action:'delete', uuid });
+            });
+        };
+        openModal('actionModal');
+    },
+    fill: function(bank) {
+        document.getElementById('w-bank').value = bank;
+        document.getElementById('w-amount').focus();
+        document.querySelector('.input-panel').scrollIntoView({behavior:'smooth'});
+    },
+    toggleChart: function() { document.getElementById('chartDrawer').classList.toggle('open'); },
+    initMonthSelect: function(id) {
+        const s = document.getElementById(id);
+        const d = new Date(); d.setMonth(d.getMonth()+1);
+        for(let i=0; i<12; i++) {
+            const v = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`;
+            const o = document.createElement('option'); o.value=v; o.text=v; s.appendChild(o);
+            d.setMonth(d.getMonth()-1);
+        }
+        s.value = `${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}`;
     }
+};
 
-    function handleItemClick(index) { const item = currentRenderedItems[index]; const bank = getVal(item.template, KEYS.BANK); if (item.record) openActionModal(bank, item.record); else fillInput(bank, '', ''); }
-    function openActionModal(bank, record) { document.getElementById('actionTitle').innerText = bank; document.getElementById('actionSubtitle').innerText = `已登錄：$${Number(record.amount).toLocaleString()}`; document.getElementById('btnActionEdit').onclick = () => { fillInput(bank, record.amount, record.note || ''); closeModal('actionModal'); }; document.getElementById('btnActionDelete').onclick = () => { closeModal('actionModal'); customConfirm(`確定要刪除 ${bank} 的紀錄嗎？`, () => deleteRecord(record.uuid, bank)); }; openModal('actionModal'); }
-    function fillInput(bank, amt, note) { document.getElementById('bankSelector').value = bank; document.getElementById('amount').value = amt; document.getElementById('note').value = note; document.querySelector('.input-panel').scrollIntoView({behavior:'smooth'}); if(!amt) document.getElementById('amount').focus(); }
-    function submitData() { const bank = document.getElementById('bankSelector').value; const amt = document.getElementById('amount').value; const note = document.getElementById('note').value; const month = document.getElementById('billMonthInput').value; if(!bank || !amt) return showToast('⚠️ 請填寫完整'); const isDup = allData.some(r => r.bank === bank && String(r.month).trim() === month); if(isDup) customConfirm('此銀行本月已有紀錄，確定要新增(覆蓋)嗎？', () => executeSubmit(bank, amt, note, month)); else executeSubmit(bank, amt, note, month); }
-    function executeSubmit(bank, amt, note, month) { const tpl = allTemplates.find(t=>getVal(t,KEYS.BANK)===bank); const pay = tpl ? getVal(tpl,KEYS.PAY) : '-'; const fakeRecord = { bank, amount: amt, note, month, paymentDate: pay, rowIndex: -1, uuid: null }; allData.unshift(fakeRecord); filterData(); document.getElementById('amount').value=''; document.getElementById('note').value=''; SyncManager.add({ action: 'post', bank, amount: amt, note, paymentDate: pay, month }); }
-    function deleteRecord(uuid, bankName) { if(uuid) allData = allData.filter(r => r.uuid !== uuid); else allData = allData.filter(r => r.bank !== bankName); filterData(); SyncManager.add({ action: 'delete', uuid: uuid }); }
-    function addTemplate() { const b=document.getElementById('newBank').value, bill=document.getElementById('newBill').value, pay=document.getElementById('newPay').value; if(!b||!bill||!pay) return showToast('⚠️ 請填寫完整'); document.getElementById('newBank').value=''; document.getElementById('newBill').value=''; document.getElementById('newPay').value=''; setBtnLoading('btnAddTemp', true, '排程中...'); CloudStatus.set('syncing'); fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, action:'template_create', BankName:b, BillDate:bill, PaymentDate:pay}) }).then(() => setTimeout(()=>{ loadData().then(() => renderTemplateList()); setBtnLoading('btnAddTemp', false); CloudStatus.set('success'); },1000)); }
-    function saveTemplateEdit() { const idx = document.getElementById('editIndex').value; const bank = document.getElementById('editBankName').value; const bill = document.getElementById('editBill').value; const pay = document.getElementById('editPay').value; if(!bill || !pay) return showToast('⚠️ 日期不能為空'); setBtnLoading('btnSaveEdit', true, '儲存中...'); const target = allTemplates.find(t => t.templateIndex == idx); if (target) { if(target.BillDate !== undefined) target.BillDate = bill; if(target.PaymentDate !== undefined) target.PaymentDate = pay; if(target['結帳日'] !== undefined) target['結帳日'] = bill; if(target['扣款日'] !== undefined) target['扣款日'] = pay; } renderTemplateList(); filterData(); CloudStatus.set('syncing'); fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ password: USER_PASSWORD, action: 'template_update', templateIndex: idx, BankName: bank, BillDate: bill, PaymentDate: pay }) }).then(() => { setTimeout(() => { closeModal('editTemplateModal'); setBtnLoading('btnSaveEdit', false); CloudStatus.set('success'); loadData(); }, 1000); }); }
-    function deleteTemplate(idx) { customConfirm('確定刪除此銀行？', () => { CloudStatus.set('syncing'); fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, action:'template_delete', templateIndex:idx}) }).then(()=>setTimeout(() => { loadData().then(() => renderTemplateList()); CloudStatus.set('success'); }, 1000)); }); }
-    function openEditTemplateModal(index, bank, bill, pay) { document.getElementById('editIndex').value = index; document.getElementById('editBankName').value = bank; document.getElementById('editBill').value = bill; document.getElementById('editPay').value = pay; openModal('editTemplateModal'); }
-    function renderTemplateList() { const d = document.getElementById('templateList'); d.innerHTML=''; const sorted = [...allTemplates].sort((a,b) => (parseInt(getVal(a,KEYS.BILL))||0) - (parseInt(getVal(b,KEYS.BILL))||0)); sorted.forEach(t => { const n = getVal(t,KEYS.BANK); const b = getVal(t,KEYS.BILL); const p = getVal(t,KEYS.PAY); const row = document.createElement('div'); row.className='setup-row'; row.innerHTML = `<div><div style="font-weight:700">${n}</div><div style="font-size:12px;color:#888;">結帳日 ${b} / 扣款日 ${p}</div></div><div style="display:flex; gap:5px;"><button class="btn-setup-action" style="color:#4F46E5;" onclick="openEditTemplateModal(${t.templateIndex}, '${n}', '${b}', '${p}')">✎ 編輯</button><button class="btn-setup-action" style="color:#EF4444;" onclick="deleteTemplate(${t.templateIndex})">🗑️ 刪除</button></div>`; d.appendChild(row); }); }
-    function openModal(id) { document.getElementById(id).classList.add('show'); }
-    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
-    function openSettingsModal() { renderTemplateList(); openModal('settingsModal'); }
-    function customConfirm(msg, callback) { document.getElementById('confirmMsg').innerText = msg; document.getElementById('confirmBtnAction').onclick = () => { closeModal('confirmModal'); callback(); }; openModal('confirmModal'); }
-    function renderChart(l,d,c) { const ctx = document.getElementById('expenseChart').getContext('2d'); if(expenseChart) expenseChart.destroy(); expenseChart = new Chart(ctx, { type:'doughnut', data:{labels:l,datasets:[{data:d,backgroundColor:c,borderWidth:2,borderColor:'rgba(255,255,255,0.2)'}]}, options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:true,position:'right',labels:{color:'white',boxWidth:12,font:{size:11}}},layout:{padding:0}}} }); }
-    function checkOverdue(ym) { const now=new Date(), y=parseInt(ym.substring(0,4)), m=parseInt(ym.substring(4,6)); const alertList = []; allTemplates.forEach(t=>{ const d = parseInt(getVal(t,KEYS.BILL)); if(!d) return; const cutoff = new Date(y, m-1, d+1); const n = getVal(t,KEYS.BANK); if(now > cutoff && !allData.some(r=>r.bank===n && String(r.month).trim()===ym)) alertList.push(n); }); const container = document.getElementById('alertContainer'); if (alertList.length > 0) container.innerHTML = `<div class="alert-box"><span class="alert-icon">🔔</span><div><span class="alert-title">待登錄提醒</span>${alertList.join('、')} 帳單已結帳，請核對並登錄金額。</div></div>`; else container.innerHTML = ''; }
-    function updateBankSelect() { const s = document.getElementById('bankSelector'); s.innerHTML='<option value="" disabled selected>請選擇</option>'; allTemplates.forEach(t => { const o=document.createElement('option'); o.value=getVal(t,KEYS.BANK); o.text=getVal(t,KEYS.BANK); s.appendChild(o); }); }
-    function updateTotal(t,c) { document.getElementById('totalAmount').innerText=`$${t.toLocaleString()}`; document.getElementById('countLabel').innerText=`${c} 筆紀錄`; const s = document.getElementById('emojiStatus'); s.innerText = t > 20000 ? '💸' : (t > 5000 ? '🤔' : '😊'); }
-    function logout() { customConfirm('確定登出？', () => { localStorage.removeItem('myBillPass'); location.reload(); }); }
-    function normalize(a) { return Array.isArray(a)?a.map(o=>{const n={};for(let k in o)n[k.trim()]=o[k];return n;}):[]; }
-    function getVal(t,k) { const m={[KEYS.BANK]:'BankName',[KEYS.BILL]:'BillDate',[KEYS.PAY]:'PaymentDate'}; return t?.[k]??t?.[m[k]]??'-'; }
-    function strColor(s) { let h=0;for(let i=0;i<s.length;i++)h=s.charCodeAt(i)+((h<<5)-h); return '#'+("00000"+(h&0xFFFFFF).toString(16)).substr(-6); }
-    function getCurrentMonthVal() { const d=new Date(); return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`; }
-    function initMonthSelect(id) { const s=document.getElementById(id),d=new Date(); d.setMonth(d.getMonth()+1); for(let i=0;i<24;i++){ const v=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`; const o=document.createElement('option'); o.value=v; o.text=`${d.getFullYear()} / ${String(d.getMonth()+1).padStart(2,'0')}`; s.appendChild(o); d.setMonth(d.getMonth()-1); } }
+// --- App 2: Crypto Logic ---
+const CryptoApp = {
+    mode: 'twd', showInUsd: false,
+    render: function() {
+        const data = GLOBAL_DATA.crypto.data.sort((a,b) => new Date(b.date) - new Date(a.date));
+        const methods = GLOBAL_DATA.crypto.methods;
+        const rate = GLOBAL_DATA.crypto.rate;
+        
+        const sel = document.getElementById('c-method');
+        const currentVal = sel.value;
+        sel.innerHTML = '<option disabled selected>選擇管道</option>';
+        if(methods) methods.forEach(m => sel.innerHTML += `<option value="${m}">${m}</option>`);
+        if(currentVal && currentVal !== '選擇管道') sel.value = currentVal;
+        if(!document.getElementById('c-date').value) document.getElementById('c-date').valueAsDate = new Date();
+
+        const totalTwd = data.reduce((sum, r) => sum + Number(r.cost_twd || r.cost), 0);
+        const displayTotal = this.showInUsd ? `$${Math.round(totalTwd/rate).toLocaleString()} USD` : `$${totalTwd.toLocaleString()} TWD`;
+        document.getElementById('c-total').innerText = displayTotal;
+        document.getElementById('c-rate-display').innerText = `Ex: ${rate}`;
+
+        let html = '';
+        data.forEach(r => {
+            let subInfo = r.date ? r.date.split('T')[0] : 'No Date';
+            let rightSide = `<div class="t-amount">$${Number(r.cost_twd || r.cost).toLocaleString()}</div>`;
+            if (r.type === 'USD') {
+                const cost = Number(r.cost_twd || r.cost);
+                const amt = Number(r.amount_usd);
+                const calcRate = (amt > 0) ? (cost / amt).toFixed(2) : '0.00';
+                rightSide += `<div style="text-align:right"><span class="c-usd-tag">${amt} U</span> <span class="c-rate">(@${calcRate})</span></div>`;
+            }
+            html += `<div class="t-card" onclick="CryptoApp.askDelete('${r.uuid}')"><div class="t-icon">🪙</div><div class="t-content"><div class="t-bank">${r.method}</div><div style="font-size:12px;color:#888">${subInfo} ${r.note ? '- '+r.note : ''}</div></div><div>${rightSide}</div></div>`;
+        });
+        document.getElementById('c-list').innerHTML = html;
+    },
+    setMode: function(m) {
+        this.mode = m;
+        document.getElementById('seg-twd').className = m=='twd'?'segment-btn active':'segment-btn';
+        document.getElementById('seg-usd').className = m=='usd'?'segment-btn active':'segment-btn';
+        document.getElementById('c-usd-field').style.display = m=='usd'?'block':'none';
+    },
+    toggleTotalUnit: function() { this.showInUsd = !this.showInUsd; this.render(); },
+    submit: function() {
+        const date = document.getElementById('c-date').value;
+        const method = document.getElementById('c-method').value;
+        const cost = document.getElementById('c-cost').value;
+        const usd = document.getElementById('c-usd').value;
+        const note = document.getElementById('c-note').value;
+        
+        if(method == "選擇管道" || !cost) return showToast('⚠️ 請填寫完整');
+        if(this.mode === 'usd' && !usd) return showToast('⚠️ 請輸入外幣金額');
+
+        GLOBAL_DATA.crypto.data.unshift({
+            date, method, cost_twd: cost, note, 
+            type: this.mode === 'usd' ? 'USD' : 'TWD',
+            amount_usd: this.mode === 'usd' ? usd : 0,
+            uuid: 'temp'
+        });
+        this.render();
+        document.getElementById('c-cost').value = ''; document.getElementById('c-usd').value = ''; document.getElementById('c-note').value = ''; document.getElementById('c-cost').focus();
+        
+        setBtnLoading('c-submit', true, '排程中...');
+        setTimeout(() => setBtnLoading('c-submit', false), 500);
+
+        SyncManager.add({ appName: 'crypto', action: 'post', date, method, cost, note, type: this.mode === 'usd' ? 'USD' : 'TWD', amount_usd: this.mode === 'usd' ? usd : 0 });
+    },
+    askDelete: function(uuid) {
+        customConfirm('刪除此紀錄?', () => {
+            GLOBAL_DATA.crypto.data = GLOBAL_DATA.crypto.data.filter(r => r.uuid !== uuid);
+            this.render();
+            SyncManager.add({ appName: 'crypto', action: 'delete', uuid });
+        });
+    },
+    openSettings: function() {
+        this.renderSettingsList();
+        document.getElementById('cryptoSettingsModal').classList.add('show');
+    },
+    renderSettingsList: function() {
+        const d = document.getElementById('cryptoMethodList'); d.innerHTML = '';
+        GLOBAL_DATA.crypto.methods.forEach(m => {
+            const row = document.createElement('div'); row.className = 'setup-row';
+            row.innerHTML = `<div><div style="font-weight:700">${m}</div></div><button class="btn-setup-action" style="color:#EF4444;" onclick="CryptoApp.deleteMethod('${m}')">🗑️</button>`;
+            d.appendChild(row);
+        });
+    },
+    addMethod: function() {
+        const val = document.getElementById('newCryptoMethod').value;
+        if(!val) return showToast('⚠️ 請輸入名稱');
+        setBtnLoading('btnAddCryptoMethod', true, '新增中...');
+        GLOBAL_DATA.crypto.methods.push(val);
+        this.renderSettingsList();
+        this.render(); 
+        document.getElementById('newCryptoMethod').value = '';
+        
+        CloudStatus.set('syncing');
+        fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, appName:'crypto', action:'config_add', methodName:val}) })
+        .then(() => { setBtnLoading('btnAddCryptoMethod', false); CloudStatus.set('success'); DataLoader.load(); });
+    },
+    deleteMethod: function(name) {
+        customConfirm(`刪除 ${name}?`, () => {
+            GLOBAL_DATA.crypto.methods = GLOBAL_DATA.crypto.methods.filter(m => m !== name);
+            this.renderSettingsList();
+            this.render();
+            CloudStatus.set('syncing');
+            fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, appName:'crypto', action:'config_delete', methodName:name}) })
+            .then(() => { CloudStatus.set('success'); DataLoader.load(); });
+        });
+    }
+};
+
+// --- Shared Logic ---
+function openWalletSettings() { renderTemplateList(); document.getElementById('settingsModal').classList.add('show'); }
+function openCryptoSettings() { CryptoApp.openSettings(); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function logout() { 
+    customConfirm('確定登出?', () => { 
+        localStorage.removeItem('myBillPass'); 
+        window.location.reload(true); 
+    }); 
+}
+
+function setBtnLoading(btnId, isLoading, text) {
+    const btn = document.getElementById(btnId); const txtSpan = btn.querySelector('.btn-text');
+    if(isLoading) { btn.disabled = true; btn.classList.add('btn-loading'); if(txtSpan) { btn.dataset.orgText = txtSpan.innerText; txtSpan.innerText = text; } } 
+    else { btn.disabled = false; btn.classList.remove('btn-loading'); if(txtSpan && btn.dataset.orgText) { txtSpan.innerText = btn.dataset.orgText; } }
+}
+function showToast(m) { const t=document.getElementById('toast'); t.innerText=m; t.className='show'; setTimeout(()=>t.className='', 2500); }
+function manualReload() { if (SyncManager.isSyncing) { showToast("⚠️ 雲端同步中，請稍後再刷新"); return; } CloudStatus.set('syncing', '資料更新中...'); DataLoader.load(false, true); }
+function toggleChart() { const drawer = document.getElementById('chartDrawer'); const btnText = document.getElementById('chartBtnText'); const btnIcon = document.getElementById('chartBtnIcon'); if (drawer.classList.contains('open')) { drawer.classList.remove('open'); btnText.innerText = "分析"; btnIcon.innerText = "📊"; } else { drawer.classList.add('open'); btnText.innerText = "收起"; btnIcon.innerText = "🔼"; if(GLOBAL_DATA.wallet.data.length > 0) WalletApp.render(); } }
+
+function customConfirm(msg, callback) {
+    document.getElementById('confirmMsg').innerText = msg;
+    const oldBtn = document.getElementById('confirmBtnAction');
+    const newBtn = oldBtn.cloneNode(true);
+    oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+    newBtn.onclick = () => { closeModal('confirmModal'); callback(); };
+    openModal('confirmModal');
+}
+function customAlert(msg) { document.getElementById('alertMsg').innerText = msg; openModal('alertModal'); }
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+
+// --- Template Logic ---
+function addTemplate() {
+    const b=document.getElementById('newBank').value, bill=document.getElementById('newBill').value, pay=document.getElementById('newPay').value;
+    if(!b||!bill||!pay) return showToast('⚠️ 請填寫完整');
+    document.getElementById('newBank').value=''; document.getElementById('newBill').value=''; document.getElementById('newPay').value='';
+    setBtnLoading('btnAddTemp', true, '排程中...');
+    CloudStatus.set('syncing');
+    fetch(API_URL, {
+        method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({password:USER_PASSWORD, appName:'wallet', action:'template_create', BankName:b, BillDate:bill, PaymentDate:pay})
+    }).then(() => setTimeout(()=>{ DataLoader.load().then(() => { renderTemplateList(); setBtnLoading('btnAddTemp', false); CloudStatus.set('success'); }); },1000));
+}
+function saveTemplateEdit() {
+    const idx = document.getElementById('editIndex').value;
+    const bank = document.getElementById('editBankName').value;
+    const bill = document.getElementById('editBill').value;
+    const pay = document.getElementById('editPay').value;
+    if(!bill || !pay) return showToast('⚠️ 日期不能為空');
+    setBtnLoading('btnSaveEdit', true, '儲存中...');
+    
+    const target = GLOBAL_DATA.wallet.templates.find(t => t.templateindex == idx);
+    if (target) { target.billdate = bill; target.paymentdate = pay; }
+    WalletApp.render(); renderTemplateList();
+    
+    CloudStatus.set('syncing');
+    fetch(API_URL, {
+        method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ password: USER_PASSWORD, appName:'wallet', action: 'template_update', templateIndex: idx, BankName: bank, BillDate: bill, PaymentDate: pay })
+    }).then(() => { setTimeout(() => { closeModal('editTemplateModal'); setBtnLoading('btnSaveEdit', false); CloudStatus.set('success'); DataLoader.load(); }, 1000); });
+}
+function deleteTemplate(idx) {
+    customConfirm('確定刪除此銀行?', () => {
+        CloudStatus.set('syncing');
+        fetch(API_URL, {
+            method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({password:USER_PASSWORD, appName:'wallet', action:'template_delete', templateIndex:idx})
+        }).then(()=>setTimeout(() => { DataLoader.load().then(() => renderTemplateList()); CloudStatus.set('success'); }, 1000));
+    });
+}
+function openEditTemplateModal(index, bank, bill, pay) { document.getElementById('editIndex').value = index; document.getElementById('editBankName').value = bank; document.getElementById('editBill').value = bill; document.getElementById('editPay').value = pay; openModal('editTemplateModal'); }
+function renderTemplateList() {
+    const d = document.getElementById('templateList'); d.innerHTML='';
+    const sorted = [...GLOBAL_DATA.wallet.templates].sort((a,b) => (parseInt(a.billdate)||0) - (parseInt(b.billdate)||0));
+    sorted.forEach(t => {
+        const n = t.bankname; const b = t.billdate; const p = t.paymentdate;
+        const row = document.createElement('div'); row.className='setup-row';
+        row.innerHTML = `<div><div style="font-weight:700">${n}</div><div style="font-size:12px;color:#888;">結帳日 ${b} / 扣款日 ${p}</div></div><div style="display:flex; gap:5px;"><button class="btn-setup-action" style="color:#4F46E5;" onclick="openEditTemplateModal(${t.templateindex}, '${n}', '${b}', '${p}')">✎ 編輯</button><button class="btn-setup-action" style="color:#EF4444;" onclick="deleteTemplate(${t.templateindex})">🗑️ 刪除</button></div>`;
+        d.appendChild(row);
+    });
+}
+
+function mapNormalize(arr) {
+    if(!Array.isArray(arr)) return [];
+    const keyMap = { '銀行名稱': 'bankname', 'bankname': 'bankname', '結帳日': 'billdate', 'billdate': 'billdate', '扣款日': 'paymentdate', 'paymentdate': 'paymentdate', '銀行': 'bank', 'bank': 'bank', '金額': 'amount', 'amount': 'amount', '備註': 'note', 'note': 'note', '月份': 'month', 'month': 'month', 'uuid': 'uuid', 'UUID': 'uuid', '日期': 'date', 'date': 'date', '管道': 'method', 'method': 'method', '台幣成本': 'cost_twd', 'cost_twd': 'cost_twd', 'cost': 'cost_twd', '外幣金額': 'amount_usd', 'amount_usd': 'amount_usd', '幣別': 'type', 'type': 'type' };
+    return arr.map(obj => { const newObj = {}; for(let k in obj) { const cleanKey = k.trim(); const mappedKey = keyMap[cleanKey] || cleanKey.toLowerCase(); newObj[mappedKey] = obj[k]; } return newObj; });
+}
+function getVal(t,k) { return t[k.toLowerCase()] || '-'; } 
+function strColor(s) { let h=0;for(let i=0;i<s.length;i++)h=s.charCodeAt(i)+((h<<5)-h); return '#'+("00000"+(h&0xFFFFFF).toString(16)).substr(-6); }
+function getCurrentMonthVal() { const d=new Date(); return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`; }
+function initMonthSelect(id) { const s=document.getElementById(id),d=new Date(); d.setMonth(d.getMonth()+1); for(let i=0;i<24;i++){ const v=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`; const o=document.createElement('option'); o.value=v; o.text=`${d.getFullYear()} / ${String(d.getMonth()+1).padStart(2,'0')}`; s.appendChild(o); d.setMonth(d.getMonth()-1); } }
 </script>
 </body>
 </html>
