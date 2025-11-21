@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V12.5</title>
+    <title>My Wallet V12.7</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- V12.5 Style System --- */
+        /* --- V12.7 Style System (Based on V12.5) --- */
         :root { 
             --bg-body: #F9FAFB; 
             --primary: #4F46E5; 
@@ -124,8 +124,8 @@
         .t-content { flex: 1; min-width: 0; }
         .t-bank { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
         .t-amount { font-size: 18px; font-weight: 800; color: var(--text-main); text-align: right; }
-        .c-sub-value { font-size: 12px; color: #059669; font-weight: 600; text-align: right; margin-top: 3px; font-family: monospace; }
-        .c-rate { font-size: 11px; color: #9CA3AF; font-weight: 400; margin-left: 3px; }
+        .c-rate { font-size: 11px; color: #9CA3AF; margin-left: 4px; }
+        .c-usd-tag { display: inline-block; background: #FEF3C7; color: #D97706; padding: 2px 6px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-top: 2px; }
         .badge-todo { font-size: 12px; font-weight: 600; color: #6B7280; background: #E5E7EB; padding: 4px 10px; border-radius: 20px; }
 
         .alert-box { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-text); padding: 16px; border-radius: 16px; margin-bottom: 20px; font-size: 14px; line-height: 1.6; display: flex; align-items: flex-start; gap: 12px; width: 100%; box-sizing: border-box; }
@@ -153,7 +153,6 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<!-- 🟡 Enable Touch Feedback -->
 <body ontouchstart="">
 
     <div id="cloudStatus"><div class="status-icon"><div class="spin-circle"></div></div><span id="cloudText">雲端同步中...</span></div>
@@ -161,7 +160,7 @@
 
     <!-- Login -->
     <div id="loginOverlay">
-        <div style="font-size:50px; margin-bottom:10px;">🔒</div>
+        <div style="font-size:50px; margin-bottom:10px; cursor:default;" onclick="handleLockClick()">🔒</div>
         <div style="font-weight:800; font-size:22px;">App Hub</div>
         <input type="password" id="passwordInput" class="login-input" placeholder="••••" maxlength="8" inputmode="numeric">
         <button id="loginBtn" class="btn-submit" onclick="verifyLogin()" style="width:240px;">
@@ -183,7 +182,7 @@
             </div>
             <div class="app-card" onclick="Nav.open('crypto')">
                 <div><div class="app-icon">🪙</div><div class="app-name">Crypto</div></div>
-                <div class="app-ver">v1.5</div>
+                <div class="app-ver">v1.4</div>
             </div>
         </div>
     </div>
@@ -354,6 +353,7 @@
         </div>
     </div>
 
+    <!-- Generic Alert Modal -->
     <div id="alertModal" class="modal-overlay">
         <div class="modal-box" style="display:block; padding:24px;">
             <div id="alertMsg" style="font-size:16px; color:#333; margin-bottom:20px; line-height:1.5;"></div>
@@ -382,6 +382,20 @@ const API_URL = "https://script.google.com/macros/s/AKfycby60jdswu4PguQ0YNMpYdfd
 
 let USER_PASSWORD = "";
 let GLOBAL_DATA = { wallet: {data:[], templates:[]}, crypto: {data:[], methods:[], rate: 32.5} };
+let lockTaps = 0;
+
+// 🟡 隱藏功能：連點鎖頭3次清除快取
+function handleLockClick() {
+    lockTaps++;
+    if(lockTaps >= 3) {
+        if(confirm('⚠️ 確定要清除快取並重新整理? (此操作可修復顯示異常)')) {
+            localStorage.clear();
+            location.reload();
+        }
+        lockTaps = 0;
+    }
+    setTimeout(() => lockTaps = 0, 1000);
+}
 
 const Nav = {
     open: function(appId) {
@@ -401,26 +415,25 @@ const SyncManager = {
     add: function(payload) { this.queue.push(payload); if (!this.isSyncing) { this.totalTasks = this.queue.length; this.completed = 0; } else { this.totalTasks++; } this.updateUI(); this.process(); },
     updateUI: function() { const pending = this.queue.length; if (pending > 0) { const current = this.totalTasks - pending + 1; CloudStatus.set('syncing', `同步中 (${current}/${this.totalTasks})...`); } else { CloudStatus.set('success'); this.totalTasks = 0; this.completed = 0; } },
     process: async function() {
-        if (this.isSyncing || this.queue.length === 0) return;
+        if (this.isSyncing || this.queue.length === 0) {
+            // 🟢 Fix 2: Queue empty -> Delay then reload
+            if(this.queue.length === 0 && this.isSyncing) {
+                this.isSyncing = false;
+                setTimeout(() => DataLoader.load(), 2000); // 2s delay for GAS lock release
+            }
+            return;
+        }
         this.isSyncing = true;
         while (this.queue.length > 0) {
             this.updateUI(); const currentTask = this.queue[0];
-            let success = false;
-            for(let i=0; i<3; i++) { // Retry 3 times
-                try {
-                    await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...currentTask, password: USER_PASSWORD }) });
-                    success = true; break;
-                } catch(e) { await new Promise(r => setTimeout(r, 1500)); }
-            }
-            
-            if(success) {
-                this.queue.shift(); this.completed++;
-                await new Promise(r => setTimeout(r, 500)); 
-            } else {
-                CloudStatus.set('error'); this.isSyncing = false; return;
-            }
+            try { await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...currentTask, password: USER_PASSWORD }) }); this.queue.shift(); this.completed++; await new Promise(r => setTimeout(r, 300)); } 
+            catch (e) { console.error("Sync Failed:", e); CloudStatus.set('error'); this.isSyncing = false; return; }
         }
-        this.isSyncing = false; this.updateUI(); DataLoader.load(); 
+        // Finished
+        this.isSyncing = false; 
+        this.updateUI();
+        // 🟢 Fix 2: 2s Delay before reload
+        setTimeout(() => DataLoader.load(), 2000);
     }
 };
 
@@ -448,6 +461,9 @@ const DataLoader = {
             const json = await res.json();
             if(json.error) throw new Error(json.error);
             
+            // 🟢 Fix 1: Auto-Login Save (On Success)
+            if(!json.error) localStorage.setItem('myBillPass', USER_PASSWORD);
+
             GLOBAL_DATA = {
                 wallet: {
                     data: mapNormalize(json.wallet.data).reverse(),
@@ -459,16 +475,18 @@ const DataLoader = {
                     rate: json.crypto.rate
                 }
             };
-            
-            // 🟢 Fix: 成功載入後，儲存密碼
-            localStorage.setItem('myBillPass', USER_PASSWORD);
 
             if(isInit) {
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('app-hub').classList.remove('hidden-layer');
             }
+            // Refresh Views
             if(!document.getElementById('app-wallet').classList.contains('hidden-layer')) WalletApp.render();
             if(!document.getElementById('app-crypto').classList.contains('hidden-layer')) CryptoApp.render();
+            
+            // Update Rates
+            const rate = GLOBAL_DATA.crypto.rate || '--.--';
+            document.getElementById('cryptoSettingsRate').innerText = `🇺🇸 1 USD ≈ ${rate} TWD`;
             
             setBtnLoading('loginBtn', false);
             if(isManual) CloudStatus.set('success', '資料已更新');
@@ -478,7 +496,7 @@ const DataLoader = {
                 document.getElementById('loginError').innerText = e.message.includes("密碼") ? '❌ 密碼錯誤' : '⚠️ 連線失敗';
                 setBtnLoading('loginBtn', false);
             } else {
-                CloudStatus.set('error');
+                if(isManual) CloudStatus.set('error');
             }
         }
     }
@@ -490,6 +508,20 @@ function verifyLogin() {
     setBtnLoading('loginBtn', true, '驗證中...');
     DataLoader.load(true);
 }
+
+// 🟢 Fix 1: Auto-Login Check on Load
+document.addEventListener('DOMContentLoaded', () => {
+    const p = localStorage.getItem('myBillPass');
+    if(p) { 
+        document.getElementById('passwordInput').value = p; 
+        verifyLogin(true); 
+    }
+    initMonthSelect('w-list-month'); 
+    initMonthSelect('w-input-month');
+    const curr = getCurrentMonthVal();
+    document.getElementById('w-input-month').value = curr;
+    document.getElementById('w-list-month').value = curr;
+});
 
 // --- App 1: Wallet Logic ---
 const WalletApp = {
@@ -533,15 +565,7 @@ const WalletApp = {
                     if (now > cutoff) alertList.push(t.bankname);
                 }
             }
-            html += `<div class="${cls}" onclick="${click}">
-                <div class="t-icon">${t.bankname.charAt(0)}</div>
-                <div class="t-content">
-                    <div class="t-bank">${t.bankname}</div>
-                    <div style="font-size:12px;color:#888">結帳日 ${t.billdate} / 扣款日 ${t.paymentdate}</div>
-                    ${rec && rec.note ? `<div style="font-size:12px;color:#6B7280;margin-top:2px;">${rec.note}</div>` : ''}
-                </div>
-                ${right}
-            </div>`;
+            html += `<div class="${cls}" onclick="${click}"><div class="t-icon">${t.bankname.charAt(0)}</div><div class="t-content"><div class="t-bank">${t.bankname}</div><div style="font-size:12px;color:#888">結帳日 ${t.billdate} / 扣款日 ${t.paymentdate}</div>${rec && rec.note ? `<div style="font-size:12px;color:#6B7280;margin-top:2px;">${rec.note}</div>` : ''}</div>${right}</div>`;
         });
         
         document.getElementById('w-list').innerHTML = html;
@@ -625,7 +649,6 @@ const CryptoApp = {
         const methods = GLOBAL_DATA.crypto.methods;
         const rate = GLOBAL_DATA.crypto.rate;
         
-        // 🟢 Fix: Force rebuild selector every render to show new methods
         const sel = document.getElementById('c-method');
         const currentVal = sel.value;
         sel.innerHTML = '<option disabled selected>選擇管道</option>';
@@ -654,8 +677,7 @@ const CryptoApp = {
                 const calcRate = (amt > 0) ? (cost / amt).toFixed(2) : '0.00';
                 rightSide += `<div class="c-sub-value">≈ $${amt.toLocaleString()} USD <span class="c-rate">(@${calcRate})</span></div>`;
             }
-            let icon = r.type === 'USD' ? '🇺🇸' : '🪙';
-            html += `<div class="t-card" onclick="CryptoApp.askDelete('${r.uuid}')"><div class="t-icon">${icon}</div><div class="t-content"><div class="t-bank">${r.method}</div><div style="font-size:12px;color:#888">${subInfo} ${r.note ? '- '+r.note : ''}</div></div><div>${rightSide}</div></div>`;
+            html += `<div class="t-card" onclick="CryptoApp.askDelete('${r.uuid}')"><div class="t-icon">🪙</div><div class="t-content"><div class="t-bank">${r.method}</div><div style="font-size:12px;color:#888">${subInfo} ${r.note ? '- '+r.note : ''}</div></div><div>${rightSide}</div></div>`;
         });
         document.getElementById('c-list').innerHTML = html;
     },
@@ -720,20 +742,14 @@ const CryptoApp = {
         const val = document.getElementById('newCryptoMethod').value;
         if(!val) return showToast('⚠️ 請輸入名稱');
         setBtnLoading('btnAddCryptoMethod', true, '新增中...');
-        
         GLOBAL_DATA.crypto.methods.push(val);
         this.renderSettingsList();
-        this.render(); // 🟢 Fix: Refresh main list dropdown immediately
+        this.render(); 
         document.getElementById('newCryptoMethod').value = '';
         
         CloudStatus.set('syncing');
         fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, appName:'crypto', action:'config_add', methodName:val}) })
-        .then(() => { 
-            setBtnLoading('btnAddCryptoMethod', false); 
-            CloudStatus.set('success'); 
-            // 🟢 Fix: Reload data and update list if modal is still open
-            DataLoader.load().then(() => CryptoApp.renderSettingsList()); 
-        });
+        .then(() => { setBtnLoading('btnAddCryptoMethod', false); CloudStatus.set('success'); DataLoader.load(); });
     },
     deleteMethod: function(name) {
         customConfirm(`刪除 ${name}?`, () => {
@@ -792,54 +808,4 @@ function addTemplate() {
     }).then(() => setTimeout(()=>{ DataLoader.load().then(() => { renderTemplateList(); setBtnLoading('btnAddTemp', false); CloudStatus.set('success'); }); },1000));
 }
 function saveTemplateEdit() {
-    const idx = document.getElementById('editIndex').value;
-    const bank = document.getElementById('editBankName').value;
-    const bill = document.getElementById('editBill').value;
-    const pay = document.getElementById('editPay').value;
-    if(!bill || !pay) return showToast('⚠️ 日期不能為空');
-    setBtnLoading('btnSaveEdit', true, '儲存中...');
-    
-    const target = GLOBAL_DATA.wallet.templates.find(t => t.templateindex == idx);
-    if (target) { target.billdate = bill; target.paymentdate = pay; }
-    WalletApp.render(); renderTemplateList();
-    
-    CloudStatus.set('syncing');
-    fetch(API_URL, {
-        method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ password: USER_PASSWORD, appName:'wallet', action: 'template_update', templateIndex: idx, BankName: bank, BillDate: bill, PaymentDate: pay })
-    }).then(() => { setTimeout(() => { closeModal('editTemplateModal'); setBtnLoading('btnSaveEdit', false); CloudStatus.set('success'); DataLoader.load(); }, 1000); });
-}
-function deleteTemplate(idx) {
-    customConfirm('確定刪除此銀行?', () => {
-        CloudStatus.set('syncing');
-        fetch(API_URL, {
-            method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({password:USER_PASSWORD, appName:'wallet', action:'template_delete', templateIndex:idx})
-        }).then(()=>setTimeout(() => { DataLoader.load().then(() => renderTemplateList()); CloudStatus.set('success'); }, 1000));
-    });
-}
-function openEditTemplateModal(index, bank, bill, pay) { document.getElementById('editIndex').value = index; document.getElementById('editBankName').value = bank; document.getElementById('editBill').value = bill; document.getElementById('editPay').value = pay; openModal('editTemplateModal'); }
-function renderTemplateList() {
-    const d = document.getElementById('templateList'); d.innerHTML='';
-    const sorted = [...GLOBAL_DATA.wallet.templates].sort((a,b) => (parseInt(a.billdate)||0) - (parseInt(b.billdate)||0));
-    sorted.forEach(t => {
-        const n = t.bankname; const b = t.billdate; const p = t.paymentdate;
-        const row = document.createElement('div'); row.className='setup-row';
-        row.innerHTML = `<div><div style="font-weight:700">${n}</div><div style="font-size:12px;color:#888;">結帳日 ${b} / 扣款日 ${p}</div></div><div style="display:flex; gap:5px;"><button class="btn-setup-action" style="color:#4F46E5;" onclick="openEditTemplateModal(${t.templateindex}, '${n}', '${b}', '${p}')">✎ 編輯</button><button class="btn-setup-action" style="color:#EF4444;" onclick="deleteTemplate(${t.templateindex})">🗑️ 刪除</button></div>`;
-        d.appendChild(row);
-    });
-}
-
-// Core: Map Normalize
-function mapNormalize(arr) {
-    if(!Array.isArray(arr)) return [];
-    const keyMap = { '銀行名稱': 'bankname', 'bankname': 'bankname', '結帳日': 'billdate', 'billdate': 'billdate', '扣款日': 'paymentdate', 'paymentdate': 'paymentdate', '銀行': 'bank', 'bank': 'bank', '金額': 'amount', 'amount': 'amount', '備註': 'note', 'note': 'note', '月份': 'month', 'month': 'month', 'uuid': 'uuid', 'UUID': 'uuid', '日期': 'date', 'date': 'date', '管道': 'method', 'method': 'method', '台幣成本': 'cost_twd', 'cost_twd': 'cost_twd', 'cost': 'cost_twd', '外幣金額': 'amount_usd', 'amount_usd': 'amount_usd', '幣別': 'type', 'type': 'type' };
-    return arr.map(obj => { const newObj = {}; for(let k in obj) { const cleanKey = k.trim(); const mappedKey = keyMap[cleanKey] || cleanKey.toLowerCase(); newObj[mappedKey] = obj[k]; } return newObj; });
-}
-function getVal(t,k) { return t[k.toLowerCase()] || '-'; } 
-function strColor(s) { let h=0;for(let i=0;i<s.length;i++)h=s.charCodeAt(i)+((h<<5)-h); return '#'+("00000"+(h&0xFFFFFF).toString(16)).substr(-6); }
-function getCurrentMonthVal() { const d=new Date(); return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`; }
-function initMonthSelect(id) { const s=document.getElementById(id),d=new Date(); d.setMonth(d.getMonth()+1); for(let i=0;i<24;i++){ const v=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`; const o=document.createElement('option'); o.value=v; o.text=`${d.getFullYear()} / ${String(d.getMonth()+1).padStart(2,'0')}`; s.appendChild(o); d.setMonth(d.getMonth()-1); } }
-</script>
-</body>
-</html>
+    c
