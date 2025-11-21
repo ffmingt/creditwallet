@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V12.3</title>
+    <title>My Wallet V12.4</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- V12.3 Style System --- */
+        /* --- V12.4 Style System (Based on V12.3) --- */
         :root { 
             --bg-body: #F9FAFB; 
             --primary: #4F46E5; 
@@ -63,6 +63,9 @@
         .app-name { font-size: 16px; font-weight: 700; color: var(--text-main); }
         .app-ver { position: absolute; bottom: 15px; right: 15px; font-size: 11px; color: #4B5563; font-weight: 500; background: #E5E7EB; padding: 2px 6px; border-radius: 6px; }
         
+        /* Rate Bar */
+        .rate-bar { margin-top: auto; background: #ECFDF5; border: 1px solid #D1FAE5; color: #047857; font-weight: 600; font-size: 14px; padding: 12px; border-radius: 16px; text-align: center; font-family: monospace; display: flex; justify-content: center; align-items: center; gap: 8px; }
+
         /* Wallet & Crypto Layout */
         .hero { padding: 20px 24px 10px 24px; }
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
@@ -70,12 +73,10 @@
         
         .total-card { background: var(--primary-gradient); border-radius: 28px; padding: 25px; color: white; box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.4); position: relative; overflow: hidden; transition: all 0.3s ease; }
         .crypto-bg { background: var(--crypto-gradient) !important; box-shadow: 0 20px 25px -5px rgba(5, 150, 105, 0.4) !important; }
-        
         .total-amount { font-size: 42px; font-weight: 800; margin: 5px 0; letter-spacing: -1px; }
         .total-amount-group { display: flex; flex-direction: column; margin-top: 5px; }
         .total-amount-main { font-size: 42px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
         .total-amount-sub { font-size: 18px; opacity: 0.9; font-weight: 500; color: #A7F3D0; margin-top: 4px; font-family: monospace; }
-
         .card-content { position: relative; z-index: 2; }
         .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
         .card-sub { font-size: 13px; opacity: 0.8; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; }
@@ -119,7 +120,7 @@
         .c-usd-tag { display: inline-block; background: #FEF3C7; color: #D97706; padding: 2px 6px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-top: 2px; }
         .badge-todo { font-size: 12px; font-weight: 600; color: #6B7280; background: #E5E7EB; padding: 4px 10px; border-radius: 20px; }
 
-        .alert-box { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-text); padding: 16px; border-radius: 16px; margin-bottom: 20px; font-size: 14px; line-height: 1.6; display: flex; align-items: flex-start; gap: 12px; width: 100%; box-sizing: border-box; }
+        .alert-box { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-text); padding: 16px; border-radius: 16px; margin-bottom: 20px; font-size: 14px; line-height: 1.6; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); width: 100%; box-sizing: border-box; }
         .alert-icon { font-size: 20px; margin-top: -2px; flex-shrink: 0; }
         .alert-content { flex: 1; }
         .alert-title { font-weight: 700; margin-bottom: 2px; display: block; color: #7C2D12; }
@@ -138,16 +139,14 @@
         .setup-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #F3F4F6; }
         .btn-setup-action { border: none; background: none; cursor: pointer; font-size: 14px; padding: 5px; transition: opacity 0.1s, transform 0.1s;}
         .btn-setup-action:active { opacity: 0.6; transform: scale(0.95); }
-        
-        /* 🟡 Rate Bar in Footer */
-        .rate-bar { background: #ECFDF5; border: 1px solid #D1FAE5; color: #047857; font-weight: 600; font-size: 13px; padding: 10px; border-radius: 12px; text-align: center; margin-bottom: 10px; font-family: monospace; }
 
         #toast { visibility: hidden; background: #333; color: #fff; padding: 12px 24px; border-radius: 50px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 99999; opacity:0; transition:0.3s; }
         #toast.show { visibility: visible; opacity: 1; bottom: 40px; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body>
+<!-- 🟡 1. 加入觸摸反饋 (Touch Feedback) -->
+<body ontouchstart="">
 
     <div id="cloudStatus"><div class="status-icon"><div class="spin-circle"></div></div><span id="cloudText">雲端同步中...</span></div>
     <div id="toast"></div>
@@ -172,11 +171,11 @@
         <div class="app-grid">
             <div class="app-card" onclick="Nav.open('wallet')">
                 <div><div class="app-icon">💰</div><div class="app-name">My Wallet</div></div>
-                <div class="app-ver">v9.0.1</div>
+                <div class="app-ver">v9.0</div>
             </div>
             <div class="app-card" onclick="Nav.open('crypto')">
                 <div><div class="app-icon">🪙</div><div class="app-name">Crypto</div></div>
-                <div class="app-ver">v1.3</div>
+                <div class="app-ver">v1.4</div>
             </div>
         </div>
     </div>
@@ -310,7 +309,6 @@
         </div>
     </div>
 
-    <!-- 🟡 Crypto Settings Modal (Rate at Footer) -->
     <div id="cryptoSettingsModal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
@@ -323,8 +321,7 @@
                 <div style="font-size:12px; color:#999; margin-top:15px; font-weight:700;">已儲存管道</div>
             </div>
             <div class="modal-content-scroll"><div id="cryptoMethodList"></div></div>
-            <!-- 🟡 Footer with Rate -->
-            <div class="modal-footer" style="display:flex; flex-direction:column;">
+            <div class="modal-footer">
                 <div id="cryptoSettingsRate" class="rate-bar">Loading...</div>
                 <button class="btn-submit" onclick="closeModal('cryptoSettingsModal')" style="background:#F3F4F6; color:#333; margin-top:0;">關閉</button>
             </div>
@@ -349,7 +346,6 @@
         </div>
     </div>
 
-    <!-- Generic Alert Modal -->
     <div id="alertModal" class="modal-overlay">
         <div class="modal-box" style="display:block; padding:24px;">
             <div id="alertMsg" style="font-size:16px; color:#333; margin-bottom:20px; line-height:1.5;"></div>
@@ -359,7 +355,6 @@
         </div>
     </div>
 
-    <!-- Confirm Modal -->
     <div id="confirmModal" class="modal-overlay">
         <div class="modal-box" style="display:block; padding:24px;">
             <div id="confirmMsg" style="font-size:16px; color:#333; margin-bottom:20px; line-height:1.5;"></div>
@@ -632,9 +627,14 @@ const CryptoApp = {
                 const cost = Number(r.cost_twd || r.cost);
                 const amt = Number(r.amount_usd);
                 const calcRate = (amt > 0) ? (cost / amt).toFixed(2) : '0.00';
+                // 🟡 2. Update Icon to US Flag for USD
                 rightSide += `<div class="c-sub-value">≈ $${amt.toLocaleString()} USD <span class="c-rate">(@${calcRate})</span></div>`;
             }
-            html += `<div class="t-card" onclick="CryptoApp.askDelete('${r.uuid}')"><div class="t-icon">🪙</div><div class="t-content"><div class="t-bank">${r.method}</div><div style="font-size:12px;color:#888">${subInfo} ${r.note ? '- '+r.note : ''}</div></div><div>${rightSide}</div></div>`;
+            
+            // 🟡 2. Dynamic Icon Logic
+            const icon = r.type === 'USD' ? '🇺🇸' : '🪙';
+
+            html += `<div class="t-card" onclick="CryptoApp.askDelete('${r.uuid}')"><div class="t-icon">${icon}</div><div class="t-content"><div class="t-bank">${r.method}</div><div style="font-size:12px;color:#888">${subInfo} ${r.note ? '- '+r.note : ''}</div></div><div>${rightSide}</div></div>`;
         });
         document.getElementById('c-list').innerHTML = html;
     },
@@ -683,7 +683,6 @@ const CryptoApp = {
     },
     openSettings: function() {
         this.renderSettingsList();
-        // 🟡 Update Rate Display
         const rate = GLOBAL_DATA.crypto.rate || '--.--';
         document.getElementById('cryptoSettingsRate').innerText = `🇺🇸 1 USD ≈ ${rate} TWD`;
         document.getElementById('cryptoSettingsModal').classList.add('show');
