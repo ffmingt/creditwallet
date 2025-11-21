@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V8.1.1</title>
+    <title>My Wallet V8.4</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- V8.1.1 樣式 --- */
+        /* --- V8.4 樣式系統 --- */
         :root { 
             --bg-body: #F9FAFB; 
             --primary: #4F46E5; 
@@ -24,7 +24,7 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; padding-bottom: 140px; user-select: none; -webkit-user-select: none; }
 
-        /* 雲端狀態燈 */
+        /* 🟡 雲端狀態指示燈 */
         #cloudStatus {
             position: fixed; top: 20px; left: 50%; 
             transform: translateX(-50%) translateY(-200%); opacity: 0;
@@ -50,34 +50,63 @@
         .login-input { width:240px; padding:15px; border:1px solid #E5E7EB; border-radius:16px; font-size:24px; text-align:center; outline:none; margin:20px 0; letter-spacing:8px; background:white; box-shadow: var(--shadow); }
         .login-input:focus { border-color: var(--primary); }
 
-        .hero { padding: 20px 24px; }
+        /* 🟡 Hero & Card (V8.4 Redesign) */
+        .hero { padding: 20px 24px 10px 24px; }
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .app-title { font-size: 24px; font-weight: 800; color: #111; }
         .btn-icon { background:white; border:1px solid #E5E7EB; padding:8px 12px; border-radius:12px; font-size:13px; font-weight:600; color:#555; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.1s; cursor: pointer; }
         .btn-icon:active { transform:scale(0.95); background: #f3f4f6; }
 
-        .total-card { background: var(--primary-gradient); border-radius: 28px; padding: 32px 28px; color: white; box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.4); position: relative; overflow: hidden; }
-        .total-amount { font-size: 42px; font-weight: 800; margin: 4px 0; }
-        .status-emoji { position:absolute; top:30px; right:25px; font-size:48px; animation: float 3s ease-in-out infinite; }
+        .total-card { 
+            background: var(--primary-gradient); 
+            border-radius: 28px; padding: 25px; color: white; 
+            box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.4); 
+            position: relative; overflow: hidden; 
+            transition: all 0.3s ease;
+        }
+        .total-card::after { content:''; position:absolute; top:-50%; right:-20%; width:250px; height:250px; background:radial-gradient(circle, rgba(255,255,255,0.15), transparent 70%); border-radius:50%; pointer-events:none; }
+        
+        .card-content { position: relative; z-index: 2; }
+        .total-amount { font-size: 42px; font-weight: 800; margin: 5px 0; letter-spacing: -1px; }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
+        .card-sub { font-size: 13px; opacity: 0.8; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; }
 
-        .chart-section { margin: 20px 24px 0; background: white; border-radius: 24px; padding: 20px; box-shadow: var(--shadow); display: none; }
-        .chart-wrapper { position: relative; height: 180px; display: flex; justify-content: center; }
+        /* 📊 分析按鈕 */
+        .btn-chart-toggle {
+            background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; gap: 5px;
+            backdrop-filter: blur(5px); transition: background 0.2s;
+        }
+        .btn-chart-toggle:active { background: rgba(255, 255, 255, 0.4); }
 
+        /* 收納圖表 (抽屜) */
+        .chart-drawer {
+            max-height: 0; opacity: 0; overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            margin-top: 0; position: relative; z-index: 2;
+        }
+        .chart-drawer.open {
+            max-height: 280px; opacity: 1; margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px;
+        }
+        .chart-wrapper { position: relative; height: 200px; width: 100%; display: flex; justify-content: center; }
+
+        /* 輸入區 */
         .input-panel { margin: 20px 24px 0; padding: 24px; background: white; border-radius: 24px; box-shadow: var(--shadow); border: 1px solid #F3F4F6; }
         .grid-2 { display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 12px; margin-bottom: 12px; }
         .form-label { font-size: 12px; font-weight: 600; color: var(--text-sub); margin-bottom: 6px; display: block; }
         .styled-input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid #E5E7EB; background: #F9FAFB; font-size: 16px; color: #333; outline: none; -webkit-appearance: none; }
         .styled-input:disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }
 
-        /* 按鈕樣式 */
         .btn-submit { width: 100%; background: #1F2937; color: white; border: none; padding: 15px; border-radius: 14px; font-size: 16px; font-weight: 600; margin-top: 10px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .btn-submit:active { transform: scale(0.96); background: #000; }
         .btn-submit:disabled { background: #6B7280; opacity: 0.8; cursor: not-allowed; transform: none; }
 
-        /* Loading 狀態 */
         .spinner { width: 18px; height: 18px; margin-right: 8px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; display: none; }
         .btn-loading .spinner { display: inline-block; }
 
+        /* 列表區 */
         .list-section { padding: 30px 24px; }
         .t-card { background: white; border-radius: 18px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow); border: 1px solid transparent; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.1s; }
         .t-card:active { transform: scale(0.98); background: #f9fafb; }
@@ -96,7 +125,7 @@
         .alert-icon { font-size: 20px; margin-top: -2px; }
         .alert-title { font-weight: 700; margin-bottom: 2px; display: block; color: #7C2D12; }
 
-        /* Modal */
+        /* Modal & Sticky Footer */
         .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: 10000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
         
@@ -212,25 +241,34 @@
         </div>
     </div>
 
-    <!-- Main UI -->
+    <!-- Main UI (Hero with Chart Drawer) -->
     <div class="hero">
         <div class="header-row">
-            <div><span class="app-title">My Wallet</span> <span style="font-size:12px; background:#E5E7EB; padding:3px 6px; border-radius:6px; color:#555;">V8.1.1</span></div>
+            <div><span class="app-title">My Wallet</span> <span style="font-size:12px; background:#E5E7EB; padding:3px 6px; border-radius:6px; color:#555;">V8.4</span></div>
             <div style="display:flex; gap:8px;">
                 <button class="btn-icon" onclick="openSettingsModal()">⚙️ 設定</button>
                 <button class="btn-icon" onclick="logout()" style="color:var(--danger);">登出</button>
             </div>
         </div>
+        
+        <!-- 整合式卡片 -->
         <div class="total-card">
-            <div style="opacity:0.9; font-size:14px;">本月總支出</div>
-            <div class="total-amount" id="totalAmount">$0</div>
-            <div style="opacity:0.8; font-size:13px;" id="countLabel">0 筆紀錄</div>
-            <div class="status-emoji" id="emojiStatus">😊</div>
+            <div class="card-content">
+                <div style="font-size:14px; opacity:0.9;">本月總支出</div>
+                <div class="total-amount" id="totalAmount">$0</div>
+                <div class="card-footer">
+                    <div class="card-sub" id="countLabel">0 筆紀錄</div>
+                    <!-- 📊 圖表開關 -->
+                    <button class="btn-chart-toggle" onclick="toggleChart()">
+                        <span id="chartBtnIcon">📊</span> <span id="chartBtnText">分析</span>
+                    </button>
+                </div>
+            </div>
+            <!-- 隱藏圖表區 -->
+            <div class="chart-drawer" id="chartDrawer">
+                <div class="chart-wrapper"><canvas id="expenseChart"></canvas></div>
+            </div>
         </div>
-    </div>
-
-    <div class="chart-section" id="chartSection">
-        <div class="chart-wrapper"><canvas id="expenseChart"></canvas></div>
     </div>
 
     <div class="input-panel">
@@ -325,6 +363,24 @@
         loadData(false, true);
     }
 
+    // 🟡 圖表開關
+    function toggleChart() {
+        const drawer = document.getElementById('chartDrawer');
+        const btnText = document.getElementById('chartBtnText');
+        const btnIcon = document.getElementById('chartBtnIcon');
+        
+        if (drawer.classList.contains('open')) {
+            drawer.classList.remove('open');
+            btnText.innerText = "分析";
+            btnIcon.innerText = "📊";
+        } else {
+            drawer.classList.add('open');
+            btnText.innerText = "收起";
+            btnIcon.innerText = "🔼";
+            if(allData.length > 0) filterData(); 
+        }
+    }
+
     async function loadData(isInit=false, isManual=false) {
         const ctr = document.getElementById('listContainer');
         if(isInit) ctr.innerHTML = '<div style="text-align:center; padding:20px; color:#aaa;">載入中...</div>';
@@ -349,7 +405,6 @@
             setBtnLoading('loginBtn', false);
             
             if(isManual) CloudStatus.set('success', '資料已更新'); 
-            else if(!isInit) CloudStatus.set('success');
 
         } catch(e) {
             console.error(e);
@@ -409,9 +464,12 @@
         list.innerHTML = html;
         updateTotal(total, count);
         checkOverdue(m);
-        const chartDiv = document.getElementById('chartSection');
-        if(total>0) { chartDiv.style.display='block'; renderChart(cLabels, cData, cColors); } 
-        else { chartDiv.style.display='none'; }
+        
+        // Chart rendering (only if drawer is open or to update data)
+        const drawer = document.getElementById('chartDrawer');
+        if(total > 0 && (drawer.classList.contains('open') || expenseChart)) {
+             renderChart(cLabels, cData, cColors);
+        }
     }
 
     function handleItemClick(index) {
@@ -496,7 +554,6 @@
         openModal('editTemplateModal');
     }
 
-    // 🟡 樂觀更新 (Optimistic Update) for Edit Template
     function saveTemplateEdit() {
         const idx = document.getElementById('editIndex').value;
         const bank = document.getElementById('editBankName').value;
@@ -504,26 +561,18 @@
         const pay = document.getElementById('editPay').value;
         if(!bill || !pay) return showToast('⚠️ 日期不能為空');
 
-        // 1. UI: 按鈕鎖定
         setBtnLoading('btnSaveEdit', true, '儲存中...');
 
-        // 2. Data: 本地直接更新 (假更新)
-        // 注意：idx 是字串，templateIndex 可能是數字，使用 == 比較
         const target = allTemplates.find(t => t.templateIndex == idx);
         if (target) {
-            target.BillDate = bill;
-            target.PaymentDate = pay;
-            // 若資料結構包含中文 Key，一併更新以防萬一
-            target['結帳日'] = bill;
-            target['扣款日'] = pay;
+            if(target.BillDate !== undefined) target.BillDate = bill;
+            if(target.PaymentDate !== undefined) target.PaymentDate = pay;
+            if(target['結帳日'] !== undefined) target['結帳日'] = bill;
+            if(target['扣款日'] !== undefined) target['扣款日'] = pay;
         }
 
-        // 3. UI: 立即刷新背後的列表
-        renderTemplateList(); // 刷新設定列表
-        filterData(); // 刷新主畫面
-
-        // 4. Network: 背景上傳
-        // User 可以等待，也可以不等，但這裡我們顯示 Loading 然後成功後關閉
+        renderTemplateList();
+        filterData();
         CloudStatus.set('syncing');
 
         fetch(API_URL, {
@@ -531,13 +580,13 @@
             body:JSON.stringify({ password: USER_PASSWORD, action: 'template_update', templateIndex: idx, BankName: bank, BillDate: bill, PaymentDate: pay })
         }).then(() => {
             setTimeout(() => {
-                closeModal('editTemplateModal'); // 關閉視窗
-                setBtnLoading('btnSaveEdit', false); // 恢復按鈕
-                CloudStatus.set('success'); // 顯示成功
-            }, 500); // 稍微延遲讓使用者看到「儲存中...」
+                closeModal('editTemplateModal');
+                setBtnLoading('btnSaveEdit', false);
+                CloudStatus.set('success');
+                loadData(); 
+            }, 1000);
         }).catch(() => {
             setBtnLoading('btnSaveEdit', false);
-            showToast('❌ 儲存失敗');
             CloudStatus.set('error');
         });
     }
@@ -572,7 +621,37 @@
     function closeModal(id) { document.getElementById(id).classList.remove('show'); }
     function openSettingsModal() { renderTemplateList(); openModal('settingsModal'); }
     function customConfirm(msg, callback) { document.getElementById('confirmMsg').innerText = msg; document.getElementById('confirmBtnAction').onclick = () => { closeModal('confirmModal'); callback(); }; openModal('confirmModal'); }
-    function renderChart(l,d,c) { const ctx = document.getElementById('expenseChart').getContext('2d'); if(expenseChart) expenseChart.destroy(); expenseChart = new Chart(ctx, { type:'doughnut', data:{labels:l,datasets:[{data:d,backgroundColor:c,borderWidth:0}]}, options:{responsive:true,maintainAspectRatio:false,cutout:'75%',plugins:{legend:{display:false}}} }); }
+    
+    // 🟡 修改: Dark Mode Chart Style
+    function renderChart(l,d,c) { 
+        const ctx = document.getElementById('expenseChart').getContext('2d'); 
+        if(expenseChart) expenseChart.destroy(); 
+        expenseChart = new Chart(ctx, { 
+            type:'doughnut', 
+            data:{
+                labels:l,
+                datasets:[{
+                    data:d,
+                    backgroundColor:c,
+                    borderWidth:2,
+                    borderColor: 'rgba(255,255,255,0.2)' // Dark mode border
+                }]
+            }, 
+            options:{
+                responsive:true,
+                maintainAspectRatio:false,
+                cutout:'65%',
+                plugins:{
+                    legend:{
+                        display:true,
+                        position: 'right',
+                        labels: { color: 'white', boxWidth: 12, font: {size: 11} } // White Text
+                    }
+                },
+                layout: { padding: 0 }
+            } 
+        }); 
+    }
     
     function checkOverdue(ym) {
         const now=new Date(), y=parseInt(ym.substring(0,4)), m=parseInt(ym.substring(4,6));
@@ -590,7 +669,7 @@
     }
     
     function updateBankSelect() { const s = document.getElementById('bankSelector'); s.innerHTML='<option value="" disabled selected>請選擇</option>'; allTemplates.forEach(t => { const o=document.createElement('option'); o.value=getVal(t,KEYS.BANK); o.text=getVal(t,KEYS.BANK); s.appendChild(o); }); }
-    function updateTotal(t,c) { document.getElementById('totalAmount').innerText=`$${t.toLocaleString()}`; document.getElementById('countLabel').innerText=`${c} 筆紀錄`; document.getElementById('emojiStatus').innerText = t>20000?'💸':(t>5000?'🤔':'😊'); }
+    function updateTotal(t,c) { document.getElementById('totalAmount').innerText=`$${t.toLocaleString()}`; document.getElementById('countLabel').innerText=`${c} 筆紀錄`; }
     function verifyLogin(auto=false) { USER_PASSWORD=document.getElementById('passwordInput').value; if(USER_PASSWORD){ setBtnLoading('loginBtn', true, '安全驗證中...'); loadData(true); } }
     function logout() { customConfirm('確定登出？', () => { localStorage.removeItem('myBillPass'); location.reload(); }); }
     function normalize(a) { return Array.isArray(a)?a.map(o=>{const n={};for(let k in o)n[k.trim()]=o[k];return n;}):[]; }
