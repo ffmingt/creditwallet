@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V7.6</title>
+    <title>My Wallet V8.1.1</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- V7.6 樣式變數 --- */
+        /* --- V8.1.1 樣式 --- */
         :root { 
             --bg-body: #F9FAFB; 
             --primary: #4F46E5; 
@@ -15,7 +15,7 @@
             --text-sub: #6B7280; 
             --danger: #EF4444;
             --success: #10B981;
-            --warning-bg: #FFF7ED; /* 橘黃色背景 */
+            --warning-bg: #FFF7ED;
             --warning-border: #FED7AA;
             --warning-text: #9A3412;
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
@@ -24,75 +24,62 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; padding-bottom: 140px; user-select: none; -webkit-user-select: none; }
 
-        .hidden-layer { opacity: 0; pointer-events: none !important; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
-
-        /* 登入 */
-        #loginOverlay { 
-            position: fixed; top:0; left:0; width:100%; height:100%; 
-            background: rgba(249,250,251,0.98); backdrop-filter: blur(5px); 
-            z-index: 99999; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; 
-            transition: opacity 0.3s;
+        /* 雲端狀態燈 */
+        #cloudStatus {
+            position: fixed; top: 20px; left: 50%; 
+            transform: translateX(-50%) translateY(-200%); opacity: 0;
+            background: white; padding: 8px 16px; border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; font-weight: 600; color: var(--text-main);
+            z-index: 100000; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
         }
+        #cloudStatus.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        #cloudStatus.syncing { color: var(--primary); border: 1px solid #E0E7FF; }
+        #cloudStatus.success { color: var(--success); border: 1px solid #D1FAE5; }
+        #cloudStatus.error { color: var(--danger); border: 1px solid #FEE2E2; pointer-events: auto; cursor: pointer; }
+
+        .status-icon { width: 16px; height: 16px; display: flex; justify-content: center; align-items: center; }
+        .spin-circle { width: 14px; height: 14px; border: 2px solid #E0E7FF; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+        .hidden-layer { opacity: 0; pointer-events: none !important; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
+        #loginOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(249,250,251,0.98); backdrop-filter: blur(5px); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.3s; }
         .login-input { width:240px; padding:15px; border:1px solid #E5E7EB; border-radius:16px; font-size:24px; text-align:center; outline:none; margin:20px 0; letter-spacing:8px; background:white; box-shadow: var(--shadow); }
         .login-input:focus { border-color: var(--primary); }
 
-        /* 頂部 */
         .hero { padding: 20px 24px; }
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .app-title { font-size: 24px; font-weight: 800; color: #111; }
         .btn-icon { background:white; border:1px solid #E5E7EB; padding:8px 12px; border-radius:12px; font-size:13px; font-weight:600; color:#555; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.1s; cursor: pointer; }
         .btn-icon:active { transform:scale(0.95); background: #f3f4f6; }
 
-        /* 卡片 */
         .total-card { background: var(--primary-gradient); border-radius: 28px; padding: 32px 28px; color: white; box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.4); position: relative; overflow: hidden; }
         .total-amount { font-size: 42px; font-weight: 800; margin: 4px 0; }
-        .status-emoji { position:absolute; top:30px; right:25px; font-size:48px; }
+        .status-emoji { position:absolute; top:30px; right:25px; font-size:48px; animation: float 3s ease-in-out infinite; }
 
-        /* 圖表 */
         .chart-section { margin: 20px 24px 0; background: white; border-radius: 24px; padding: 20px; box-shadow: var(--shadow); display: none; }
         .chart-wrapper { position: relative; height: 180px; display: flex; justify-content: center; }
 
-        /* 輸入區 */
         .input-panel { margin: 20px 24px 0; padding: 24px; background: white; border-radius: 24px; box-shadow: var(--shadow); border: 1px solid #F3F4F6; }
         .grid-2 { display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 12px; margin-bottom: 12px; }
         .form-label { font-size: 12px; font-weight: 600; color: var(--text-sub); margin-bottom: 6px; display: block; }
         .styled-input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid #E5E7EB; background: #F9FAFB; font-size: 16px; color: #333; outline: none; -webkit-appearance: none; }
-        
-        /* 禁用狀態輸入框 (用於編輯模式) */
         .styled-input:disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }
 
-        /* 按鈕 */
-        .btn-submit { 
-            width: 100%; background: #1F2937; color: white; border: none; 
-            padding: 15px; border-radius: 14px; font-size: 16px; font-weight: 600; 
-            margin-top: 10px; display: flex; justify-content: center; align-items: center; 
-            cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .btn-submit:active { transform: scale(0.96); background: #000; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        /* 按鈕樣式 */
+        .btn-submit { width: 100%; background: #1F2937; color: white; border: none; padding: 15px; border-radius: 14px; font-size: 16px; font-weight: 600; margin-top: 10px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-submit:active { transform: scale(0.96); background: #000; }
         .btn-submit:disabled { background: #6B7280; opacity: 0.8; cursor: not-allowed; transform: none; }
 
-        /* Loading */
-        .spinner {
-            width: 18px; height: 18px; margin-right: 8px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%; border-top-color: #fff;
-            animation: spin 0.8s linear infinite;
-            display: none;
-        }
+        /* Loading 狀態 */
+        .spinner { width: 18px; height: 18px; margin-right: 8px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; display: none; }
         .btn-loading .spinner { display: inline-block; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        /* 列表區 */
+
         .list-section { padding: 30px 24px; }
-        
-        .t-card {
-            background: white; border-radius: 18px; padding: 16px; 
-            margin-bottom: 12px; display: flex; align-items: center; gap: 14px;
-            box-shadow: var(--shadow); border: 1px solid transparent;
-            position: relative; overflow: hidden; cursor: pointer; transition: transform 0.1s;
-        }
+        .t-card { background: white; border-radius: 18px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow); border: 1px solid transparent; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.1s; }
         .t-card:active { transform: scale(0.98); background: #f9fafb; }
         .t-card.logged { border: 1px solid #E5E7EB; }
         .t-card.logged::before { content:''; position:absolute; left:0; top:0; bottom:0; width:5px; background: var(--success); }
@@ -105,30 +92,25 @@
         .t-amount { font-size: 18px; font-weight: 800; color: var(--text-main); text-align: right; }
         .badge-todo { font-size: 12px; font-weight: 600; color: #6B7280; background: #E5E7EB; padding: 4px 10px; border-radius: 20px; }
 
-        /* 🟡 V7.6 新版提示框 (出帳提醒) */
-        .alert-box { 
-            background: var(--warning-bg); 
-            border: 1px solid var(--warning-border); 
-            color: var(--warning-text); 
-            padding: 16px; border-radius: 16px; margin-bottom: 20px; 
-            font-size: 14px; line-height: 1.6; 
-            display: flex; align-items: flex-start; gap: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
+        .alert-box { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-text); padding: 16px; border-radius: 16px; margin-bottom: 20px; font-size: 14px; line-height: 1.6; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .alert-icon { font-size: 20px; margin-top: -2px; }
         .alert-title { font-weight: 700; margin-bottom: 2px; display: block; color: #7C2D12; }
 
         /* Modal */
-        .modal-overlay { 
-            position: fixed; top:0; left:0; width:100%; height:100%; 
-            background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); 
-            z-index: 10000; display: flex; justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.2s;
-        }
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: 10000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
-        .modal-box { background: white; width: 85%; max-width: 380px; border-radius: 24px; padding: 24px; transform: scale(0.95); transition: 0.2s; max-height: 80vh; overflow-y: auto;}
+        
+        .modal-box { 
+            background: white; width: 85%; max-width: 380px; border-radius: 24px; 
+            padding: 0; transform: scale(0.95); transition: 0.2s; 
+            max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; 
+        }
         .modal-overlay.show .modal-box { transform: scale(1); }
         
+        .modal-header { padding: 24px 24px 15px 24px; flex-shrink: 0; background: white; z-index: 10; }
+        .modal-content-scroll { padding: 0 24px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+        .modal-footer { padding: 15px 24px 24px 24px; flex-shrink: 0; background: white; border-top: 1px solid #F3F4F6; }
+
         .action-btn { display: block; width: 100%; padding: 14px; margin-bottom: 10px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
         .btn-edit { background: #F3F4F6; color: var(--text-main); }
         .btn-delete { background: #FEF2F2; color: var(--danger); }
@@ -141,6 +123,12 @@
     </style>
 </head>
 <body>
+
+    <!-- 雲端狀態 -->
+    <div id="cloudStatus">
+        <div class="status-icon"><div class="spin-circle"></div></div>
+        <span id="cloudText">雲端同步中...</span>
+    </div>
 
     <!-- Login -->
     <div id="loginOverlay">
@@ -155,50 +143,55 @@
 
     <!-- Action Menu -->
     <div id="actionModal" class="modal-overlay">
-        <div class="modal-box">
+        <div class="modal-box" style="display:block; padding:24px;">
             <div style="text-align:center; margin-bottom:20px;">
                 <div id="actionTitle" style="font-size:18px; font-weight:800;"></div>
                 <div id="actionSubtitle" style="font-size:14px; color:#6B7280; margin-top:5px;"></div>
             </div>
             <button class="action-btn btn-edit" id="btnActionEdit">✏️ 修改 / 填入</button>
             <button class="action-btn btn-delete" id="btnActionDelete">🗑️ 刪除紀錄</button>
-            <button class="action-btn" style="background:white; color:#888;" onclick="closeModal('actionModal')">取消</button>
+            <button class="action-btn" style="background:white; color:#888; margin-bottom:0;" onclick="closeModal('actionModal')">取消</button>
         </div>
     </div>
 
-    <!-- Settings Modal (新增 + 列表) -->
+    <!-- Settings Modal -->
     <div id="settingsModal" class="modal-overlay">
         <div class="modal-box">
-            <div style="font-size:18px; font-weight:800; margin-bottom:15px;">銀行設定</div>
-            <div style="background:#F9FAFB; padding:15px; border-radius:16px; margin-bottom:15px;">
-                <input type="text" id="newBank" class="styled-input" placeholder="銀行名稱 (例: 中信)" style="margin-bottom:10px; background:white;">
-                <div class="grid-2">
-                    <input type="number" id="newBill" class="styled-input" placeholder="結帳日" style="background:white;">
-                    <input type="number" id="newPay" class="styled-input" placeholder="扣款日" style="background:white;">
+            <div class="modal-header">
+                <div style="font-size:18px; font-weight:800; margin-bottom:15px;">銀行設定</div>
+                <div style="background:#F9FAFB; padding:15px; border-radius:16px;">
+                    <input type="text" id="newBank" class="styled-input" placeholder="銀行名稱 (例: 中信)" style="margin-bottom:10px; background:white;">
+                    <div class="grid-2">
+                        <input type="number" id="newBill" class="styled-input" placeholder="結帳日" style="background:white;">
+                        <input type="number" id="newPay" class="styled-input" placeholder="扣款日" style="background:white;">
+                    </div>
+                    <button id="btnAddTemp" class="btn-submit" onclick="addTemplate()" style="padding:10px; font-size:14px;">
+                        <div class="spinner"></div><span class="btn-text">＋ 新增</span>
+                    </button>
                 </div>
-                <button id="btnAddTemp" class="btn-submit" onclick="addTemplate()" style="padding:10px; font-size:14px;">
-                    <div class="spinner"></div> <span class="btn-text">＋ 新增</span>
-                </button>
+                <div style="font-size:12px; color:#999; margin-top:15px; font-weight:700;">已儲存的銀行</div>
             </div>
-            <div id="templateList"></div>
-            <button class="btn-submit" onclick="closeModal('settingsModal')" style="background:#F3F4F6; color:#333; margin-top:15px;">關閉</button>
+            <div class="modal-content-scroll">
+                <div id="templateList"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-submit" onclick="closeModal('settingsModal')" style="background:#F3F4F6; color:#333; margin-top:0;">關閉</button>
+            </div>
         </div>
     </div>
 
-    <!-- 🟡 Edit Template Modal (編輯銀行 - V7.6 回歸) -->
+    <!-- Edit Template Modal -->
     <div id="editTemplateModal" class="modal-overlay">
-        <div class="modal-box">
+        <div class="modal-box" style="display:block; padding:24px;">
             <div style="font-size:18px; font-weight:800; margin-bottom:15px;">編輯銀行資訊</div>
             <input type="hidden" id="editIndex">
             <label class="form-label">銀行名稱 (不可修改)</label>
             <input type="text" id="editBankName" class="styled-input" style="margin-bottom:15px;" disabled>
-            
             <div class="grid-2">
                 <div><label class="form-label">結帳日</label><input type="number" id="editBill" class="styled-input"></div>
                 <div><label class="form-label">扣款日</label><input type="number" id="editPay" class="styled-input"></div>
             </div>
-
-            <div style="display:flex; gap:10px; margin-top:10px;">
+            <div style="display:flex; gap:10px; margin-top:15px;">
                 <button class="btn-submit" onclick="closeModal('editTemplateModal')" style="background:#F3F4F6; color:#333; margin-top:0;">取消</button>
                 <button id="btnSaveEdit" class="btn-submit" onclick="saveTemplateEdit()" style="margin-top:0;">
                     <div class="spinner"></div> <span class="btn-text">儲存</span>
@@ -210,7 +203,7 @@
 
     <!-- Confirm Modal -->
     <div id="confirmModal" class="modal-overlay">
-        <div class="modal-box">
+        <div class="modal-box" style="display:block; padding:24px;">
             <div id="confirmMsg" style="font-size:16px; color:#333; margin-bottom:20px; line-height:1.5;"></div>
             <div style="display:flex; gap:10px; justify-content:flex-end;">
                 <button class="action-btn" style="width:auto; background:#F3F4F6; margin:0;" onclick="closeModal('confirmModal')">取消</button>
@@ -222,7 +215,7 @@
     <!-- Main UI -->
     <div class="hero">
         <div class="header-row">
-            <div><span class="app-title">My Wallet</span> <span style="font-size:12px; background:#E5E7EB; padding:3px 6px; border-radius:6px; color:#555;">V7.6</span></div>
+            <div><span class="app-title">My Wallet</span> <span style="font-size:12px; background:#E5E7EB; padding:3px 6px; border-radius:6px; color:#555;">V8.1.1</span></div>
             <div style="display:flex; gap:8px;">
                 <button class="btn-icon" onclick="openSettingsModal()">⚙️ 設定</button>
                 <button class="btn-icon" onclick="logout()" style="color:var(--danger);">登出</button>
@@ -262,10 +255,9 @@
             <div style="font-size:18px; font-weight:800;">帳單明細</div>
             <div style="display:flex; gap:10px;">
                 <select id="monthSelector" style="border:none; background:transparent; font-weight:600;" onchange="filterData()"></select>
-                <button onclick="loadData()" style="border:none; background:white; border-radius:50%; width:30px; height:30px; box-shadow:0 2px 5px rgba(0,0,0,0.1); cursor:pointer;">↻</button>
+                <button onclick="manualReload()" style="border:none; background:white; border-radius:50%; width:30px; height:30px; box-shadow:0 2px 5px rgba(0,0,0,0.1); cursor:pointer;">↻</button>
             </div>
         </div>
-        <!-- 🟡 Alert Container -->
         <div id="alertContainer"></div>
         <div id="listContainer"></div>
     </div>
@@ -280,6 +272,29 @@
 
     let allData=[], allTemplates=[], USER_PASSWORD="", expenseChart=null, currentRenderedItems = []; 
     const KEYS = { BANK:'銀行名稱', BILL:'結帳日', PAY:'扣款日' };
+    
+    const CloudStatus = {
+        el: document.getElementById('cloudStatus'),
+        icon: document.querySelector('#cloudStatus .status-icon'),
+        text: document.getElementById('cloudText'),
+        timer: null,
+        set: function(state, customText) {
+            clearTimeout(this.timer);
+            this.el.className = 'show ' + state;
+            if (state === 'syncing') {
+                this.icon.innerHTML = '<div class="spin-circle"></div>';
+                this.text.innerText = customText || '雲端同步中...';
+            } else if (state === 'success') {
+                this.icon.innerHTML = '✅';
+                this.text.innerText = customText || '已儲存';
+                this.timer = setTimeout(() => { this.el.className = ''; }, 2000);
+            } else if (state === 'error') {
+                this.icon.innerHTML = '❌';
+                this.text.innerText = '同步失敗 (點此重試)';
+                this.el.onclick = () => loadData(); 
+            }
+        }
+    };
 
     document.addEventListener('DOMContentLoaded', () => {
         const p = localStorage.getItem('myBillPass');
@@ -305,9 +320,14 @@
 
     function showToast(m) { const t=document.getElementById('toast'); t.innerText=m; t.className='show'; setTimeout(()=>t.className='', 2500); }
 
-    async function loadData(isInit=false) {
+    function manualReload() {
+        CloudStatus.set('syncing', '資料更新中...');
+        loadData(false, true);
+    }
+
+    async function loadData(isInit=false, isManual=false) {
         const ctr = document.getElementById('listContainer');
-        if(!isInit) ctr.innerHTML = '<div style="text-align:center; padding:20px; color:#aaa;">載入中...</div>';
+        if(isInit) ctr.innerHTML = '<div style="text-align:center; padding:20px; color:#aaa;">載入中...</div>';
         
         try {
             const res = await fetch(`${API_URL}?password=${encodeURIComponent(USER_PASSWORD)}`);
@@ -327,13 +347,20 @@
             updateBankSelect();
             filterData();
             setBtnLoading('loginBtn', false);
+            
+            if(isManual) CloudStatus.set('success', '資料已更新'); 
+            else if(!isInit) CloudStatus.set('success');
+
         } catch(e) {
             console.error(e);
             if(isInit) {
                 document.getElementById('loginError').innerText = e.message.includes("密碼") ? '❌ 密碼錯誤' : '⚠️ 連線失敗';
                 setBtnLoading('loginBtn', false); 
                 if(e.message.includes("密碼")) localStorage.removeItem('myBillPass');
-            } else ctr.innerHTML = '⚠️ 載入失敗';
+            } else {
+                if(isManual) CloudStatus.set('error');
+                else ctr.innerHTML = '⚠️ 載入失敗';
+            }
         }
     }
 
@@ -351,6 +378,7 @@
         sorted.forEach((t, index) => {
             const bank = getVal(t, KEYS.BANK);
             const bill = getVal(t, KEYS.BILL);
+            const pay = getVal(t, KEYS.PAY);
             const rec = monthData.find(r => r.bank === bank);
             currentRenderedItems.push({ template: t, record: rec });
             const itemIndex = currentRenderedItems.length - 1;
@@ -371,7 +399,7 @@
                     <div class="t-icon">${bank.charAt(0)}</div>
                     <div class="t-content">
                         <div class="t-bank">${bank}</div>
-                        <div style="font-size:12px; color:#888;">結帳日：${bill}</div>
+                        <div style="font-size:12px; color:#888;">結帳日 ${bill} / 扣款日 ${pay}</div>
                     </div>
                     ${right}
                 </div>
@@ -397,7 +425,7 @@
         document.getElementById('actionTitle').innerText = bank;
         document.getElementById('actionSubtitle').innerText = `已登錄：$${Number(record.amount).toLocaleString()}`;
         document.getElementById('btnActionEdit').onclick = () => { fillInput(bank, record.amount, record.note || ''); closeModal('actionModal'); };
-        document.getElementById('btnActionDelete').onclick = () => { closeModal('actionModal'); customConfirm(`確定要刪除 ${bank} 的紀錄嗎？`, () => deleteRecord(record.rowIndex)); };
+        document.getElementById('btnActionDelete').onclick = () => { closeModal('actionModal'); customConfirm(`確定要刪除 ${bank} 的紀錄嗎？`, () => deleteRecord(record.rowIndex, bank)); };
         openModal('actionModal');
     }
 
@@ -414,7 +442,6 @@
         const amt = document.getElementById('amount').value;
         const note = document.getElementById('note').value;
         const month = document.getElementById('billMonthInput').value;
-        
         if(!bank || !amt) return showToast('⚠️ 請填寫完整');
         
         const isDup = allData.some(r => r.bank === bank && String(r.month).trim() === month);
@@ -425,120 +452,114 @@
     function executeSubmit(bank, amt, note, month) {
         const tpl = allTemplates.find(t=>getVal(t,KEYS.BANK)===bank);
         const pay = tpl ? getVal(tpl,KEYS.PAY) : '-';
-        
-        setBtnLoading('submitBtn', true, '雲端同步中...');
-        
+        const fakeRecord = { bank, amount: amt, note, month, paymentDate: pay, rowIndex: -1 }; 
+        allData.unshift(fakeRecord);
+        filterData(); 
+        document.getElementById('amount').value=''; document.getElementById('note').value='';
+        CloudStatus.set('syncing'); 
         fetch(API_URL, {
             method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
             body:JSON.stringify({password:USER_PASSWORD, action:'post', bank, amount:amt, note, paymentDate:pay, month})
-        }).then(()=>{
-            setTimeout(()=>{
-                showToast('✅ 記帳成功');
-                document.getElementById('monthSelector').value = month; 
-                loadData(); 
-                setBtnLoading('submitBtn', false); 
-                document.getElementById('amount').value=''; document.getElementById('note').value='';
-            },1000);
-        });
+        }).then(()=>{ CloudStatus.set('success'); }).catch(() => { CloudStatus.set('error'); });
     }
 
-    function deleteRecord(idx) {
-        showToast('🗑️ 刪除中...');
+    function deleteRecord(idx, bankName) {
+        allData = allData.filter(r => r.rowIndex !== idx);
+        filterData();
+        CloudStatus.set('syncing');
         fetch(API_URL, {
             method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
             body:JSON.stringify({password:USER_PASSWORD, action:'delete', rowIndex:idx})
-        }).then(() => setTimeout(loadData, 1000));
+        }).then(() => { CloudStatus.set('success'); }).catch(() => { CloudStatus.set('error'); });
     }
 
-    // 🟡 銀行編輯/新增相關函式
     function addTemplate() {
         const b=document.getElementById('newBank').value, bill=document.getElementById('newBill').value, pay=document.getElementById('newPay').value;
         if(!b||!bill||!pay) return showToast('⚠️ 請填寫完整');
-        
         setBtnLoading('btnAddTemp', true, '新增中...');
-        
         fetch(API_URL, {
             method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
             body:JSON.stringify({password:USER_PASSWORD, action:'template_create', BankName:b, BillDate:bill, PaymentDate:pay})
         }).then(() => setTimeout(()=>{ 
             loadData(); 
             setBtnLoading('btnAddTemp', false);
-            document.getElementById('newBank').value=''; showToast('✅ 完成'); 
+            document.getElementById('newBank').value=''; document.getElementById('newBill').value=''; document.getElementById('newPay').value='';
+            showToast('✅ 完成'); 
         },1000));
     }
 
-    // 開啟編輯視窗
     function openEditTemplateModal(index, bank, bill, pay) {
         document.getElementById('editIndex').value = index;
-        document.getElementById('editBankName').value = bank; // Disabled field
+        document.getElementById('editBankName').value = bank;
         document.getElementById('editBill').value = bill;
         document.getElementById('editPay').value = pay;
         openModal('editTemplateModal');
     }
 
-    // 儲存編輯
+    // 🟡 樂觀更新 (Optimistic Update) for Edit Template
     function saveTemplateEdit() {
         const idx = document.getElementById('editIndex').value;
         const bank = document.getElementById('editBankName').value;
         const bill = document.getElementById('editBill').value;
         const pay = document.getElementById('editPay').value;
-
         if(!bill || !pay) return showToast('⚠️ 日期不能為空');
 
+        // 1. UI: 按鈕鎖定
         setBtnLoading('btnSaveEdit', true, '儲存中...');
+
+        // 2. Data: 本地直接更新 (假更新)
+        // 注意：idx 是字串，templateIndex 可能是數字，使用 == 比較
+        const target = allTemplates.find(t => t.templateIndex == idx);
+        if (target) {
+            target.BillDate = bill;
+            target.PaymentDate = pay;
+            // 若資料結構包含中文 Key，一併更新以防萬一
+            target['結帳日'] = bill;
+            target['扣款日'] = pay;
+        }
+
+        // 3. UI: 立即刷新背後的列表
+        renderTemplateList(); // 刷新設定列表
+        filterData(); // 刷新主畫面
+
+        // 4. Network: 背景上傳
+        // User 可以等待，也可以不等，但這裡我們顯示 Loading 然後成功後關閉
+        CloudStatus.set('syncing');
 
         fetch(API_URL, {
             method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({
-                password: USER_PASSWORD, 
-                action: 'template_update', 
-                templateIndex: idx, 
-                BankName: bank, 
-                BillDate: bill, 
-                PaymentDate: pay 
-            })
+            body:JSON.stringify({ password: USER_PASSWORD, action: 'template_update', templateIndex: idx, BankName: bank, BillDate: bill, PaymentDate: pay })
         }).then(() => {
             setTimeout(() => {
-                closeModal('editTemplateModal');
-                setBtnLoading('btnSaveEdit', false);
-                showToast('✅ 設定已更新');
-                // 儲存成功後，重新載入資料以刷新列表和外面的設定選單
-                loadData().then(() => {
-                    // 如果還想保持設定視窗開啟並更新列表
-                    renderTemplateList(); 
-                });
-            }, 1000);
+                closeModal('editTemplateModal'); // 關閉視窗
+                setBtnLoading('btnSaveEdit', false); // 恢復按鈕
+                CloudStatus.set('success'); // 顯示成功
+            }, 500); // 稍微延遲讓使用者看到「儲存中...」
+        }).catch(() => {
+            setBtnLoading('btnSaveEdit', false);
+            showToast('❌ 儲存失敗');
+            CloudStatus.set('error');
         });
     }
     
     function deleteTemplate(idx) {
         customConfirm('確定刪除此銀行？', () => {
-            showToast('🗑️ 刪除中...');
+            CloudStatus.set('syncing');
             fetch(API_URL, {
                 method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
                 body:JSON.stringify({password:USER_PASSWORD, action:'template_delete', templateIndex:idx})
-            }).then(()=>setTimeout(loadData,1000));
+            }).then(()=>setTimeout(() => { loadData(); CloudStatus.set('success'); }, 1000));
         });
     }
 
-    // 渲染設定列表 (含編輯按鈕)
     function renderTemplateList() {
         const d = document.getElementById('templateList'); d.innerHTML='';
-        // 依照結帳日排序
         const sorted = [...allTemplates].sort((a,b) => (parseInt(getVal(a,KEYS.BILL))||0) - (parseInt(getVal(b,KEYS.BILL))||0));
-
         sorted.forEach(t => {
-            const n = getVal(t,KEYS.BANK);
-            const b = getVal(t,KEYS.BILL);
-            const p = getVal(t,KEYS.PAY);
+            const n = getVal(t,KEYS.BANK); const b = getVal(t,KEYS.BILL); const p = getVal(t,KEYS.PAY);
             const row = document.createElement('div'); row.className='setup-row';
-            
-            // 這裡加入 Edit 按鈕
             row.innerHTML = `
-                <div>
-                    <div style="font-weight:700">${n}</div>
-                    <div style="font-size:12px;color:#888;">結 ${b} / 扣 ${p}</div>
-                </div>
+                <div><div style="font-weight:700">${n}</div><div style="font-size:12px;color:#888;">結帳日 ${b} / 扣款日 ${p}</div></div>
                 <div style="display:flex; gap:5px;">
                     <button class="btn-setup-action" style="color:#4F46E5;" onclick="openEditTemplateModal(${t.templateIndex}, '${n}', '${b}', '${p}')">✎ 編輯</button>
                     <button class="btn-setup-action" style="color:#EF4444;" onclick="deleteTemplate(${t.templateIndex})">🗑️ 刪除</button>
@@ -550,66 +571,28 @@
     function openModal(id) { document.getElementById(id).classList.add('show'); }
     function closeModal(id) { document.getElementById(id).classList.remove('show'); }
     function openSettingsModal() { renderTemplateList(); openModal('settingsModal'); }
-
-    function customConfirm(msg, callback) {
-        document.getElementById('confirmMsg').innerText = msg;
-        document.getElementById('confirmBtnAction').onclick = () => { closeModal('confirmModal'); callback(); };
-        openModal('confirmModal');
-    }
-
-    function renderChart(l,d,c) {
-        const ctx = document.getElementById('expenseChart').getContext('2d');
-        if(expenseChart) expenseChart.destroy();
-        expenseChart = new Chart(ctx, { type:'doughnut', data:{labels:l,datasets:[{data:d,backgroundColor:c,borderWidth:0}]}, options:{responsive:true,maintainAspectRatio:false,cutout:'75%',plugins:{legend:{display:false}}} });
-    }
+    function customConfirm(msg, callback) { document.getElementById('confirmMsg').innerText = msg; document.getElementById('confirmBtnAction').onclick = () => { closeModal('confirmModal'); callback(); }; openModal('confirmModal'); }
+    function renderChart(l,d,c) { const ctx = document.getElementById('expenseChart').getContext('2d'); if(expenseChart) expenseChart.destroy(); expenseChart = new Chart(ctx, { type:'doughnut', data:{labels:l,datasets:[{data:d,backgroundColor:c,borderWidth:0}]}, options:{responsive:true,maintainAspectRatio:false,cutout:'75%',plugins:{legend:{display:false}}} }); }
     
-    // 🟡 V7.6 出帳提醒邏輯 (改為溫馨提醒)
     function checkOverdue(ym) {
         const now=new Date(), y=parseInt(ym.substring(0,4)), m=parseInt(ym.substring(4,6));
         const alertList = [];
         allTemplates.forEach(t=>{
             const d = parseInt(getVal(t,KEYS.BILL)); if(!d) return;
-            // 結帳日過了 + 1 天
             const cutoff = new Date(y, m-1, d+1);
             const n = getVal(t,KEYS.BANK);
-            // 條件：時間超過結帳日 且 資料庫沒有這筆紀錄
-            if(now > cutoff && !allData.some(r=>r.bank===n && String(r.month).trim()===ym)) {
-                alertList.push(n);
-            }
+            if(now > cutoff && !allData.some(r=>r.bank===n && String(r.month).trim()===ym)) alertList.push(n);
         });
-        
         const container = document.getElementById('alertContainer');
         if (alertList.length > 0) {
-            container.innerHTML = `
-                <div class="alert-box">
-                    <span class="alert-icon">🔔</span>
-                    <div>
-                        <span class="alert-title">待登錄提醒</span>
-                        ${alertList.join('、')} 帳單已結帳，請核對並登錄金額。
-                    </div>
-                </div>`;
-        } else {
-            container.innerHTML = '';
-        }
+            container.innerHTML = `<div class="alert-box"><span class="alert-icon">🔔</span><div><span class="alert-title">待登錄提醒</span>${alertList.join('、')} 帳單已結帳，請核對並登錄金額。</div></div>`;
+        } else container.innerHTML = '';
     }
     
-    function updateBankSelect() {
-        const s = document.getElementById('bankSelector'); s.innerHTML='<option value="" disabled selected>請選擇</option>';
-        allTemplates.forEach(t => { const o=document.createElement('option'); o.value=getVal(t,KEYS.BANK); o.text=getVal(t,KEYS.BANK); s.appendChild(o); });
-    }
-
-    function updateTotal(t,c) {
-        document.getElementById('totalAmount').innerText=`$${t.toLocaleString()}`;
-        document.getElementById('countLabel').innerText=`${c} 筆紀錄`;
-        document.getElementById('emojiStatus').innerText = t>20000?'💸':(t>5000?'🤔':'😊');
-    }
-
-    function verifyLogin(auto=false) { 
-        USER_PASSWORD=document.getElementById('passwordInput').value; 
-        if(USER_PASSWORD){ setBtnLoading('loginBtn', true, '安全驗證中...'); loadData(true); } 
-    }
+    function updateBankSelect() { const s = document.getElementById('bankSelector'); s.innerHTML='<option value="" disabled selected>請選擇</option>'; allTemplates.forEach(t => { const o=document.createElement('option'); o.value=getVal(t,KEYS.BANK); o.text=getVal(t,KEYS.BANK); s.appendChild(o); }); }
+    function updateTotal(t,c) { document.getElementById('totalAmount').innerText=`$${t.toLocaleString()}`; document.getElementById('countLabel').innerText=`${c} 筆紀錄`; document.getElementById('emojiStatus').innerText = t>20000?'💸':(t>5000?'🤔':'😊'); }
+    function verifyLogin(auto=false) { USER_PASSWORD=document.getElementById('passwordInput').value; if(USER_PASSWORD){ setBtnLoading('loginBtn', true, '安全驗證中...'); loadData(true); } }
     function logout() { customConfirm('確定登出？', () => { localStorage.removeItem('myBillPass'); location.reload(); }); }
-    
     function normalize(a) { return Array.isArray(a)?a.map(o=>{const n={};for(let k in o)n[k.trim()]=o[k];return n;}):[]; }
     function getVal(t,k) { const m={[KEYS.BANK]:'BankName',[KEYS.BILL]:'BillDate',[KEYS.PAY]:'PaymentDate'}; return t?.[k]??t?.[m[k]]??'-'; }
     function strColor(s) { let h=0;for(let i=0;i<s.length;i++)h=s.charCodeAt(i)+((h<<5)-h); return '#'+("00000"+(h&0xFFFFFF).toString(16)).substr(-6); }
