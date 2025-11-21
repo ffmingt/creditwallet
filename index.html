@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V12.7</title>
+    <title>My Wallet V12.6.1</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- V12.7 Style System --- */
+        /* --- V12.5 Base Style --- */
         :root { 
             --bg-body: #F9FAFB; 
             --primary: #4F46E5; 
@@ -37,9 +37,16 @@
         }
         .btn-submit:active { transform: scale(0.96); background-color: #000; }
         .btn-submit:disabled { background: #6B7280; opacity: 0.8; cursor: not-allowed; transform: none; }
-        .spinner { width: 18px; height: 18px; min-width: 18px; margin-right: 8px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; display: none; }
+        
+        .spinner { 
+            width: 18px; height: 18px; min-width: 18px; 
+            margin-right: 8px; border: 2px solid rgba(255,255,255,0.3); 
+            border-radius: 50%; border-top-color: #fff; 
+            animation: spin 0.8s linear infinite; display: none; 
+        }
         .btn-loading .spinner { display: inline-block; } 
         @keyframes spin { to { transform: rotate(360deg); } }
+
         .btn-icon { background:white; border:1px solid #E5E7EB; padding:8px 12px; border-radius:12px; font-size:13px; font-weight:600; color:#555; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.1s; cursor: pointer; }
         .btn-icon:active { transform:scale(0.95); background: #f3f4f6; }
 
@@ -73,6 +80,7 @@
         
         .total-card { background: var(--primary-gradient); border-radius: 28px; padding: 25px; color: white; box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.4); position: relative; overflow: hidden; transition: all 0.3s ease; }
         .crypto-bg { background: var(--crypto-gradient) !important; box-shadow: 0 20px 25px -5px rgba(5, 150, 105, 0.4) !important; }
+        
         .total-amount { font-size: 42px; font-weight: 800; margin: 5px 0; letter-spacing: -1px; }
         .total-amount-group { display: flex; flex-direction: column; margin-top: 5px; }
         .total-amount-main { font-size: 42px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
@@ -116,11 +124,11 @@
         .t-content { flex: 1; min-width: 0; }
         .t-bank { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
         .t-amount { font-size: 18px; font-weight: 800; color: var(--text-main); text-align: right; }
-        .c-sub-value { font-size: 12px; color: #059669; font-weight: 600; text-align: right; margin-top: 3px; font-family: monospace; }
-        .c-rate { font-size: 11px; color: #9CA3AF; font-weight: 400; margin-left: 3px; }
+        .c-rate { font-size: 11px; color: #9CA3AF; margin-left: 4px; }
+        .c-usd-tag { display: inline-block; background: #FEF3C7; color: #D97706; padding: 2px 6px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-top: 2px; }
         .badge-todo { font-size: 12px; font-weight: 600; color: #6B7280; background: #E5E7EB; padding: 4px 10px; border-radius: 20px; }
 
-        .alert-box { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-text); padding: 16px; border-radius: 16px; margin-bottom: 20px; font-size: 14px; line-height: 1.6; display: flex; align-items: flex-start; gap: 12px; width: 100%; box-sizing: border-box; }
+        .alert-box { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-text); padding: 16px; border-radius: 16px; margin-bottom: 20px; font-size: 14px; line-height: 1.6; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); width: 100%; box-sizing: border-box; }
         .alert-icon { font-size: 20px; margin-top: -2px; flex-shrink: 0; }
         .alert-content { flex: 1; }
         .alert-title { font-weight: 700; margin-bottom: 2px; display: block; color: #7C2D12; }
@@ -145,7 +153,6 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<!-- 🟡 Enable Touch Feedback -->
 <body ontouchstart="">
 
     <div id="cloudStatus"><div class="status-icon"><div class="spin-circle"></div></div><span id="cloudText">雲端同步中...</span></div>
@@ -428,10 +435,10 @@ const DataLoader = {
             const res = await fetch(`${API_URL}?password=${encodeURIComponent(USER_PASSWORD)}`);
             const json = await res.json();
             if(json.error) throw new Error(json.error);
-
-            // 🟢 [Fix] 提早存檔：確保密碼優先寫入
-            if(!json.error) localStorage.setItem('myBillPass', USER_PASSWORD);
             
+            // 🟢 FIX 1: Save password immediately on success
+            localStorage.setItem('myBillPass', USER_PASSWORD);
+
             GLOBAL_DATA = {
                 wallet: {
                     data: mapNormalize(json.wallet.data).reverse(),
@@ -456,8 +463,6 @@ const DataLoader = {
             document.getElementById('cryptoSettingsRate').innerText = `🇺🇸 1 USD ≈ ${rate} TWD`;
             
             setBtnLoading('loginBtn', false);
-            
-            // 🟢 Fix: 靜默失敗模式 (背景刷新時不跳錯)
             if(isManual) CloudStatus.set('success', '資料已更新');
 
         } catch(e) {
@@ -465,8 +470,8 @@ const DataLoader = {
                 document.getElementById('loginError').innerText = e.message.includes("密碼") ? '❌ 密碼錯誤' : '⚠️ 連線失敗';
                 setBtnLoading('loginBtn', false);
             } else {
+                // 🟢 FIX 2: Silent error for background refresh
                 if(isManual) CloudStatus.set('error');
-                // else console.warn('Background Refresh Failed (Silent)');
             }
         }
     }
@@ -478,6 +483,23 @@ function verifyLogin() {
     setBtnLoading('loginBtn', true, '驗證中...');
     DataLoader.load(true);
 }
+
+// 🟢 FIX 1: Auto-Login Check
+document.addEventListener('DOMContentLoaded', () => {
+    const p = localStorage.getItem('myBillPass');
+    if(p) { 
+        document.getElementById('passwordInput').value = p; 
+        verifyLogin(true); 
+    }
+    
+    // Init selectors
+    initMonthSelect('w-list-month'); 
+    initMonthSelect('w-input-month');
+    const curr = getCurrentMonthVal();
+    document.getElementById('w-input-month').value = curr;
+    document.getElementById('w-list-month').value = curr;
+});
+
 
 // --- App 1: Wallet Logic ---
 const WalletApp = {
@@ -563,9 +585,13 @@ const WalletApp = {
         this.render();
         
         document.getElementById('w-amount').value=''; document.getElementById('w-note').value='';
+        
+        // 🟢 FIX 2: Delay background refresh
         setBtnLoading('w-submit', true, '排程中...'); 
-        // 🟢 Fix: Delay background refresh to avoid race condition
-        setTimeout(() => setBtnLoading('w-submit', false), 500);
+        setTimeout(() => {
+             setBtnLoading('w-submit', false);
+             CloudStatus.set('syncing'); // Show syncing immediately
+        }, 1000);
 
         SyncManager.add({ appName:'wallet', action:'post', bank, amount:amt, note, month, paymentDate: tpl?tpl.paymentdate:'-' });
     },
@@ -616,7 +642,6 @@ const CryptoApp = {
         const methods = GLOBAL_DATA.crypto.methods;
         const rate = GLOBAL_DATA.crypto.rate;
         
-        // 🟢 Fix: Always reset selector
         const sel = document.getElementById('c-method');
         const currentVal = sel.value;
         sel.innerHTML = '<option disabled selected>選擇管道</option>';
@@ -626,8 +651,8 @@ const CryptoApp = {
 
         const totalTwd = data.reduce((sum, r) => sum + Number(r.cost_twd || r.cost), 0);
         const displayTotal = this.showInUsd ? `$${Math.round(totalTwd/rate).toLocaleString()} USD` : `$${totalTwd.toLocaleString()} TWD`;
-        document.getElementById('c-total').innerText = displayTotal;
-        document.getElementById('c-rate-display').innerText = `Ex: ${rate}`;
+        document.getElementById('c-total-twd').innerText = `$${totalTwd.toLocaleString()} TWD`;
+        document.getElementById('c-total-usd').innerText = `≈ $${Math.round(totalTwd/rate).toLocaleString()} USD`;
 
         let html = '';
         data.forEach(r => {
@@ -682,7 +707,10 @@ const CryptoApp = {
         document.getElementById('c-cost').value = ''; document.getElementById('c-usd').value = ''; document.getElementById('c-note').value = ''; document.getElementById('c-cost').focus();
         
         setBtnLoading('c-submit', true, '排程中...');
-        setTimeout(() => setBtnLoading('c-submit', false), 500);
+        setTimeout(() => {
+             setBtnLoading('c-submit', false);
+             CloudStatus.set('syncing');
+        }, 1000);
 
         SyncManager.add({ appName: 'crypto', action: 'post', date: isoDate, method, cost, note, type: this.mode === 'usd' ? 'USD' : 'TWD', amount_usd: this.mode === 'usd' ? usd : 0 });
     },
@@ -718,7 +746,12 @@ const CryptoApp = {
         
         CloudStatus.set('syncing');
         fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, appName:'crypto', action:'config_add', methodName:val}) })
-        .then(() => { setBtnLoading('btnAddCryptoMethod', false); CloudStatus.set('success'); DataLoader.load(); });
+        .then(() => { 
+            setBtnLoading('btnAddCryptoMethod', false); 
+            CloudStatus.set('success'); 
+            // Silent refresh settings
+            setTimeout(() => DataLoader.load(), 2000);
+        });
     },
     deleteMethod: function(name) {
         customConfirm(`刪除 ${name}?`, () => {
@@ -727,7 +760,10 @@ const CryptoApp = {
             this.render();
             CloudStatus.set('syncing');
             fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, appName:'crypto', action:'config_delete', methodName:name}) })
-            .then(() => { CloudStatus.set('success'); DataLoader.load(); });
+            .then(() => { 
+                CloudStatus.set('success'); 
+                setTimeout(() => DataLoader.load(), 2000);
+            });
         });
     }
 };
@@ -778,53 +814,4 @@ function addTemplate() {
 }
 function saveTemplateEdit() {
     const idx = document.getElementById('editIndex').value;
-    const bank = document.getElementById('editBankName').value;
-    const bill = document.getElementById('editBill').value;
-    const pay = document.getElementById('editPay').value;
-    if(!bill || !pay) return showToast('⚠️ 日期不能為空');
-    setBtnLoading('btnSaveEdit', true, '儲存中...');
-    
-    const target = GLOBAL_DATA.wallet.templates.find(t => t.templateindex == idx);
-    if (target) { target.billdate = bill; target.paymentdate = pay; }
-    WalletApp.render(); renderTemplateList();
-    
-    CloudStatus.set('syncing');
-    fetch(API_URL, {
-        method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ password: USER_PASSWORD, appName:'wallet', action: 'template_update', templateIndex: idx, BankName: bank, BillDate: bill, PaymentDate: pay })
-    }).then(() => { setTimeout(() => { closeModal('editTemplateModal'); setBtnLoading('btnSaveEdit', false); CloudStatus.set('success'); DataLoader.load(); }, 1000); });
-}
-function deleteTemplate(idx) {
-    customConfirm('確定刪除此銀行?', () => {
-        CloudStatus.set('syncing');
-        fetch(API_URL, {
-            method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({password:USER_PASSWORD, appName:'wallet', action:'template_delete', templateIndex:idx})
-        }).then(()=>setTimeout(() => { DataLoader.load().then(() => renderTemplateList()); CloudStatus.set('success'); }, 1000));
-    });
-}
-function openEditTemplateModal(index, bank, bill, pay) { document.getElementById('editIndex').value = index; document.getElementById('editBankName').value = bank; document.getElementById('editBill').value = bill; document.getElementById('editPay').value = pay; openModal('editTemplateModal'); }
-function renderTemplateList() {
-    const d = document.getElementById('templateList'); d.innerHTML='';
-    const sorted = [...GLOBAL_DATA.wallet.templates].sort((a,b) => (parseInt(a.billdate)||0) - (parseInt(b.billdate)||0));
-    sorted.forEach(t => {
-        const n = t.bankname; const b = t.billdate; const p = t.paymentdate;
-        const row = document.createElement('div'); row.className='setup-row';
-        row.innerHTML = `<div><div style="font-weight:700">${n}</div><div style="font-size:12px;color:#888;">結帳日 ${b} / 扣款日 ${p}</div></div><div style="display:flex; gap:5px;"><button class="btn-setup-action" style="color:#4F46E5;" onclick="openEditTemplateModal(${t.templateindex}, '${n}', '${b}', '${p}')">✎ 編輯</button><button class="btn-setup-action" style="color:#EF4444;" onclick="deleteTemplate(${t.templateindex})">🗑️ 刪除</button></div>`;
-        d.appendChild(row);
-    });
-}
-
-// Core: Map Normalize
-function mapNormalize(arr) {
-    if(!Array.isArray(arr)) return [];
-    const keyMap = { '銀行名稱': 'bankname', 'bankname': 'bankname', '結帳日': 'billdate', 'billdate': 'billdate', '扣款日': 'paymentdate', 'paymentdate': 'paymentdate', '銀行': 'bank', 'bank': 'bank', '金額': 'amount', 'amount': 'amount', '備註': 'note', 'note': 'note', '月份': 'month', 'month': 'month', 'uuid': 'uuid', 'UUID': 'uuid', '日期': 'date', 'date': 'date', '管道': 'method', 'method': 'method', '台幣成本': 'cost_twd', 'cost_twd': 'cost_twd', 'cost': 'cost_twd', '外幣金額': 'amount_usd', 'amount_usd': 'amount_usd', '幣別': 'type', 'type': 'type' };
-    return arr.map(obj => { const newObj = {}; for(let k in obj) { const cleanKey = k.trim(); const mappedKey = keyMap[cleanKey] || cleanKey.toLowerCase(); newObj[mappedKey] = obj[k]; } return newObj; });
-}
-function getVal(t,k) { return t[k.toLowerCase()] || '-'; } 
-function strColor(s) { let h=0;for(let i=0;i<s.length;i++)h=s.charCodeAt(i)+((h<<5)-h); return '#'+("00000"+(h&0xFFFFFF).toString(16)).substr(-6); }
-function getCurrentMonthVal() { const d=new Date(); return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`; }
-function initMonthSelect(id) { const s=document.getElementById(id),d=new Date(); d.setMonth(d.getMonth()+1); for(let i=0;i<24;i++){ const v=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`; const o=document.createElement('option'); o.value=v; o.text=`${d.getFullYear()} / ${String(d.getMonth()+1).padStart(2,'0')}`; s.appendChild(o); d.setMonth(d.getMonth()-1); } }
-</script>
-</body>
-</html>
+    const bank = document.getElementById('editBankName')
