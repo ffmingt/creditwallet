@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V13.0</title>
+    <title>My Wallet V12.9</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- V13.0 Style --- */
+        /* --- V12.5 Base Style (Unchanged) --- */
         :root { 
             --bg-body: #F9FAFB; 
             --primary: #4F46E5; 
@@ -73,7 +73,7 @@
         /* Rate Bar */
         .rate-bar { margin-top: auto; background: #ECFDF5; border: 1px solid #D1FAE5; color: #047857; font-weight: 600; font-size: 14px; padding: 12px; border-radius: 16px; text-align: center; font-family: monospace; display: flex; justify-content: center; align-items: center; gap: 8px; }
 
-        /* Wallet & Crypto */
+        /* Wallet & Crypto Layout */
         .hero { padding: 20px 24px 10px 24px; }
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .app-title { font-size: 24px; font-weight: 800; color: #111; }
@@ -95,6 +95,7 @@
         .chart-drawer.open { max-height: 280px; opacity: 1; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; }
         .chart-wrapper { position: relative; height: 200px; width: 100%; display: flex; justify-content: center; }
 
+        /* Inputs */
         .input-panel { margin: 20px 24px 0; padding: 24px; background: white; border-radius: 24px; box-shadow: var(--shadow); border: 1px solid #F3F4F6; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
         .form-label { font-size: 12px; font-weight: 600; color: var(--text-sub); margin-bottom: 6px; display: block; }
@@ -104,6 +105,7 @@
         .segment-btn { flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 600; color: #6B7280; border-radius: 10px; cursor: pointer; transition: 0.2s; }
         .segment-btn.active { background: white; color: #1F2937; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
+        /* Lists */
         .list-section { padding: 30px 24px; }
         .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #EEE; }
         .list-title { font-size: 18px; font-weight: 800; color: var(--text-main); }
@@ -121,8 +123,8 @@
         .t-content { flex: 1; min-width: 0; }
         .t-bank { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
         .t-amount { font-size: 18px; font-weight: 800; color: var(--text-main); text-align: right; }
-        .c-sub-value { font-size: 12px; color: #059669; font-weight: 600; text-align: right; margin-top: 3px; font-family: monospace; }
-        .c-rate { font-size: 11px; color: #9CA3AF; font-weight: 400; margin-left: 3px; }
+        .c-rate { font-size: 11px; color: #9CA3AF; margin-left: 4px; }
+        .c-usd-tag { display: inline-block; background: #FEF3C7; color: #D97706; padding: 2px 6px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-top: 2px; }
         .badge-todo { font-size: 12px; font-weight: 600; color: #6B7280; background: #E5E7EB; padding: 4px 10px; border-radius: 20px; }
 
         .alert-box { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-text); padding: 16px; border-radius: 16px; margin-bottom: 20px; font-size: 14px; line-height: 1.6; display: flex; align-items: flex-start; gap: 12px; width: 100%; box-sizing: border-box; }
@@ -382,7 +384,7 @@ let USER_PASSWORD = "";
 let GLOBAL_DATA = { wallet: {data:[], templates:[]}, crypto: {data:[], methods:[], rate: 32.5} };
 let lockTaps = 0;
 
-// 🟡 Hidden Tool: Clear Cache
+// 🟡 Hidden Tool
 function handleLockClick() {
     lockTaps++;
     if(lockTaps >= 3) {
@@ -416,8 +418,7 @@ const SyncManager = {
         if (this.isSyncing || this.queue.length === 0) {
             if(this.queue.length === 0 && this.isSyncing) {
                 this.isSyncing = false;
-                // 🔴 Fix: Delay reload 2s
-                setTimeout(() => loadData(), 2000); 
+                setTimeout(() => loadData(), 2000);
             }
             return;
         }
@@ -429,7 +430,6 @@ const SyncManager = {
         }
         this.isSyncing = false; 
         this.updateUI();
-        // 🔴 Fix: Delay reload 2s
         setTimeout(() => loadData(), 2000);
     }
 };
@@ -450,7 +450,7 @@ const CloudStatus = {
     }
 };
 
-// 🟢 Unified loadData
+// 🟢 Function restored to global scope
 async function loadData(isInit=false, isManual=false) {
     try {
         if(isManual) CloudStatus.set('syncing', '資料更新中...');
@@ -458,7 +458,7 @@ async function loadData(isInit=false, isManual=false) {
         const json = await res.json();
         if(json.error) throw new Error(json.error);
         
-        // 🔴 Fix: Save password immediately
+        // 🟢 Auto-Login Save
         if(!json.error) localStorage.setItem('myBillPass', USER_PASSWORD);
 
         GLOBAL_DATA = {
@@ -483,7 +483,7 @@ async function loadData(isInit=false, isManual=false) {
         
         const rate = GLOBAL_DATA.crypto.rate || '--.--';
         document.getElementById('cryptoSettingsRate').innerText = `🇺🇸 1 USD ≈ ${rate} TWD`;
-        document.getElementById('hubRateBar').innerText = `🇺🇸 USD/TWD ≈ ${rate}`; // Show rate in Hub
+        document.getElementById('hubRateBar').innerText = `🇺🇸 USD/TWD ≈ ${rate}`;
         
         setBtnLoading('loginBtn', false);
         if(isManual) CloudStatus.set('success', '資料已更新');
@@ -505,7 +505,7 @@ function verifyLogin() {
     loadData(true);
 }
 
-// 🟢 Fix: Auto Login Trigger
+// 🟢 Auto Login Trigger
 document.addEventListener('DOMContentLoaded', () => {
     const p = localStorage.getItem('myBillPass');
     if(p) { 
@@ -603,12 +603,10 @@ const WalletApp = {
         this.render();
         
         document.getElementById('w-amount').value=''; document.getElementById('w-note').value='';
-        
-        // 🟢 Fix: Delay background refresh
         setBtnLoading('w-submit', true, '排程中...'); 
         setTimeout(() => {
              setBtnLoading('w-submit', false);
-             CloudStatus.set('syncing'); // Show syncing immediately
+             CloudStatus.set('syncing');
         }, 1000);
 
         SyncManager.add({ appName:'wallet', action:'post', bank, amount:amt, note, month, paymentDate: tpl?tpl.paymentdate:'-' });
@@ -797,4 +795,50 @@ function manualReload() { if (SyncManager.isSyncing) { showToast("⚠️ 雲端�
 function toggleChart() { const drawer = document.getElementById('chartDrawer'); const btnText = document.getElementById('chartBtnText'); const btnIcon = document.getElementById('chartBtnIcon'); if (drawer.classList.contains('open')) { drawer.classList.remove('open'); btnText.innerText = "分析"; btnIcon.innerText = "📊"; } else { drawer.classList.add('open'); btnText.innerText = "收起"; btnIcon.innerText = "🔼"; if(GLOBAL_DATA.wallet.data.length > 0) WalletApp.render(); } }
 
 function customConfirm(msg, callback) {
-    document
+    document.getElementById('confirmMsg').innerText = msg;
+    const oldBtn = document.getElementById('confirmBtnAction');
+    const newBtn = oldBtn.cloneNode(true);
+    oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+    newBtn.onclick = () => { closeModal('confirmModal'); callback(); };
+    openModal('confirmModal');
+}
+function customAlert(msg) { document.getElementById('alertMsg').innerText = msg; openModal('alertModal'); }
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+
+// --- Template Logic ---
+function addTemplate() {
+    const b=document.getElementById('newBank').value, bill=document.getElementById('newBill').value, pay=document.getElementById('newPay').value;
+    if(!b||!bill||!pay) return showToast('⚠️ 請填寫完整');
+    document.getElementById('newBank').value=''; document.getElementById('newBill').value=''; document.getElementById('newPay').value='';
+    setBtnLoading('btnAddTemp', true, '排程中...');
+    CloudStatus.set('syncing');
+    fetch(API_URL, {
+        method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({password:USER_PASSWORD, appName:'wallet', action:'template_create', BankName:b, BillDate:bill, PaymentDate:pay})
+    }).then(() => setTimeout(()=>{ DataLoader.load().then(() => { renderTemplateList(); setBtnLoading('btnAddTemp', false); CloudStatus.set('success'); }); },1000));
+}
+function saveTemplateEdit() {
+    const idx = document.getElementById('editIndex').value;
+    const bank = document.getElementById('editBankName').value;
+    const bill = document.getElementById('editBill').value;
+    const pay = document.getElementById('editPay').value;
+    if(!bill || !pay) return showToast('⚠️ 日期不能為空');
+    setBtnLoading('btnSaveEdit', true, '儲存中...');
+    
+    const target = GLOBAL_DATA.wallet.templates.find(t => t.templateindex == idx);
+    if (target) { target.billdate = bill; target.paymentdate = pay; }
+    WalletApp.render(); renderTemplateList();
+    
+    CloudStatus.set('syncing');
+    fetch(API_URL, {
+        method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ password: USER_PASSWORD, appName:'wallet', action: 'template_update', templateIndex: idx, BankName: bank, BillDate: bill, PaymentDate: pay })
+    }).then(() => { setTimeout(() => { closeModal('editTemplateModal'); setBtnLoading('btnSaveEdit', false); CloudStatus.set('success'); DataLoader.load(); }, 1000); });
+}
+function deleteTemplate(idx) {
+    customConfirm('確定刪除此銀行?', () => {
+        CloudStatus.set('syncing');
+        fetch(API_URL, {
+            method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({password:USER_PASSWORD, appName:'wallet', action:'template_delete', templateIndex:idx})
+        }).then(()=>setTimeout(() => { DataLoader.load().then(() => renderTem
