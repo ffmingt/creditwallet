@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V12.1</title>
+    <title>My Wallet V12.3</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- V12.1 Style System --- */
+        /* --- V12.3 Style System --- */
         :root { 
             --bg-body: #F9FAFB; 
             --primary: #4F46E5; 
             --primary-gradient: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-            --crypto-gradient: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            --crypto-gradient: linear-gradient(135deg, #1F2937 0%, #059669 100%);
             --text-main: #1F2937; --text-sub: #6B7280; 
             --danger: #EF4444; --success: #10B981;
             --warning-bg: #FFF7ED; --warning-border: #FED7AA; --warning-text: #9A3412;
@@ -23,13 +23,8 @@
 
         .hidden-layer { display: none !important; }
 
-        /* Login Screen */
-        #loginOverlay { 
-            position: fixed; top:0; left:0; width:100%; height:100%; 
-            background: rgba(249,250,251,0.98); backdrop-filter: blur(5px); 
-            z-index: 99999; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; transition: opacity 0.3s; 
-        }
+        /* Login */
+        #loginOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(249,250,251,0.98); backdrop-filter: blur(5px); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.3s; }
         .login-input { width:240px; padding:15px; border:1px solid #E5E7EB; border-radius:16px; font-size:24px; text-align:center; outline:none; margin:20px 0; letter-spacing:8px; background:white; box-shadow: var(--shadow); }
         .login-input:focus { border-color: var(--primary); }
 
@@ -42,56 +37,14 @@
         }
         .btn-submit:active { transform: scale(0.96); background-color: #000; }
         .btn-submit:disabled { background: #6B7280; opacity: 0.8; cursor: not-allowed; transform: none; }
-
-        .spinner { 
-            width: 18px; height: 18px; min-width: 18px; 
-            margin-right: 8px; border: 2px solid rgba(255,255,255,0.3); 
-            border-radius: 50%; border-top-color: #fff; 
-            animation: spin 0.8s linear infinite; 
-            display: none; 
-        }
-        .btn-loading .spinner { display: block; } 
+        .spinner { width: 18px; height: 18px; min-width: 18px; margin-right: 8px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; display: none; }
+        .btn-loading .spinner { display: inline-block; } 
         @keyframes spin { to { transform: rotate(360deg); } }
-
         .btn-icon { background:white; border:1px solid #E5E7EB; padding:8px 12px; border-radius:12px; font-size:13px; font-weight:600; color:#555; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.1s; cursor: pointer; }
         .btn-icon:active { transform:scale(0.95); background: #f3f4f6; }
 
-        /* Hub Styles (修復版本號顏色) */
-        #app-hub { padding: 20px 24px; animation: fadeIn 0.4s ease; }
-        .hub-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .hub-title { font-size: 28px; font-weight: 800; color: var(--text-main); margin: 0; }
-        
-        .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .app-card { 
-            background: white; border-radius: 24px; padding: 20px; 
-            box-shadow: var(--shadow); border: 1px solid transparent; 
-            display: flex; flex-direction: column; justify-content: space-between; 
-            height: 140px; cursor: pointer; transition: transform 0.1s; 
-            position: relative;
-        }
-        .app-card:active { transform: scale(0.96); background: #F3F4F6; }
-        
-        .app-icon { font-size: 32px; margin-bottom: 10px; }
-        .app-name { font-size: 16px; font-weight: 700; color: var(--text-main); }
-        
-        /* 🟡 修復：加深顏色，確保可見 */
-        .app-ver { 
-            position: absolute; bottom: 15px; right: 15px; 
-            font-size: 12px; color: #4B5563; font-weight: 600; 
-            background: #E5E7EB; padding: 3px 8px; border-radius: 6px; 
-        }
-
         /* Cloud Status */
-        #cloudStatus {
-            position: fixed; top: 20px; left: 50%; 
-            transform: translateX(-50%) translateY(-200%); opacity: 0;
-            background: white; padding: 8px 16px; border-radius: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-            display: flex; align-items: center; gap: 8px;
-            font-size: 13px; font-weight: 600; color: var(--text-main);
-            z-index: 200000; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-            pointer-events: none;
-        }
+        #cloudStatus { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-200%); opacity: 0; background: white; padding: 8px 16px; border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-main); z-index: 200000; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none; }
         #cloudStatus.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         #cloudStatus.syncing { color: var(--primary); border: 1px solid #E0E7FF; }
         #cloudStatus.success { color: var(--success); border: 1px solid #D1FAE5; }
@@ -99,14 +52,30 @@
         .status-icon { width: 16px; height: 16px; display: flex; justify-content: center; align-items: center; }
         .spin-circle { width: 14px; height: 14px; border: 2px solid #E0E7FF; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
 
-        /* Layout & Cards (Shared) */
+        /* Hub Layout */
+        #app-hub { padding: 20px 24px; animation: fadeIn 0.4s ease; display: flex; flex-direction: column; height: 80vh; }
+        .hub-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-shrink: 0; }
+        .hub-title { font-size: 28px; font-weight: 800; color: var(--text-main); margin: 0; }
+        .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; flex: 1; align-content: start; }
+        .app-card { background: white; border-radius: 24px; padding: 20px; box-shadow: var(--shadow); border: 1px solid transparent; display: flex; flex-direction: column; justify-content: space-between; height: 140px; cursor: pointer; transition: transform 0.1s; position: relative; }
+        .app-card:active { transform: scale(0.96); background: #F3F4F6; }
+        .app-icon { font-size: 32px; margin-bottom: 10px; }
+        .app-name { font-size: 16px; font-weight: 700; color: var(--text-main); }
+        .app-ver { position: absolute; bottom: 15px; right: 15px; font-size: 11px; color: #4B5563; font-weight: 500; background: #E5E7EB; padding: 2px 6px; border-radius: 6px; }
+        
+        /* Wallet & Crypto Layout */
         .hero { padding: 20px 24px 10px 24px; }
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .app-title { font-size: 24px; font-weight: 800; color: #111; }
         
         .total-card { background: var(--primary-gradient); border-radius: 28px; padding: 25px; color: white; box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.4); position: relative; overflow: hidden; transition: all 0.3s ease; }
-        .crypto-bg { background: var(--crypto-gradient) !important; box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.4) !important; }
+        .crypto-bg { background: var(--crypto-gradient) !important; box-shadow: 0 20px 25px -5px rgba(5, 150, 105, 0.4) !important; }
+        
         .total-amount { font-size: 42px; font-weight: 800; margin: 5px 0; letter-spacing: -1px; }
+        .total-amount-group { display: flex; flex-direction: column; margin-top: 5px; }
+        .total-amount-main { font-size: 42px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
+        .total-amount-sub { font-size: 18px; opacity: 0.9; font-weight: 500; color: #A7F3D0; margin-top: 4px; font-family: monospace; }
+
         .card-content { position: relative; z-index: 2; }
         .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
         .card-sub { font-size: 13px; opacity: 0.8; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; }
@@ -124,41 +93,39 @@
         .form-label { font-size: 12px; font-weight: 600; color: var(--text-sub); margin-bottom: 6px; display: block; }
         .styled-input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid #E5E7EB; background: #F9FAFB; font-size: 16px; color: #333; outline: none; -webkit-appearance: none; }
         .styled-input:disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }
-        
         .segment-control { display: flex; background: #F3F4F6; padding: 4px; border-radius: 14px; margin-bottom: 15px; }
         .segment-btn { flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 600; color: #6B7280; border-radius: 10px; cursor: pointer; transition: 0.2s; }
         .segment-btn.active { background: white; color: #1F2937; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-        /* List Style */
+        /* Lists */
         .list-section { padding: 30px 24px; }
         .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #EEE; }
-        .list-title { font-size: 18px; font-weight: 800; }
-        .month-selector { border: none; background: transparent; font-size: 15px; font-weight: 600; text-align: right; outline: none; }
-        .refresh-btn { border: none; background: white; border-radius: 50%; width: 32px; height: 32px; margin-left: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; display: flex; justify-content: center; align-items: center; }
+        .list-title { font-size: 18px; font-weight: 800; color: var(--text-main); }
+        .month-selector { border: none; background: transparent; font-size: 15px; font-weight: 600; color: var(--text-main); text-align: right; outline: none; cursor: pointer; }
+        .refresh-btn { border: none; background: white; border-radius: 50%; width: 32px; height: 32px; margin-left: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 16px; transition: transform 0.2s; }
         .refresh-btn:active { transform: rotate(180deg); }
 
-        .t-card { background: white; border-radius: 18px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow); border: 1px solid #E5E7EB; position: relative; overflow: hidden; cursor: pointer; transition: 0.1s; }
-        .t-card:active { transform: scale(0.98); }
+        .t-card { background: white; border-radius: 18px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow); border: 1px solid #E5E7EB; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.1s; }
+        .t-card:active { transform: scale(0.98); background: #f9fafb; }
         .t-card.logged { border: 1px solid #E5E7EB; }
         .t-card.logged::before { content:''; position:absolute; left:0; top:0; bottom:0; width:5px; background: var(--success); }
         .t-card.unlogged { background: #F9FAFB; border: 1px dashed #D1D5DB; opacity: 0.95; }
         .t-card.unlogged .t-icon { background: #E5E7EB; color: #9CA3AF; }
         .t-icon { width: 42px; height: 42px; border-radius: 12px; background: #F3F4F6; color: #374151; font-size: 18px; font-weight: 700; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
         .t-content { flex: 1; min-width: 0; }
-        .t-bank { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-        .t-amount { font-size: 18px; font-weight: 800; text-align: right; }
+        .t-bank { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
+        .t-amount { font-size: 18px; font-weight: 800; color: var(--text-main); text-align: right; }
         .c-rate { font-size: 11px; color: #9CA3AF; margin-left: 4px; }
         .c-usd-tag { display: inline-block; background: #FEF3C7; color: #D97706; padding: 2px 6px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-top: 2px; }
         .badge-todo { font-size: 12px; font-weight: 600; color: #6B7280; background: #E5E7EB; padding: 4px 10px; border-radius: 20px; }
 
-        /* Alerts */
         .alert-box { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-text); padding: 16px; border-radius: 16px; margin-bottom: 20px; font-size: 14px; line-height: 1.6; display: flex; align-items: flex-start; gap: 12px; width: 100%; box-sizing: border-box; }
         .alert-icon { font-size: 20px; margin-top: -2px; flex-shrink: 0; }
         .alert-content { flex: 1; }
         .alert-title { font-weight: 700; margin-bottom: 2px; display: block; color: #7C2D12; }
 
         /* Modals */
-        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: 10000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: 0.2s; }
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: 10000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
         .modal-box { background: white; width: 85%; max-width: 380px; border-radius: 24px; padding: 0; transform: scale(0.95); transition: 0.2s; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; }
         .modal-overlay.show .modal-box { transform: scale(1); }
@@ -169,7 +136,11 @@
         .btn-edit { background: #F3F4F6; color: var(--text-main); }
         .btn-delete { background: #FEF2F2; color: var(--danger); }
         .setup-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #F3F4F6; }
-        .btn-setup-action { border: none; background: none; cursor: pointer; font-size: 14px; padding: 5px; }
+        .btn-setup-action { border: none; background: none; cursor: pointer; font-size: 14px; padding: 5px; transition: opacity 0.1s, transform 0.1s;}
+        .btn-setup-action:active { opacity: 0.6; transform: scale(0.95); }
+        
+        /* 🟡 Rate Bar in Footer */
+        .rate-bar { background: #ECFDF5; border: 1px solid #D1FAE5; color: #047857; font-weight: 600; font-size: 13px; padding: 10px; border-radius: 12px; text-align: center; margin-bottom: 10px; font-family: monospace; }
 
         #toast { visibility: hidden; background: #333; color: #fff; padding: 12px 24px; border-radius: 50px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 99999; opacity:0; transition:0.3s; }
         #toast.show { visibility: visible; opacity: 1; bottom: 40px; }
@@ -205,7 +176,7 @@
             </div>
             <div class="app-card" onclick="Nav.open('crypto')">
                 <div><div class="app-icon">🪙</div><div class="app-name">Crypto</div></div>
-                <div class="app-ver">v1.0</div>
+                <div class="app-ver">v1.3</div>
             </div>
         </div>
     </div>
@@ -270,10 +241,14 @@
                     <button class="btn-icon" onclick="Nav.home()" style="color:#4F46E5;">🏠 首頁</button>
                 </div>
             </div>
-            <div class="total-card crypto-bg" onclick="CryptoApp.toggleTotalUnit()">
-                <div style="font-size:14px; opacity:0.9;">總投入成本</div>
-                <div class="total-amount" id="c-total">$0</div>
-                <div class="card-sub" id="c-rate-display">Ex: --.--</div>
+            <div class="total-card crypto-bg">
+                <div class="card-content">
+                    <div style="font-size:14px; opacity:0.9;">總投入成本</div>
+                    <div class="total-amount-group">
+                        <div class="total-amount-main" id="c-total-twd">$0 TWD</div>
+                        <div class="total-amount-sub" id="c-total-usd">≈ $0 USD</div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="input-panel">
@@ -335,6 +310,7 @@
         </div>
     </div>
 
+    <!-- 🟡 Crypto Settings Modal (Rate at Footer) -->
     <div id="cryptoSettingsModal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
@@ -347,7 +323,11 @@
                 <div style="font-size:12px; color:#999; margin-top:15px; font-weight:700;">已儲存管道</div>
             </div>
             <div class="modal-content-scroll"><div id="cryptoMethodList"></div></div>
-            <div class="modal-footer"><button class="btn-submit" onclick="closeModal('cryptoSettingsModal')" style="background:#F3F4F6; color:#333; margin-top:0;">關閉</button></div>
+            <!-- 🟡 Footer with Rate -->
+            <div class="modal-footer" style="display:flex; flex-direction:column;">
+                <div id="cryptoSettingsRate" class="rate-bar">Loading...</div>
+                <button class="btn-submit" onclick="closeModal('cryptoSettingsModal')" style="background:#F3F4F6; color:#333; margin-top:0;">關閉</button>
+            </div>
         </div>
     </div>
 
@@ -635,8 +615,8 @@ const CryptoApp = {
 
         const totalTwd = data.reduce((sum, r) => sum + Number(r.cost_twd || r.cost), 0);
         const displayTotal = this.showInUsd ? `$${Math.round(totalTwd/rate).toLocaleString()} USD` : `$${totalTwd.toLocaleString()} TWD`;
-        document.getElementById('c-total').innerText = displayTotal;
-        document.getElementById('c-rate-display').innerText = `Ex: ${rate}`;
+        document.getElementById('c-total-twd').innerText = `$${totalTwd.toLocaleString()} TWD`;
+        document.getElementById('c-total-usd').innerText = `≈ $${Math.round(totalTwd/rate).toLocaleString()} USD`;
 
         let html = '';
         data.forEach(r => {
@@ -652,7 +632,7 @@ const CryptoApp = {
                 const cost = Number(r.cost_twd || r.cost);
                 const amt = Number(r.amount_usd);
                 const calcRate = (amt > 0) ? (cost / amt).toFixed(2) : '0.00';
-                rightSide += `<div style="text-align:right"><span class="c-usd-tag">${amt} U</span> <span class="c-rate">(@${calcRate})</span></div>`;
+                rightSide += `<div class="c-sub-value">≈ $${amt.toLocaleString()} USD <span class="c-rate">(@${calcRate})</span></div>`;
             }
             html += `<div class="t-card" onclick="CryptoApp.askDelete('${r.uuid}')"><div class="t-icon">🪙</div><div class="t-content"><div class="t-bank">${r.method}</div><div style="font-size:12px;color:#888">${subInfo} ${r.note ? '- '+r.note : ''}</div></div><div>${rightSide}</div></div>`;
         });
@@ -703,6 +683,9 @@ const CryptoApp = {
     },
     openSettings: function() {
         this.renderSettingsList();
+        // 🟡 Update Rate Display
+        const rate = GLOBAL_DATA.crypto.rate || '--.--';
+        document.getElementById('cryptoSettingsRate').innerText = `🇺🇸 1 USD ≈ ${rate} TWD`;
         document.getElementById('cryptoSettingsModal').classList.add('show');
     },
     renderSettingsList: function() {
