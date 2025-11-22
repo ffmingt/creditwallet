@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V16.6 UI Fix</title>
+    <title>My Wallet V16.7 Viewer</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <!-- 🟢 引入 Viewer.js (圖片全螢幕檢視神器) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.js"></script>
     <style>
-        /* --- V16.6 Style System --- */
+        /* --- V16.7 Style System --- */
         :root { 
             --bg-body: #F9FAFB; 
             --primary: #4F46E5; 
@@ -172,7 +175,7 @@
             align-items: center; 
             box-shadow: inset 0 0 10px rgba(0,0,0,0.03); 
             border: 2px dashed #E5E7EB;
-            touch-action: none; 
+            cursor: pointer; /* Hint clickable */
         }
         
         .schedule-img { 
@@ -186,8 +189,23 @@
         }
         .schedule-img.loaded { opacity: 1; }
 
-        .schedule-empty { color: #9CA3AF; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .schedule-empty { color: #9CA3AF; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: none;}
         
+        /* Zoom Hint Overlay */
+        .zoom-hint {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            backdrop-filter: blur(2px);
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
         /* Image Loading Spinner */
         .img-loading-spinner {
             position: absolute;
@@ -252,7 +270,7 @@
             <div class="spinner"></div> <span class="btn-text">解鎖</span>
         </button>
         <div id="loginError" style="color:var(--danger); margin-top:20px; min-height:20px;"></div>
-        <div id="versionTag" onclick="LoginHandler.clickVersion()">v16.6</div>
+        <div id="versionTag" onclick="LoginHandler.clickVersion()">v16.7</div>
     </div>
 
     <div id="app-hub" class="hidden-layer">
@@ -271,7 +289,7 @@
             </div>
             <div class="app-card" onclick="Nav.open('schedule')">
                 <div><div class="app-icon">📅</div><div class="app-name">班表</div></div>
-                <div class="app-ver">v1.7</div>
+                <div class="app-ver">v1.8</div>
             </div>
         </div>
     </div>
@@ -391,12 +409,11 @@
         <div class="schedule-actions">
             <select id="s-month-selector" class="styled-input" style="flex:1;" onchange="ScheduleApp.render()"></select>
             <div class="btn-upload-wrapper">
-                <!-- PC Feedback Fix: Added ID to button for JS manipulation -->
+                <!-- PC Feedback Fix -->
                 <button id="s-upload-btn" class="btn-submit" style="margin-top:0; background:#D97706;">
                     <div id="uploadSpinner" class="spinner"></div>
                     <span class="btn-text">📷 上傳</span>
                 </button>
-                <!-- Added feedback listeners to input -->
                 <input type="file" id="s-upload-input" class="file-input" accept="image/*" 
                        onchange="ScheduleApp.handleUpload(this)"
                        onmousedown="document.getElementById('s-upload-btn').classList.add('active-state')"
@@ -405,7 +422,7 @@
             </div>
         </div>
 
-        <!-- Pinch to Zoom Viewer -->
+        <!-- Viewer.js Container -->
         <div class="schedule-viewer" id="s-viewer-container">
             <div id="s-img-spinner" class="img-loading-spinner"></div>
             <div id="s-empty-msg" class="schedule-empty">
@@ -413,6 +430,7 @@
                 <div>本月尚無班表</div>
             </div>
             <img id="s-image" class="schedule-img" style="display:none;" onload="ScheduleApp.onImageLoad()" onerror="ScheduleApp.onImageError()">
+            <div class="zoom-hint" id="s-zoom-hint" style="display:none;">🔍 點擊放大</div>
         </div>
 
         <div class="list-section">
@@ -550,32 +568,6 @@ const DomUtils = {
         });
     }
 };
-
-// 🟢 Touch Zoom Viewer
-class TouchImageViewer {
-    constructor(containerId, imageId) {
-        this.container = document.getElementById(containerId);
-        this.img = document.getElementById(imageId);
-        this.state = { scale: 1, panning: false, pointX: 0, pointY: 0, startX: 0, startY: 0, startDist: 0 };
-        this.container.addEventListener('touchstart', this.handleTouchStart.bind(this), {passive: false});
-        this.container.addEventListener('touchmove', this.handleTouchMove.bind(this), {passive: false});
-        this.container.addEventListener('touchend', this.handleTouchEnd.bind(this));
-    }
-    updateTransform() { this.img.style.transform = `translate(${this.state.pointX}px, ${this.state.pointY}px) scale(${this.state.scale})`; }
-    getDistance(touches) { return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY); }
-    handleTouchStart(e) {
-        if (e.touches.length === 2) { e.preventDefault(); this.state.startDist = this.getDistance(e.touches); this.state.panning = false; } 
-        else if (e.touches.length === 1) { this.state.startX = e.touches[0].clientX - this.state.pointX; this.state.startY = e.touches[0].clientY - this.state.pointY; this.state.panning = true; }
-    }
-    handleTouchMove(e) {
-        e.preventDefault();
-        if (e.touches.length === 2) { const dist = this.getDistance(e.touches); const scaleChange = dist / this.state.startDist; this.state.scale = Math.min(Math.max(1, this.state.scale * scaleChange), 4); this.state.startDist = dist; this.updateTransform(); } 
-        else if (e.touches.length === 1 && this.state.panning && this.state.scale > 1) { this.state.pointX = e.touches[0].clientX - this.state.startX; this.state.pointY = e.touches[0].clientY - this.state.startY; this.updateTransform(); }
-    }
-    handleTouchEnd(e) { if (e.touches.length < 2) { if(this.state.scale < 1) { this.state.scale = 1; this.state.pointX = 0; this.state.pointY = 0; this.updateTransform(); } } }
-    reset() { this.state = { scale: 1, panning: false, pointX: 0, pointY: 0, startX: 0, startY: 0, startDist: 0 }; this.updateTransform(); }
-}
-const scheduleViewer = new TouchImageViewer('s-viewer-container', 's-image');
 
 // 🟢 Universal Swipe Logic (Touch + Mouse) - FIXED
 let isDragging = false; let startX = 0; let activeSwipeEl = null;
@@ -808,7 +800,7 @@ const WalletApp = {
             container.style.display = 'block'; const pct = Math.min((currentTotal / budget) * 100, 100); const left = budget - currentTotal; fill.style.width = `${pct}%`; 
             if (pct < 80) { fill.style.backgroundColor = '#10B981'; emoji.innerText = '😊'; } 
             else if (pct < 100) { fill.style.backgroundColor = '#F59E0B'; emoji.innerText = '😓'; } 
-            else { fill.style.backgroundColor = '#EF4444'; emoji.innerText = '💸'; } // 🟢 Budget Fix
+            else { fill.style.backgroundColor = '#EF4444'; emoji.innerText = '💸'; } 
             if(left >= 0) { txtLeft.innerText = `剩餘 $${formatMoney(left)}`; txtLeft.style.color = '#1F2937'; } else { txtLeft.innerText = `超支 $${formatMoney(Math.abs(left))}`; txtLeft.style.color = '#EF4444'; } 
         } else { container.style.display = 'none'; emoji.innerText = '😊'; }
     },
@@ -853,30 +845,52 @@ const CryptoApp = {
 };
 
 const ScheduleApp = {
+    // ... ScheduleApp 邏輯 (已內建 Viewer.js)
     render: function() {
         const sel = document.getElementById('s-month-selector');
         if(sel.innerHTML == "") {
             const d = new Date();
+            // Start loop from -1 (Next Month)
+            d.setMonth(d.getMonth() + 1);
             const frag = document.createDocumentFragment();
-            for(let i=0; i<12; i++) {
+            for(let i=0; i<=12; i++) {
                 const val = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`;
                 const opt = document.createElement('option');
                 opt.value = val; opt.text = `${d.getFullYear()} 年 ${String(d.getMonth()+1).padStart(2,'0')} 月`;
                 frag.appendChild(opt); d.setMonth(d.getMonth()-1);
             }
             sel.appendChild(frag);
+            // Set Default to Current Month
+            if(sel.options.length > 1) sel.selectedIndex = 1;
         }
         const m = sel.value;
         document.getElementById('s-display-month').innerText = `${m.substring(0,4)} / ${m.substring(4,6)}`;
         const imgEl = document.getElementById('s-image');
         const emptyEl = document.getElementById('s-empty-msg');
         const spinner = document.getElementById('s-img-spinner');
+        const hint = document.getElementById('s-zoom-hint');
+        
+        let viewer = null;
+        if (imgEl._viewer) { viewer = imgEl._viewer; }
+
         const record = GLOBAL_DATA.schedule.data.find(r => String(r.month) === m);
         if(record && record.imageurl) { 
-            if(imgEl.src !== record.imageurl) { imgEl.style.opacity = '0'; imgEl.classList.remove('loaded'); spinner.style.display = 'block'; imgEl.src = record.imageurl; }
-            imgEl.style.display = 'block'; emptyEl.style.display = 'none'; scheduleViewer.reset(); 
+            if(imgEl.src !== record.imageurl) { 
+                imgEl.style.opacity = '0'; 
+                imgEl.classList.remove('loaded'); 
+                spinner.style.display = 'block'; 
+                hint.style.display = 'none';
+                // Destroy old viewer if exists
+                if(viewer) { viewer.destroy(); imgEl._viewer = null; }
+                imgEl.src = record.imageurl; 
+            }
+            imgEl.style.display = 'block'; 
+            emptyEl.style.display = 'none'; 
         } else { 
-            imgEl.style.display = 'none'; spinner.style.display = 'none'; emptyEl.style.display = 'flex'; 
+            imgEl.style.display = 'none'; 
+            spinner.style.display = 'none'; 
+            hint.style.display = 'none';
+            emptyEl.style.display = 'flex'; 
         }
         const listDiv = document.getElementById('s-list'); listDiv.innerHTML = ''; const frag = document.createDocumentFragment();
         const sortedData = [...GLOBAL_DATA.schedule.data].sort((a, b) => (parseInt(b.month)||0) - (parseInt(a.month)||0));
@@ -903,7 +917,21 @@ const ScheduleApp = {
             listDiv.appendChild(frag);
         }
     },
-    onImageLoad: function() { const imgEl = document.getElementById('s-image'); const spinner = document.getElementById('s-img-spinner'); spinner.style.display = 'none'; imgEl.classList.add('loaded'); imgEl.style.opacity = '1'; },
+    onImageLoad: function() { 
+        const imgEl = document.getElementById('s-image'); 
+        const spinner = document.getElementById('s-img-spinner'); 
+        const hint = document.getElementById('s-zoom-hint');
+        spinner.style.display = 'none'; 
+        hint.style.display = 'block';
+        imgEl.classList.add('loaded'); 
+        imgEl.style.opacity = '1'; 
+        
+        // Init Viewer.js
+        if(imgEl._viewer) imgEl._viewer.destroy();
+        imgEl._viewer = new Viewer(imgEl, {
+            inline: false, toolbar: false, navbar: false, title: false, tooltip: false, movable: true, zoomable: true, rotatable: false, scalable: false, transition: true, backdrop: true, className: 'schedule-lightbox'
+        });
+    },
     onImageError: function() { document.getElementById('s-img-spinner').style.display = 'none'; showToast('⚠️ 圖片載入失敗'); },
     selectMonth: function(m) {
         if(!m) return;
