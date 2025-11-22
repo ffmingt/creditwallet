@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V14.0</title>
+    <title>My Wallet V14.1</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- V14.0 Style System --- */
+        /* --- V14.1 Style System --- */
         :root { 
             --bg-body: #F9FAFB; 
             --primary: #4F46E5; 
@@ -171,7 +171,7 @@
         </button>
         <div id="loginError" style="color:var(--danger); margin-top:20px; min-height:20px;"></div>
         <!-- Version Tag for Cache Clear -->
-        <div id="versionTag" onclick="LoginHandler.clickVersion()">v14.0</div>
+        <div id="versionTag" onclick="LoginHandler.clickVersion()">v14.1</div>
     </div>
 
     <!-- Hub -->
@@ -183,11 +183,11 @@
         <div class="app-grid">
             <div class="app-card" onclick="Nav.open('wallet')">
                 <div><div class="app-icon">💰</div><div class="app-name">My Wallet</div></div>
-                <div class="app-ver">v9.4</div>
+                <div class="app-ver">v9.5</div>
             </div>
             <div class="app-card" onclick="Nav.open('crypto')">
                 <div><div class="app-icon">🪙</div><div class="app-name">Crypto</div></div>
-                <div class="app-ver">v1.8</div>
+                <div class="app-ver">v1.9</div>
             </div>
         </div>
     </div>
@@ -551,7 +551,6 @@ const DataLoader = {
 };
 
 function verifyLogin() { USER_PASSWORD = document.getElementById('passwordInput').value; if(!USER_PASSWORD) return; setBtnLoading('loginBtn', true, '驗證中...'); DataLoader.load(true); }
-// 🟢 Fix: Robust Money Parsing
 function formatMoney(num) { if(!num && num !== 0) return '0'; return Number(num).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
 function parseMoney(numStr) { 
     if(typeof numStr === 'number') return numStr;
@@ -656,15 +655,30 @@ const WalletApp = {
 const CryptoApp = {
     mode: 'twd',
     render: function() {
-        const fragList = document.createDocumentFragment(); const data = GLOBAL_DATA.crypto.data.sort((a,b) => new Date(b.date) - new Date(a.date)); const methods = GLOBAL_DATA.crypto.methods; const rate = GLOBAL_DATA.crypto.rate; const sel = document.getElementById('c-method');
+        const fragList = document.createDocumentFragment(); 
+        const data = GLOBAL_DATA.crypto.data.sort((a,b) => new Date(b.date) - new Date(a.date)); 
+        const methods = GLOBAL_DATA.crypto.methods; 
+        
+        // 🟢 Fix: Safe Rate Parsing
+        let rate = parseFloat(GLOBAL_DATA.crypto.rate);
+        if (isNaN(rate) || rate <= 0) { rate = 32.5; console.warn('Using default rate 32.5'); }
+
+        const sel = document.getElementById('c-method');
         if(!document.getElementById('c-date').value) document.getElementById('c-date').valueAsDate = new Date();
         if(sel.options.length <= 1) { let ops = ['<option disabled selected>選擇管道</option>']; if(methods) methods.forEach(m => ops.push(`<option value="${m}">${m}</option>`)); sel.innerHTML = ops.join(''); }
+        
         const totalTwd = data.reduce((sum, r) => sum + parseMoney(r.cost_twd || r.cost), 0);
-        document.getElementById('c-total-twd').innerText = `$${formatMoney(totalTwd)} TWD`; document.getElementById('c-total-usd').innerText = `≈ $${formatMoney(totalTwd/rate)} USD`;
+        document.getElementById('c-total-twd').innerText = `$${formatMoney(totalTwd)} TWD`; 
+        document.getElementById('c-total-usd').innerText = `≈ $${formatMoney(totalTwd/rate)} USD`;
+        
         data.forEach(r => {
             let dateObj = new Date(r.date); let subInfo = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
             let rightSide = `<div class="t-amount">$${formatMoney(r.cost_twd || r.cost)}</div>`;
-            if (r.type === 'USD') { const cost = parseMoney(r.cost_twd || r.cost); const amt = parseMoney(r.amount_usd); const calcRate = (amt > 0) ? (cost / amt).toFixed(2) : '0.00'; rightSide += `<div class="c-sub-value">≈ $${formatMoney(amt)} USD <span class="c-rate">(@${calcRate})</span></div>`; }
+            if (r.type === 'USD') { 
+                const cost = parseMoney(r.cost_twd || r.cost); const amt = parseMoney(r.amount_usd); 
+                const calcRate = (amt > 0) ? (cost / amt).toFixed(2) : '0.00'; 
+                rightSide += `<div class="c-sub-value">≈ $${formatMoney(amt)} USD <span class="c-rate">(@${calcRate})</span></div>`; 
+            }
             let icon = r.type === 'USD' ? '🇺🇸' : '🪙';
             const container = document.createElement('div'); container.className = 'swipe-item-container';
             container.innerHTML = `<div class="swipe-bg-action" onclick="CryptoApp.askDelete('${r.uuid}')">刪除</div><div class="t-card" onclick=""><div class="t-icon">${icon}</div><div class="t-content"><div class="t-bank">${r.method}</div><div style="font-size:12px;color:#888">${subInfo} ${r.note ? '- '+r.note : ''}</div></div><div>${rightSide}</div></div>`;
@@ -683,6 +697,7 @@ const CryptoApp = {
 
 // --- Shared Logic ---
 function saveBudget() { 
+    // 🟡 確保輸入的是乾淨的數字
     const b = parseInt(document.getElementById('budgetInput').value) || 0;
     setBtnLoading('btnSaveBudget', true, '儲存中...');
     GLOBAL_DATA.config.budget = b;
