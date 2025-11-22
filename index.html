@@ -746,4 +746,24 @@ function mapNormalize(arr) {
         for(let k in obj) { 
             const cleanKey = k.trim(); 
             const lowerKey = cleanKey.toLowerCase();
-            const mappedKey = DATA_KEY_MAP[cleanKey] || DATA
+            const mappedKey = DATA_KEY_MAP[cleanKey] || DATA_KEY_MAP[lowerKey] || lowerKey; 
+            newObj[mappedKey] = obj[k]; 
+        } 
+        return newObj; 
+    }); 
+}
+
+function initMonthSelect(id) { 
+    const s=document.getElementById(id); if (!s) return;
+    const startD = new Date(); startD.setMonth(startD.getMonth() + 1);
+    const frag = document.createDocumentFragment(); 
+    for(let i=0; i<24; i++){ 
+        const v=`${startD.getFullYear()}${String(startD.getMonth()+1).padStart(2,'0')}`; 
+        const o=document.createElement('option'); o.value=v; o.text=`${startD.getFullYear()} / ${String(startD.getMonth()+1).padStart(2,'0')}`; 
+        frag.appendChild(o); startD.setMonth(startD.getMonth()-1); 
+    }
+    s.appendChild(frag); const d=new Date(); s.value = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+</script>
+</body>
+</html>
