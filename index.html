@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V16.7 Viewer</title>
+    <title>My Wallet V16.10 Instant</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-    <!-- 🟢 引入 Viewer.js (圖片全螢幕檢視神器) -->
+    <!-- 🟢 引入 Viewer.js -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.js"></script>
     <style>
-        /* --- V16.7 Style System --- */
+        /* --- V16.10 Style System --- */
         :root { 
             --bg-body: #F9FAFB; 
             --primary: #4F46E5; 
@@ -270,7 +270,7 @@
             <div class="spinner"></div> <span class="btn-text">解鎖</span>
         </button>
         <div id="loginError" style="color:var(--danger); margin-top:20px; min-height:20px;"></div>
-        <div id="versionTag" onclick="LoginHandler.clickVersion()">v16.7</div>
+        <div id="versionTag" onclick="LoginHandler.clickVersion()">v16.10 Instant</div>
     </div>
 
     <div id="app-hub" class="hidden-layer">
@@ -569,18 +569,16 @@ const DomUtils = {
     }
 };
 
-// 🟢 Universal Swipe Logic (Touch + Mouse) - FIXED
+// 🟢 Universal Swipe Logic (Touch + Mouse)
 let isDragging = false; let startX = 0; let activeSwipeEl = null;
 
 function handleStart(x, target) {
     if(target.closest('.schedule-viewer')) return;
-    
-    // 🔥 FIX: Don't swipe if clicking a button (Delete Action)
+    // 🔥 Fix: Don't swipe if clicking delete/action buttons
     if (target.classList.contains('swipe-bg-action') || target.closest('.swipe-bg-action')) return;
 
     const card = target.closest('.t-card');
     if (!card) { if (activeSwipeEl) closeSwipe(activeSwipeEl); return; }
-    
     if (activeSwipeEl && activeSwipeEl !== card) closeSwipe(activeSwipeEl);
     isDragging = true; startX = x; card.style.transition = 'none';
 }
@@ -609,12 +607,10 @@ function handleEnd(target) {
     else { card.style.transform = `translateX(0px)`; activeSwipeEl = null; }
 }
 
-// Touch Events
 document.addEventListener('touchstart', (e) => handleStart(e.touches[0].clientX, e.target), { passive: true });
 document.addEventListener('touchmove', (e) => handleMove(e.touches[0].clientX, e.target, e), { passive: false });
 document.addEventListener('touchend', (e) => handleEnd(e.target));
 
-// Mouse Events (For PC)
 document.addEventListener('mousedown', (e) => handleStart(e.clientX, e.target));
 document.addEventListener('mousemove', (e) => handleMove(e.clientX, e.target, e));
 document.addEventListener('mouseup', (e) => handleEnd(e.target));
@@ -693,7 +689,7 @@ const CloudStatus = {
     }
 };
 
-// 🟢 KEY MAPPING: EXACT MATCH from your request
+// 🟢 KEY MAPPING
 const DATA_KEY_MAP = { 
     'UUID': 'uuid', 'Month': 'month', 'ImageURL': 'imageurl', 'Timestamp': 'timestamp',
     '月份': 'month', 'month': 'month', 'imageurl': 'imageurl', 'image': 'imageurl', 'url': 'imageurl', 'timestamp': 'timestamp', 'time': 'timestamp',
@@ -715,7 +711,7 @@ const DataLoader = {
             GLOBAL_DATA = { 
                 wallet: { data: mapNormalize(json.wallet.data).reverse(), templates: mapNormalize(json.wallet.templates) }, 
                 crypto: { data: mapNormalize(json.crypto.data), methods: json.crypto.methods, rate: json.crypto.rate },
-                schedule: { data: mapNormalize(json.schedule.data) }, // Remove reverse here, we sort later
+                schedule: { data: mapNormalize(json.schedule.data) },
                 config: json.config || {budget: 0} 
             };
             localStorage.setItem('myBillPass', USER_PASSWORD);
@@ -737,22 +733,8 @@ const DataLoader = {
 function verifyLogin() { USER_PASSWORD = document.getElementById('passwordInput').value; if(!USER_PASSWORD) return; setBtnLoading('loginBtn', true, '驗證中...'); DataLoader.load(true); }
 function formatMoney(num) { if(!num && num !== 0) return '0'; return Number(num).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
 function parseMoney(numStr) { if(typeof numStr === 'number') return numStr; if(!numStr) return 0; const cleanStr = String(numStr).replace(/,/g, '').replace(/\s/g, ''); return parseFloat(cleanStr) || 0; }
+function mapNormalize(arr) { if(!Array.isArray(arr)) return []; return arr.map(obj => { const newObj = {}; for(let k in obj) { const cleanKey = k.trim(); const mappedKey = DATA_KEY_MAP[cleanKey] || DATA_KEY_MAP[cleanKey.toLowerCase()] || cleanKey.toLowerCase(); newObj[mappedKey] = obj[k]; } return newObj; }); }
 
-function mapNormalize(arr) { 
-    if(!Array.isArray(arr)) return []; 
-    return arr.map(obj => { 
-        const newObj = {}; 
-        for(let k in obj) { 
-            const cleanKey = k.trim();
-            // Check Exact Match first, then Lowercase
-            const mappedKey = DATA_KEY_MAP[cleanKey] || DATA_KEY_MAP[cleanKey.toLowerCase()] || cleanKey.toLowerCase(); 
-            newObj[mappedKey] = obj[k]; 
-        }
-        return newObj; 
-    }); 
-}
-
-// --- Wallet Logic ---
 const WalletApp = {
     chart: null, chartType: 'pie',
     render: function() {
@@ -763,8 +745,10 @@ const WalletApp = {
         const m = listSel.value;
         const data = GLOBAL_DATA.wallet.data.filter(r => String(r.month).trim() === m);
         const templates = GLOBAL_DATA.wallet.templates.sort((a,b) => (parseInt(a.billdate)||0) - (parseInt(b.billdate)||0));
-        const sel = document.getElementById('w-bank');
-        if(sel.options.length <= 1) { DomUtils.renderOptions('w-bank', templates.map(t => t.bankname), '選擇銀行'); }
+        
+        // Always render options to ensure sync with GLOBAL_DATA (Fix dropdown bug)
+        DomUtils.renderOptions('w-bank', templates.map(t => t.bankname), '選擇銀行');
+        
         let total = 0, count = 0, alertList = [];
         const now = new Date(); const year = parseInt(m.substring(0, 4)); const month = parseInt(m.substring(4, 6));
         const frag = document.createDocumentFragment();
@@ -845,12 +829,10 @@ const CryptoApp = {
 };
 
 const ScheduleApp = {
-    // ... ScheduleApp 邏輯 (已內建 Viewer.js)
     render: function() {
         const sel = document.getElementById('s-month-selector');
         if(sel.innerHTML == "") {
             const d = new Date();
-            // Start loop from -1 (Next Month)
             d.setMonth(d.getMonth() + 1);
             const frag = document.createDocumentFragment();
             for(let i=0; i<=12; i++) {
@@ -860,7 +842,6 @@ const ScheduleApp = {
                 frag.appendChild(opt); d.setMonth(d.getMonth()-1);
             }
             sel.appendChild(frag);
-            // Set Default to Current Month
             if(sel.options.length > 1) sel.selectedIndex = 1;
         }
         const m = sel.value;
@@ -880,7 +861,6 @@ const ScheduleApp = {
                 imgEl.classList.remove('loaded'); 
                 spinner.style.display = 'block'; 
                 hint.style.display = 'none';
-                // Destroy old viewer if exists
                 if(viewer) { viewer.destroy(); imgEl._viewer = null; }
                 imgEl.src = record.imageurl; 
             }
@@ -904,7 +884,6 @@ const ScheduleApp = {
                 const timeStr = r.timestamp ? new Date(r.timestamp).toLocaleDateString() : '';
                 content.appendChild(DomUtils.createEl('div', '', `上傳於 ${timeStr}`, [], {style:'font-size:12px;color:#888'}));
                 
-                // Right Side Buttons
                 const actions = DomUtils.createEl('div', 'card-actions');
                 const btnCopy = DomUtils.createEl('button', 'btn-icon', '🔗', [], {style: 'z-index:10; position:relative; padding:8px 10px;'});
                 btnCopy.onclick = (e) => { e.stopPropagation(); ScheduleApp.copyLink(r.imageurl); };
@@ -926,7 +905,6 @@ const ScheduleApp = {
         imgEl.classList.add('loaded'); 
         imgEl.style.opacity = '1'; 
         
-        // Init Viewer.js
         if(imgEl._viewer) imgEl._viewer.destroy();
         imgEl._viewer = new Viewer(imgEl, {
             inline: false, toolbar: false, navbar: false, title: false, tooltip: false, movable: true, zoomable: true, rotatable: false, scalable: false, transition: true, backdrop: true, className: 'schedule-lightbox'
@@ -943,16 +921,12 @@ const ScheduleApp = {
         navigator.clipboard.writeText(url).then(() => showToast('✅ 連結已複製')).catch(() => showToast('❌ 複製失敗'));
     },
     handleUpload: async function(input) {
-        if(CLOUDINARY_CLOUD_NAME === "你的cloud_name") return alert("請先填入 Cloudinary Cloud Name！");
+        if(CLOUDINARY_CLOUD_NAME === "dmgdasluw") return alert("請先填入 Cloudinary Cloud Name！");
         const file = input.files[0]; if(!file) return;
         const m = document.getElementById('s-month-selector').value;
         
-        // 🟢 Check Duplicate
         const exists = GLOBAL_DATA.schedule.data.find(r => String(r.month) === m);
-        if (exists) {
-            input.value = '';
-            return customAlert('⚠️ 該月份已有班表，請先刪除舊紀錄後再上傳。');
-        }
+        if (exists) { input.value = ''; return customAlert('⚠️ 該月份已有班表，請先刪除舊紀錄後再上傳。'); }
 
         const spinner = document.getElementById('uploadSpinner'); spinner.style.display = 'inline-block';
         try {
@@ -983,11 +957,27 @@ function customConfirm(msg, callback) { document.getElementById('confirmMsg').in
 function customAlert(msg) { document.getElementById('alertMsg').innerText = msg; openModal('alertModal'); }
 function openModal(id) { document.getElementById(id).classList.add('show'); }
 function initMonthSelect(id) { const s=document.getElementById(id); if (!s) return; const startD = new Date(); startD.setMonth(startD.getMonth() + 1); const frag = document.createDocumentFragment(); for(let i=0; i<24; i++){ const v=`${startD.getFullYear()}${String(startD.getMonth()+1).padStart(2,'0')}`; const o=document.createElement('option'); o.value=v; o.text=`${startD.getFullYear()} / ${String(startD.getMonth()+1).padStart(2,'0')}`; frag.appendChild(o); startD.setMonth(startD.getMonth()-1); } s.appendChild(frag); const d=new Date(); s.value = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`; }
-function addTemplate() { const b=document.getElementById('newBank').value, bill=document.getElementById('newBill').value, pay=document.getElementById('newPay').value; if(!b||!bill||!pay) return showToast('⚠️ 請填寫完整'); document.getElementById('newBank').value=''; document.getElementById('newBill').value=''; document.getElementById('newPay').value=''; setBtnLoading('btnAddTemp', true, '排程中...'); CloudStatus.set('syncing'); fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, appName:'wallet', action:'template_create', BankName:b, BillDate:bill, PaymentDate:pay}) }).then(() => setTimeout(()=>{ DataLoader.load().then(() => { renderTemplateList(); setBtnLoading('btnAddTemp', false); CloudStatus.set('success'); }); },1000)); }
-function saveTemplateEdit() { const idx = document.getElementById('editIndex').value; const bank = document.getElementById('editBankName').value; const bill = document.getElementById('editBill').value; const pay = document.getElementById('editPay').value; if(!bill || !pay) return showToast('⚠️ 日期不能為空'); setBtnLoading('btnSaveEdit', true, '儲存中...'); const target = GLOBAL_DATA.wallet.templates.find(t => t.templateindex == idx); if (target) { target.billdate = bill; target.paymentdate = pay; } WalletApp.render(); renderTemplateList(); CloudStatus.set('syncing'); fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ password: USER_PASSWORD, appName:'wallet', action: 'template_update', templateIndex: idx, BankName: bank, BillDate: bill, PaymentDate: pay }) }).then(() => { setTimeout(() => { closeModal('editTemplateModal'); setBtnLoading('btnSaveEdit', false); CloudStatus.set('success'); DataLoader.load(); }, 1000); }); }
-function deleteTemplate(idx) { customConfirm('確定刪除此銀行?', () => { CloudStatus.set('syncing'); fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, appName:'wallet', action:'template_delete', templateIndex:idx}) }).then(()=>setTimeout(() => { DataLoader.load().then(() => renderTemplateList()); CloudStatus.set('success'); }, 1000)); }); }
+// 🟢 Optimistic Settings Logic
+function addTemplate() { const b=document.getElementById('newBank').value, bill=document.getElementById('newBill').value, pay=document.getElementById('newPay').value; if(!b||!bill||!pay) return showToast('⚠️ 請填寫完整'); document.getElementById('newBank').value=''; document.getElementById('newBill').value=''; document.getElementById('newPay').value=''; 
+    // Optimistic Add
+    GLOBAL_DATA.wallet.templates.push({ bankname: b, billdate: bill, paymentdate: pay, templateindex: b });
+    renderTemplateList(); WalletApp.render(); CloudStatus.set('syncing'); fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, appName:'wallet', action:'template_create', BankName:b, BillDate:bill, PaymentDate:pay}) }).then(() => { CloudStatus.set('success'); }); 
+}
+function saveTemplateEdit() { const idx = document.getElementById('editIndex').value; const bank = document.getElementById('editBankName').value; const bill = document.getElementById('editBill').value; const pay = document.getElementById('editPay').value; if(!bill || !pay) return showToast('⚠️ 日期不能為空'); 
+    // Optimistic Edit
+    const target = GLOBAL_DATA.wallet.templates.find(t => t.templateindex == idx); if (target) { target.billdate = bill; target.paymentdate = pay; }
+    renderTemplateList(); WalletApp.render(); closeModal('editTemplateModal'); CloudStatus.set('syncing'); fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ password: USER_PASSWORD, appName:'wallet', action: 'template_update', templateIndex: idx, BankName: bank, BillDate: bill, PaymentDate: pay }) }).then(() => { CloudStatus.set('success'); }); 
+}
+function deleteTemplate(idx) { 
+    customConfirm('確定刪除此銀行?', () => { 
+        // Optimistic Delete
+        GLOBAL_DATA.wallet.templates = GLOBAL_DATA.wallet.templates.filter(t => t.templateindex !== String(idx));
+        renderTemplateList(); WalletApp.render(); CloudStatus.set('syncing'); fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, appName:'wallet', action:'template_delete', templateIndex:idx}) }).then(()=> { CloudStatus.set('success'); }); 
+    }); 
+}
 function openEditTemplateModal(index, bank, bill, pay) { document.getElementById('editIndex').value = index; document.getElementById('editBankName').value = bank; document.getElementById('editBill').value = bill; document.getElementById('editPay').value = pay; openModal('editTemplateModal'); }
-function renderTemplateList() { const d = document.getElementById('templateList'); d.innerHTML=''; const sorted = [...GLOBAL_DATA.wallet.templates].sort((a,b) => (parseInt(a.billdate)||0) - (parseInt(b.billdate)||0)); sorted.forEach(t => { const n = t.bankname; const b = t.billdate; const p = t.paymentdate; const row = DomUtils.createEl('div', 'setup-row'); row.innerHTML = `<div><div style="font-weight:700">${n}</div><div style="font-size:12px;color:#888;">結帳日 ${b} / 扣款日 ${p}</div></div><div style="display:flex; gap:5px;"><button class="btn-setup-action" style="color:#4F46E5;" onclick="openEditTemplateModal(${t.templateindex}, '${n}', '${b}', '${p}')">✎ 編輯</button><button class="btn-setup-action" style="color:#EF4444;" onclick="deleteTemplate(${t.templateindex})">🗑️ 刪除</button></div>`; d.appendChild(row); }); }
+// 🟢 Render Template Fix (Use string quotes)
+function renderTemplateList() { const d = document.getElementById('templateList'); d.innerHTML=''; const sorted = [...GLOBAL_DATA.wallet.templates].sort((a,b) => (parseInt(a.billdate)||0) - (parseInt(b.billdate)||0)); sorted.forEach(t => { const n = t.bankname; const b = t.billdate; const p = t.paymentdate; const row = DomUtils.createEl('div', 'setup-row'); row.innerHTML = `<div><div style="font-weight:700">${n}</div><div style="font-size:12px;color:#888;">結帳日 ${b} / 扣款日 ${p}</div></div><div style="display:flex; gap:5px;"><button class="btn-setup-action" style="color:#4F46E5;" onclick="openEditTemplateModal('${t.templateindex}', '${n}', '${b}', '${p}')">✎ 編輯</button><button class="btn-setup-action" style="color:#EF4444;" onclick="deleteTemplate('${t.templateindex}')">🗑️ 刪除</button></div>`; d.appendChild(row); }); }
 </script>
 </body>
 </html>
