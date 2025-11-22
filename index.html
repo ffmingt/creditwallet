@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V16.4 Cloudinary</title>
+    <title>My Wallet V16.6 UI Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <style>
-        /* --- V16.4 Style System --- */
+        /* --- V16.6 Style System --- */
         :root { 
             --bg-body: #F9FAFB; 
             --primary: #4F46E5; 
@@ -50,16 +50,17 @@
         @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform:translateX(-50%) translateY(0);} 40% {transform:translateX(-50%) translateY(-10px);} 60% {transform:translateX(-50%) translateY(-5px);} }
 
         /* Buttons & Loading */
-        .btn-submit { width: 100%; background: #1F2937; color: white; border: none; padding: 15px; border-radius: 14px; font-size: 16px; font-weight: 600; margin-top: 10px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.1s, background-color 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-submit:active { transform: scale(0.96); background-color: #000; }
+        .btn-submit { width: 100%; background: #1F2937; color: white; border: none; padding: 15px; border-radius: 14px; font-size: 16px; font-weight: 600; margin-top: 10px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.1s, background-color 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; overflow: hidden;}
+        .btn-submit:active, .btn-submit.active-state { transform: scale(0.96); background-color: #000; }
         .btn-submit:disabled { background: #6B7280; opacity: 0.8; cursor: not-allowed; transform: none; }
         
         .spinner { width: 18px; height: 18px; min-width: 18px; margin-right: 8px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; display: none; }
         .btn-loading .spinner { display: inline-block; } 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .btn-icon { background:white; border:1px solid #E5E7EB; padding:8px 12px; border-radius:12px; font-size:13px; font-weight:600; color:#555; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.1s; cursor: pointer; }
-        .btn-icon:active { transform:scale(0.95); background: #f3f4f6; }
+        /* Button Feedback Fix */
+        .btn-icon { background:white; border:1px solid #E5E7EB; padding:8px 12px; border-radius:12px; font-size:13px; font-weight:600; color:#555; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:transform 0.1s, background 0.1s; cursor: pointer; display: flex; align-items: center; justify-content: center; user-select: none; }
+        .btn-icon:active, .btn-icon.active { transform:scale(0.90); background: #F3F4F6; border-color: #D1D5DB; }
 
         /* Cloud Status */
         #cloudStatus { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-200%); opacity: 0; background: white; padding: 8px 16px; border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-main); z-index: var(--z-toast); transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none; }
@@ -137,7 +138,7 @@
         .swipe-item-container { position: relative; margin-bottom: 12px; height: 76px; overflow: hidden; border-radius: 18px; box-shadow: var(--shadow); }
         .swipe-bg-action { position: absolute; top: 0; bottom: 0; right: 0; width: 100px; background: var(--danger); display: flex; justify-content: center; align-items: center; color: white; font-weight: 700; font-size: 14px; letter-spacing: 1px; z-index: 1; border-radius: 18px; cursor: pointer; }
         
-        .t-card { position: relative; z-index: 2; height: 100%; background: white; border-radius: 18px; padding: 16px; display: flex; align-items: center; gap: 14px; border: 1px solid #E5E7EB; transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); touch-action: pan-y; margin-bottom: 0; box-shadow: none; }
+        .t-card { position: relative; z-index: 2; height: 100%; background: white; border-radius: 18px; padding: 16px; display: flex; align-items: center; gap: 14px; border: 1px solid #E5E7EB; transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); touch-action: pan-y; margin-bottom: 0; box-shadow: none; user-select: none; }
         .t-card.logged { border: 1px solid #E5E7EB; }
         .t-card.logged::before { content:''; position:absolute; left:0; top:0; bottom:0; width:5px; background: var(--success); }
         .t-card.unlogged { background: #F9FAFB; border: 1px dashed #D1D5DB; opacity: 0.98; }
@@ -203,6 +204,10 @@
         .btn-upload-wrapper { position: relative; flex: 1; }
         .file-input { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2; }
         
+        /* Schedule Card Action Buttons */
+        .card-actions { display:flex; gap:8px; align-items:center; }
+        .schedule-card { margin-bottom: 12px !important; }
+        
         /* Modals */
         .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: var(--z-modal); display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
@@ -247,7 +252,7 @@
             <div class="spinner"></div> <span class="btn-text">解鎖</span>
         </button>
         <div id="loginError" style="color:var(--danger); margin-top:20px; min-height:20px;"></div>
-        <div id="versionTag" onclick="LoginHandler.clickVersion()">v16.4</div>
+        <div id="versionTag" onclick="LoginHandler.clickVersion()">v16.6</div>
     </div>
 
     <div id="app-hub" class="hidden-layer">
@@ -266,7 +271,7 @@
             </div>
             <div class="app-card" onclick="Nav.open('schedule')">
                 <div><div class="app-icon">📅</div><div class="app-name">班表</div></div>
-                <div class="app-ver">v1.6</div>
+                <div class="app-ver">v1.7</div>
             </div>
         </div>
     </div>
@@ -386,11 +391,17 @@
         <div class="schedule-actions">
             <select id="s-month-selector" class="styled-input" style="flex:1;" onchange="ScheduleApp.render()"></select>
             <div class="btn-upload-wrapper">
-                <button class="btn-submit" style="margin-top:0; background:#D97706;">
+                <!-- PC Feedback Fix: Added ID to button for JS manipulation -->
+                <button id="s-upload-btn" class="btn-submit" style="margin-top:0; background:#D97706;">
                     <div id="uploadSpinner" class="spinner"></div>
                     <span class="btn-text">📷 上傳</span>
                 </button>
-                <input type="file" id="s-upload-input" class="file-input" accept="image/*" onchange="ScheduleApp.handleUpload(this)">
+                <!-- Added feedback listeners to input -->
+                <input type="file" id="s-upload-input" class="file-input" accept="image/*" 
+                       onchange="ScheduleApp.handleUpload(this)"
+                       onmousedown="document.getElementById('s-upload-btn').classList.add('active-state')"
+                       onmouseup="document.getElementById('s-upload-btn').classList.remove('active-state')"
+                       onmouseleave="document.getElementById('s-upload-btn').classList.remove('active-state')">
             </div>
         </div>
 
@@ -566,32 +577,56 @@ class TouchImageViewer {
 }
 const scheduleViewer = new TouchImageViewer('s-viewer-container', 's-image');
 
-// 🟢 Swipe Logic
-let touchStartX = 0; let touchStartY = 0; let activeSwipeEl = null;
-document.addEventListener('touchstart', (e) => {
-    if(e.target.closest('.schedule-viewer')) return;
-    const card = e.target.closest('.t-card'); if (!card) { if (activeSwipeEl) closeSwipe(activeSwipeEl); return; }
-    touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY;
+// 🟢 Universal Swipe Logic (Touch + Mouse) - FIXED
+let isDragging = false; let startX = 0; let activeSwipeEl = null;
+
+function handleStart(x, target) {
+    if(target.closest('.schedule-viewer')) return;
+    
+    // 🔥 FIX: Don't swipe if clicking a button (Delete Action)
+    if (target.classList.contains('swipe-bg-action') || target.closest('.swipe-bg-action')) return;
+
+    const card = target.closest('.t-card');
+    if (!card) { if (activeSwipeEl) closeSwipe(activeSwipeEl); return; }
+    
     if (activeSwipeEl && activeSwipeEl !== card) closeSwipe(activeSwipeEl);
-    card.style.transition = 'none';
-}, { passive: true });
-document.addEventListener('touchmove', (e) => {
-    if(e.target.closest('.schedule-viewer')) return;
-    if (!touchStartX) return; const card = e.target.closest('.t-card'); if (!card) return;
-    const diffX = e.touches[0].clientX - touchStartX; const diffY = e.touches[0].clientY - touchStartY;
-    if (Math.abs(diffY) > Math.abs(diffX)) return;
-    if (diffX < 0 && diffX > -120) { e.preventDefault(); card.style.transform = `translateX(${diffX}px)`; } 
-    else if (diffX > 0) { card.style.transform = `translateX(0px)`; }
-}, { passive: false });
-document.addEventListener('touchend', (e) => {
-    if(e.target.closest('.schedule-viewer')) return;
-    const card = e.target.closest('.t-card'); if (!card) return;
+    isDragging = true; startX = x; card.style.transition = 'none';
+}
+
+function handleMove(x, target, e) {
+    if (!isDragging) return;
+    const card = target.closest('.t-card');
+    if (!card) return;
+    const diffX = x - startX;
+    if (diffX < 0 && diffX > -120) { 
+        if(e.cancelable) e.preventDefault(); 
+        card.style.transform = `translateX(${diffX}px)`; 
+    } else if (diffX > 0) { 
+        card.style.transform = `translateX(0px)`; 
+    }
+}
+
+function handleEnd(target) {
+    if (!isDragging) return;
+    isDragging = false;
+    const card = target.closest('.t-card');
+    if (!card) return;
     card.style.transition = 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)';
     const currentX = new WebKitCSSMatrix(window.getComputedStyle(card).transform).m41;
     if (currentX < -40) { card.style.transform = `translateX(-100px)`; activeSwipeEl = card; } 
     else { card.style.transform = `translateX(0px)`; activeSwipeEl = null; }
-    touchStartX = 0;
-});
+}
+
+// Touch Events
+document.addEventListener('touchstart', (e) => handleStart(e.touches[0].clientX, e.target), { passive: true });
+document.addEventListener('touchmove', (e) => handleMove(e.touches[0].clientX, e.target, e), { passive: false });
+document.addEventListener('touchend', (e) => handleEnd(e.target));
+
+// Mouse Events (For PC)
+document.addEventListener('mousedown', (e) => handleStart(e.clientX, e.target));
+document.addEventListener('mousemove', (e) => handleMove(e.clientX, e.target, e));
+document.addEventListener('mouseup', (e) => handleEnd(e.target));
+
 function closeSwipe(el) { if(!el) return; el.style.transform = 'translateX(0px)'; activeSwipeEl = null; }
 
 const LoginHandler = {
@@ -666,7 +701,7 @@ const CloudStatus = {
     }
 };
 
-// 🟢 KEY MAPPING
+// 🟢 KEY MAPPING: EXACT MATCH from your request
 const DATA_KEY_MAP = { 
     'UUID': 'uuid', 'Month': 'month', 'ImageURL': 'imageurl', 'Timestamp': 'timestamp',
     '月份': 'month', 'month': 'month', 'imageurl': 'imageurl', 'image': 'imageurl', 'url': 'imageurl', 'timestamp': 'timestamp', 'time': 'timestamp',
@@ -684,10 +719,11 @@ const DataLoader = {
             const res = await fetch(`${API_URL}?password=${encodeURIComponent(USER_PASSWORD)}`);
             const json = await res.json();
             if(json.error) throw new Error(json.error);
+            
             GLOBAL_DATA = { 
                 wallet: { data: mapNormalize(json.wallet.data).reverse(), templates: mapNormalize(json.wallet.templates) }, 
                 crypto: { data: mapNormalize(json.crypto.data), methods: json.crypto.methods, rate: json.crypto.rate },
-                schedule: { data: mapNormalize(json.schedule.data) },
+                schedule: { data: mapNormalize(json.schedule.data) }, // Remove reverse here, we sort later
                 config: json.config || {budget: 0} 
             };
             localStorage.setItem('myBillPass', USER_PASSWORD);
@@ -709,8 +745,22 @@ const DataLoader = {
 function verifyLogin() { USER_PASSWORD = document.getElementById('passwordInput').value; if(!USER_PASSWORD) return; setBtnLoading('loginBtn', true, '驗證中...'); DataLoader.load(true); }
 function formatMoney(num) { if(!num && num !== 0) return '0'; return Number(num).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
 function parseMoney(numStr) { if(typeof numStr === 'number') return numStr; if(!numStr) return 0; const cleanStr = String(numStr).replace(/,/g, '').replace(/\s/g, ''); return parseFloat(cleanStr) || 0; }
-function mapNormalize(arr) { if(!Array.isArray(arr)) return []; return arr.map(obj => { const newObj = {}; for(let k in obj) { const cleanKey = k.trim(); const mappedKey = DATA_KEY_MAP[cleanKey] || DATA_KEY_MAP[cleanKey.toLowerCase()] || cleanKey.toLowerCase(); newObj[mappedKey] = obj[k]; } return newObj; }); }
 
+function mapNormalize(arr) { 
+    if(!Array.isArray(arr)) return []; 
+    return arr.map(obj => { 
+        const newObj = {}; 
+        for(let k in obj) { 
+            const cleanKey = k.trim();
+            // Check Exact Match first, then Lowercase
+            const mappedKey = DATA_KEY_MAP[cleanKey] || DATA_KEY_MAP[cleanKey.toLowerCase()] || cleanKey.toLowerCase(); 
+            newObj[mappedKey] = obj[k]; 
+        }
+        return newObj; 
+    }); 
+}
+
+// --- Wallet Logic ---
 const WalletApp = {
     chart: null, chartType: 'pie',
     render: function() {
@@ -753,7 +803,14 @@ const WalletApp = {
     updateBudgetUI: function(currentTotal) {
         const budget = GLOBAL_DATA.config.budget || 0;
         const container = document.getElementById('budgetContainer'); const fill = document.getElementById('budgetFill'); const txtLeft = document.getElementById('budgetLeftText');
-        if(budget > 0) { container.style.display = 'block'; const pct = Math.min((currentTotal / budget) * 100, 100); const left = budget - currentTotal; fill.style.width = `${pct}%`; if (pct < 80) { fill.style.backgroundColor = '#10B981'; } else if (pct < 100) { fill.style.backgroundColor = '#F59E0B'; } else { fill.style.backgroundColor = '#EF4444'; } if(left >= 0) { txtLeft.innerText = `剩餘 $${formatMoney(left)}`; txtLeft.style.color = '#1F2937'; } else { txtLeft.innerText = `超支 $${formatMoney(Math.abs(left))}`; txtLeft.style.color = '#EF4444'; } } else { container.style.display = 'none'; }
+        const emoji = document.getElementById('emojiStatus');
+        if(budget > 0) { 
+            container.style.display = 'block'; const pct = Math.min((currentTotal / budget) * 100, 100); const left = budget - currentTotal; fill.style.width = `${pct}%`; 
+            if (pct < 80) { fill.style.backgroundColor = '#10B981'; emoji.innerText = '😊'; } 
+            else if (pct < 100) { fill.style.backgroundColor = '#F59E0B'; emoji.innerText = '😓'; } 
+            else { fill.style.backgroundColor = '#EF4444'; emoji.innerText = '💸'; } // 🟢 Budget Fix
+            if(left >= 0) { txtLeft.innerText = `剩餘 $${formatMoney(left)}`; txtLeft.style.color = '#1F2937'; } else { txtLeft.innerText = `超支 $${formatMoney(Math.abs(left))}`; txtLeft.style.color = '#EF4444'; } 
+        } else { container.style.display = 'none'; emoji.innerText = '😊'; }
     },
     toggleChart: function() { const drawer = document.getElementById('chartDrawer'); const btnText = document.getElementById('chartBtnText'); const btnIcon = document.getElementById('chartBtnIcon'); if (drawer.classList.contains('open')) { drawer.classList.remove('open'); btnText.innerText = "分析"; btnIcon.innerText = "📊"; } else { drawer.classList.add('open'); btnText.innerText = "收起"; btnIcon.innerText = "🔼"; const m = document.getElementById('w-list-month').value; const data = GLOBAL_DATA.wallet.data.filter(r => String(r.month).trim() === m); this.renderChart(data); } },
     setChartType: function(type) { this.chartType = type; document.getElementById('btnChartPie').className = type === 'pie' ? 'chart-type-btn active' : 'chart-type-btn'; document.getElementById('btnChartBar').className = type === 'bar' ? 'chart-type-btn active' : 'chart-type-btn'; const m = document.getElementById('w-list-month').value; const data = GLOBAL_DATA.wallet.data.filter(r => String(r.month).trim() === m); this.renderChart(data); },
@@ -826,15 +883,22 @@ const ScheduleApp = {
         if (sortedData.length === 0) { const emptyState = DomUtils.createEl('div', '', '尚無歷史紀錄', [], {style: 'text-align:center; color:#999; padding:20px; font-size:14px;'}); listDiv.appendChild(emptyState); } 
         else {
             sortedData.forEach(r => {
-                const card = DomUtils.createEl('div', 't-card'); card.onclick = () => ScheduleApp.selectMonth(r.month);
+                const card = DomUtils.createEl('div', 't-card schedule-card'); card.onclick = () => ScheduleApp.selectMonth(r.month);
                 const icon = DomUtils.createEl('div', 't-icon', '📅'); const content = DomUtils.createEl('div', 't-content');
                 const mStr = String(r.month || '??????'); const displayMonth = mStr.length >= 6 ? `${mStr.substring(0,4)} / ${mStr.substring(4,6)}` : mStr;
                 content.appendChild(DomUtils.createEl('div', 't-bank', displayMonth));
                 const timeStr = r.timestamp ? new Date(r.timestamp).toLocaleDateString() : '';
                 content.appendChild(DomUtils.createEl('div', '', `上傳於 ${timeStr}`, [], {style:'font-size:12px;color:#888'}));
-                const btnDelete = DomUtils.createEl('button', 'btn-icon', '🗑️', [], {style: 'color:#EF4444; z-index:10; position:relative;'});
+                
+                // Right Side Buttons
+                const actions = DomUtils.createEl('div', 'card-actions');
+                const btnCopy = DomUtils.createEl('button', 'btn-icon', '🔗', [], {style: 'z-index:10; position:relative; padding:8px 10px;'});
+                btnCopy.onclick = (e) => { e.stopPropagation(); ScheduleApp.copyLink(r.imageurl); };
+                const btnDelete = DomUtils.createEl('button', 'btn-icon', '🗑️', [], {style: 'color:#EF4444; z-index:10; position:relative; padding:8px 10px;'});
                 btnDelete.onclick = (e) => { e.stopPropagation(); ScheduleApp.delete(r.uuid); };
-                card.appendChild(icon); card.appendChild(content); card.appendChild(btnDelete); frag.appendChild(card);
+                
+                actions.appendChild(btnCopy); actions.appendChild(btnDelete);
+                card.appendChild(icon); card.appendChild(content); card.appendChild(actions); frag.appendChild(card);
             });
             listDiv.appendChild(frag);
         }
@@ -847,10 +911,21 @@ const ScheduleApp = {
         if (!opt) { opt = document.createElement('option'); opt.value = m; opt.text = `${m.substring(0,4)} 年 ${m.substring(4,6)} 月`; sel.appendChild(opt); }
         sel.value = m; this.render(); document.querySelector('#app-schedule .hero').scrollIntoView({behavior:'smooth'});
     },
+    copyLink: function(url) {
+        navigator.clipboard.writeText(url).then(() => showToast('✅ 連結已複製')).catch(() => showToast('❌ 複製失敗'));
+    },
     handleUpload: async function(input) {
         if(CLOUDINARY_CLOUD_NAME === "你的cloud_name") return alert("請先填入 Cloudinary Cloud Name！");
         const file = input.files[0]; if(!file) return;
         const m = document.getElementById('s-month-selector').value;
+        
+        // 🟢 Check Duplicate
+        const exists = GLOBAL_DATA.schedule.data.find(r => String(r.month) === m);
+        if (exists) {
+            input.value = '';
+            return customAlert('⚠️ 該月份已有班表，請先刪除舊紀錄後再上傳。');
+        }
+
         const spinner = document.getElementById('uploadSpinner'); spinner.style.display = 'inline-block';
         try {
             const compressedFile = await compressImage(file, 1024, 0.6);
@@ -859,7 +934,6 @@ const ScheduleApp = {
             const json = await res.json();
             if(!res.ok) throw new Error(json.error ? json.error.message : 'Upload Failed');
             const link = json.secure_url;
-            GLOBAL_DATA.schedule.data = GLOBAL_DATA.schedule.data.filter(r => r.month !== m);
             GLOBAL_DATA.schedule.data.unshift({ month: m, imageurl: link, timestamp: new Date(), uuid: 'temp' });
             this.render(); SyncManager.add({ appName: 'schedule', action: 'post', month: m, url: link });
             showToast('✅ 上傳成功');
@@ -878,6 +952,7 @@ function setBtnLoading(btnId, isLoading, text) { const btn = document.getElement
 function showToast(m) { const t=document.getElementById('toast'); t.innerText=m; t.className='show'; setTimeout(()=>t.className='', 2500); }
 function manualReload() { if (SyncManager.isSyncing) { showToast("⚠️ 雲端同步中，請稍後再刷新"); return; } CloudStatus.set('syncing', '資料更新中...'); DataLoader.load(false, true); }
 function customConfirm(msg, callback) { document.getElementById('confirmMsg').innerText = msg; const oldBtn = document.getElementById('confirmBtnAction'); const newBtn = oldBtn.cloneNode(true); oldBtn.parentNode.replaceChild(newBtn, oldBtn); newBtn.onclick = () => { closeModal('confirmModal'); callback(); }; openModal('confirmModal'); }
+function customAlert(msg) { document.getElementById('alertMsg').innerText = msg; openModal('alertModal'); }
 function openModal(id) { document.getElementById(id).classList.add('show'); }
 function initMonthSelect(id) { const s=document.getElementById(id); if (!s) return; const startD = new Date(); startD.setMonth(startD.getMonth() + 1); const frag = document.createDocumentFragment(); for(let i=0; i<24; i++){ const v=`${startD.getFullYear()}${String(startD.getMonth()+1).padStart(2,'0')}`; const o=document.createElement('option'); o.value=v; o.text=`${startD.getFullYear()} / ${String(startD.getMonth()+1).padStart(2,'0')}`; frag.appendChild(o); startD.setMonth(startD.getMonth()-1); } s.appendChild(frag); const d=new Date(); s.value = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`; }
 function addTemplate() { const b=document.getElementById('newBank').value, bill=document.getElementById('newBill').value, pay=document.getElementById('newPay').value; if(!b||!bill||!pay) return showToast('⚠️ 請填寫完整'); document.getElementById('newBank').value=''; document.getElementById('newBill').value=''; document.getElementById('newPay').value=''; setBtnLoading('btnAddTemp', true, '排程中...'); CloudStatus.set('syncing'); fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, appName:'wallet', action:'template_create', BankName:b, BillDate:bill, PaymentDate:pay}) }).then(() => setTimeout(()=>{ DataLoader.load().then(() => { renderTemplateList(); setBtnLoading('btnAddTemp', false); CloudStatus.set('success'); }); },1000)); }
