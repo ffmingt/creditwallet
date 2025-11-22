@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V13.5</title>
+    <title>My Wallet V14.0</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- V13.5 Style System --- */
+        /* --- V14.0 Style System --- */
         :root { 
             --bg-body: #F9FAFB; 
             --primary: #4F46E5; 
@@ -23,36 +23,26 @@
 
         .hidden-layer { display: none !important; }
 
-        /* Login */
-        #loginOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(249,250,251,0.98); backdrop-filter: blur(5px); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.3s; }
+        /* Login: z-index 2000 */
+        #loginOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(249,250,251,0.98); backdrop-filter: blur(5px); z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.3s; }
         .login-input { width:240px; padding:15px; border:1px solid #E5E7EB; border-radius:16px; font-size:24px; text-align:center; outline:none; margin:20px 0; letter-spacing:8px; background:white; box-shadow: var(--shadow); }
         .login-input:focus { border-color: var(--primary); }
-        #versionTag { position: absolute; bottom: 30px; font-size: 12px; color: #9CA3AF; font-weight: 500; cursor: pointer; padding: 10px; }
+        #versionTag { position: absolute; bottom: 30px; font-size: 12px; color: #9CA3AF; font-weight: 500; cursor: pointer; padding: 10px; z-index: 2001; }
 
         /* Buttons & Loading */
-        .btn-submit { 
-            width: 100%; background: #1F2937; color: white; border: none; 
-            padding: 15px; border-radius: 14px; font-size: 16px; font-weight: 600; 
-            margin-top: 10px; display: flex; justify-content: center; align-items: center; 
-            cursor: pointer; transition: transform 0.1s, background-color 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-        }
+        .btn-submit { width: 100%; background: #1F2937; color: white; border: none; padding: 15px; border-radius: 14px; font-size: 16px; font-weight: 600; margin-top: 10px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.1s, background-color 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .btn-submit:active { transform: scale(0.96); background-color: #000; }
         .btn-submit:disabled { background: #6B7280; opacity: 0.8; cursor: not-allowed; transform: none; }
         
-        .spinner { 
-            width: 18px; height: 18px; min-width: 18px; 
-            margin-right: 8px; border: 2px solid rgba(255,255,255,0.3); 
-            border-radius: 50%; border-top-color: #fff; 
-            animation: spin 0.8s linear infinite; display: none; 
-        }
+        .spinner { width: 18px; height: 18px; min-width: 18px; margin-right: 8px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; display: none; }
         .btn-loading .spinner { display: inline-block; } 
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .btn-icon { background:white; border:1px solid #E5E7EB; padding:8px 12px; border-radius:12px; font-size:13px; font-weight:600; color:#555; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.1s; cursor: pointer; }
         .btn-icon:active { transform:scale(0.95); background: #f3f4f6; }
 
-        /* Cloud Status */
-        #cloudStatus { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-200%); opacity: 0; background: white; padding: 8px 16px; border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-main); z-index: 200000; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none; }
+        /* Cloud Status: z-index 2000000 */
+        #cloudStatus { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-200%); opacity: 0; background: white; padding: 8px 16px; border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-main); z-index: 2000000; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none; }
         #cloudStatus.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         #cloudStatus.syncing { color: var(--primary); border: 1px solid #E0E7FF; }
         #cloudStatus.success { color: var(--success); border: 1px solid #D1FAE5; }
@@ -90,7 +80,7 @@
         .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
         .card-sub { font-size: 13px; opacity: 0.8; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; }
         
-        /* 🟡 Budget Progress Bar */
+        /* Budget Progress Bar */
         .budget-container { margin-top: 15px; margin-bottom: 5px; }
         .budget-bar-bg { background: rgba(0,0,0,0.2); height: 6px; border-radius: 3px; overflow: hidden; position: relative; }
         .budget-bar-fill { height: 100%; background: white; width: 0%; transition: width 0.5s ease, background-color 0.3s; border-radius: 3px; }
@@ -116,7 +106,7 @@
         .segment-btn { flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 600; color: #6B7280; border-radius: 10px; cursor: pointer; transition: 0.2s; }
         .segment-btn.active { background: white; color: #1F2937; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-        /* Lists & Swipe Actions */
+        /* Lists & Swipe */
         .list-section { padding: 30px 24px; }
         .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #EEE; }
         .list-title { font-size: 18px; font-weight: 800; color: var(--text-main); }
@@ -124,7 +114,6 @@
         .refresh-btn { border: none; background: white; border-radius: 50%; width: 32px; height: 32px; margin-left: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 16px; transition: transform 0.2s; }
         .refresh-btn:active { transform: rotate(180deg); }
 
-        /* 🟡 Swipe List Styles */
         .swipe-item-container { position: relative; margin-bottom: 12px; height: 76px; overflow: hidden; border-radius: 18px; box-shadow: var(--shadow); }
         .swipe-bg-action { position: absolute; top: 0; bottom: 0; right: 0; width: 100px; background: var(--danger); display: flex; justify-content: center; align-items: center; color: white; font-weight: 700; font-size: 14px; letter-spacing: 1px; z-index: 1; border-radius: 18px; cursor: pointer; }
         
@@ -146,8 +135,8 @@
         .alert-content { flex: 1; }
         .alert-title { font-weight: 700; margin-bottom: 2px; display: block; color: #7C2D12; }
 
-        /* Modals */
-        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: 10000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        /* Modals: z-index 1,000,000 */
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: 1000000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
         .modal-box { background: white; width: 85%; max-width: 380px; border-radius: 24px; padding: 0; transform: scale(0.95); transition: 0.2s; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; }
         .modal-overlay.show .modal-box { transform: scale(1); }
@@ -161,7 +150,8 @@
         .btn-setup-action { border: none; background: none; cursor: pointer; font-size: 14px; padding: 5px; transition: opacity 0.1s, transform 0.1s;}
         .btn-setup-action:active { opacity: 0.6; transform: scale(0.95); }
 
-        #toast { visibility: hidden; background: #333; color: #fff; padding: 12px 24px; border-radius: 50px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 99999; opacity:0; transition:0.3s; }
+        /* Toast: z-index 2,000,000 */
+        #toast { visibility: hidden; background: #333; color: #fff; padding: 12px 24px; border-radius: 50px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 2000000; opacity:0; transition:0.3s; }
         #toast.show { visibility: visible; opacity: 1; bottom: 40px; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -180,8 +170,8 @@
             <div class="spinner"></div> <span class="btn-text">解鎖</span>
         </button>
         <div id="loginError" style="color:var(--danger); margin-top:20px; min-height:20px;"></div>
-        <!-- 🟡 Version & Hidden Cache Clear -->
-        <div id="versionTag" onclick="LoginHandler.clickVersion()">v13.5</div>
+        <!-- Version Tag for Cache Clear -->
+        <div id="versionTag" onclick="LoginHandler.clickVersion()">v14.0</div>
     </div>
 
     <!-- Hub -->
@@ -193,11 +183,11 @@
         <div class="app-grid">
             <div class="app-card" onclick="Nav.open('wallet')">
                 <div><div class="app-icon">💰</div><div class="app-name">My Wallet</div></div>
-                <div class="app-ver">v9.1</div>
+                <div class="app-ver">v9.4</div>
             </div>
             <div class="app-card" onclick="Nav.open('crypto')">
                 <div><div class="app-icon">🪙</div><div class="app-name">Crypto</div></div>
-                <div class="app-ver">v1.5</div>
+                <div class="app-ver">v1.8</div>
             </div>
         </div>
     </div>
@@ -217,7 +207,7 @@
                     <div style="font-size:14px; opacity:0.9;">本月總支出</div>
                     <div class="total-amount" id="w-total">$0</div>
                     
-                    <!-- 🟡 Budget Progress Bar -->
+                    <!-- Budget Progress Bar -->
                     <div class="budget-container" id="budgetContainer" style="display:none;">
                         <div class="budget-bar-bg"><div id="budgetFill" class="budget-bar-fill"></div></div>
                         <div class="budget-text">
@@ -233,7 +223,6 @@
                 </div>
                 <div class="status-emoji" id="emojiStatus">😊</div>
                 <div class="chart-drawer" id="chartDrawer">
-                    <!-- 🟡 Chart Toggle Buttons -->
                     <div class="chart-actions">
                         <button class="chart-type-btn active" id="btnChartPie" onclick="WalletApp.setChartType('pie')">圓餅圖</button>
                         <button class="chart-type-btn" id="btnChartBar" onclick="WalletApp.setChartType('bar')">近半年趨勢</button>
@@ -335,12 +324,12 @@
         <div class="modal-box">
             <div class="modal-header">
                 <div style="font-size:18px; font-weight:800; margin-bottom:15px;">Wallet 設定</div>
-                <!-- 🟡 Budget Setting -->
+                <!-- Budget Setting -->
                 <div style="background:#FFF7ED; padding:15px; border-radius:16px; margin-bottom:15px; border:1px solid #FED7AA;">
                     <label class="form-label" style="color:#9A3412;">每月預算目標 ($)</label>
                     <div style="display:flex; gap:10px;">
                         <input type="number" id="budgetInput" class="styled-input" placeholder="例如: 30000" style="background:white;" inputmode="numeric">
-                        <button class="btn-submit" onclick="saveBudget()" style="width:80px; margin-top:0; background:#9A3412;">儲存</button>
+                        <button id="btnSaveBudget" class="btn-submit" onclick="saveBudget()" style="width:80px; margin-top:0; background:#9A3412;"><div class="spinner"></div><span class="btn-text">儲存</span></button>
                     </div>
                 </div>
 
@@ -397,6 +386,7 @@
         </div>
     </div>
 
+    <!-- Common Alert/Confirm Modals -->
     <div id="alertModal" class="modal-overlay">
         <div class="modal-box" style="display:block; padding:24px;">
             <div id="alertMsg" style="font-size:16px; color:#333; margin-bottom:20px; line-height:1.5;"></div>
@@ -406,7 +396,6 @@
         </div>
     </div>
 
-    <!-- Confirm Modal -->
     <div id="confirmModal" class="modal-overlay">
         <div class="modal-box" style="display:block; padding:24px;">
             <div id="confirmMsg" style="font-size:16px; color:#333; margin-bottom:20px; line-height:1.5;"></div>
@@ -424,29 +413,27 @@ const API_URL = "https://script.google.com/macros/s/AKfycby60jdswu4PguQ0YNMpYdfd
 // ==========================================
 
 let USER_PASSWORD = "";
-let GLOBAL_DATA = { wallet: {data:[], templates:[]}, crypto: {data:[], methods:[], rate: 32.5} };
+let GLOBAL_DATA = { wallet: {data:[], templates:[]}, crypto: {data:[], methods:[], rate: 32.5}, config: {budget: 0} };
+
 const DATA_KEY_MAP = { 
     '銀行名稱': 'bankname', 'bankname': 'bankname', '結帳日': 'billdate', 'billdate': 'billdate', '扣款日': 'paymentdate', 'paymentdate': 'paymentdate', 
     '銀行': 'bank', 'bank': 'bank', '金額': 'amount', 'amount': 'amount', '備註': 'note', 'note': 'note', '月份': 'month', 'month': 'month', 
     'uuid': 'uuid', 'UUID': 'uuid', '日期': 'date', 'date': 'date', '管道': 'method', 'method': 'method', 
-    '台幣成本': 'cost_twd', 'cost_twd': 'cost_twd', 'cost': 'cost_twd', '外幣金額': 'amount_usd', 'amount_usd': 'amount_usd', '幣別': 'type', 'type': 'type' 
+    
+    // Complete Mapping Table for Crypto
+    '台幣成本': 'cost_twd', 'cost_twd': 'cost_twd', 'cost': 'cost_twd', 'costtwd': 'cost_twd', 'CostTWD': 'cost_twd',
+    '外幣金額': 'amount_usd', 'amount_usd': 'amount_usd', 'amountusd': 'amount_usd', 'AmountUSD': 'amount_usd',
+    '幣別': 'type', 'type': 'type' 
 };
 
-// 🟡 Login Logic with Hidden Cache Clear
+// 🟡 Login Handler
 const LoginHandler = {
-    clickCount: 0,
-    timer: null,
+    clickCount: 0, timer: null,
     clickVersion: function() {
-        this.clickCount++;
-        clearTimeout(this.timer);
-        this.timer = setTimeout(() => { this.clickCount = 0; }, 2000);
-        
+        this.clickCount++; clearTimeout(this.timer); this.timer = setTimeout(() => { this.clickCount = 0; }, 2000);
         if (this.clickCount === 5) {
             this.clickCount = 0;
-            customConfirm('確定要清除所有快取設定並重置嗎？', () => {
-                localStorage.clear();
-                window.location.reload();
-            });
+            customConfirm('確定要清除所有快取設定並重置嗎？', () => { localStorage.clear(); window.location.reload(); });
         }
     }
 };
@@ -459,9 +446,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setBtnLoading('loginBtn', true, '自動登入中...');
         DataLoader.load(true);
     }
-    // Load Budget
-    const savedBudget = localStorage.getItem('myBudgetLimit');
-    if(savedBudget) document.getElementById('budgetInput').value = savedBudget;
 });
 
 const Nav = {
@@ -477,69 +461,30 @@ const Nav = {
     }
 };
 
-// 🟡 Global Touch Handler for Swipe (Delegation)
-let touchStartX = 0;
-let touchStartY = 0;
-let activeSwipeEl = null;
-
+// 🟡 Swipe Logic
+let touchStartX = 0; let touchStartY = 0; let activeSwipeEl = null;
 document.addEventListener('touchstart', (e) => {
-    const card = e.target.closest('.t-card');
-    if (!card) {
-        if (activeSwipeEl) closeSwipe(activeSwipeEl);
-        return;
-    }
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    
-    // Close other opened swipes
+    const card = e.target.closest('.t-card'); if (!card) { if (activeSwipeEl) closeSwipe(activeSwipeEl); return; }
+    touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY;
     if (activeSwipeEl && activeSwipeEl !== card) closeSwipe(activeSwipeEl);
-    
-    card.style.transition = 'none'; // Dragging should be instant
+    card.style.transition = 'none';
 }, { passive: true });
-
 document.addEventListener('touchmove', (e) => {
-    if (!touchStartX) return;
-    const card = e.target.closest('.t-card');
-    if (!card) return;
-
-    const diffX = e.touches[0].clientX - touchStartX;
-    const diffY = e.touches[0].clientY - touchStartY;
-
-    // Check if vertical scroll intention
+    if (!touchStartX) return; const card = e.target.closest('.t-card'); if (!card) return;
+    const diffX = e.touches[0].clientX - touchStartX; const diffY = e.touches[0].clientY - touchStartY;
     if (Math.abs(diffY) > Math.abs(diffX)) return;
-
-    if (diffX < 0 && diffX > -120) {
-        // Swiping Left
-        e.preventDefault(); // Stop page scrolling
-        card.style.transform = `translateX(${diffX}px)`;
-    } else if (diffX > 0) {
-        // Swiping Right (closing)
-        card.style.transform = `translateX(0px)`;
-    }
+    if (diffX < 0 && diffX > -120) { e.preventDefault(); card.style.transform = `translateX(${diffX}px)`; } 
+    else if (diffX > 0) { card.style.transform = `translateX(0px)`; }
 }, { passive: false });
-
 document.addEventListener('touchend', (e) => {
-    const card = e.target.closest('.t-card');
-    if (!card) return;
-
+    const card = e.target.closest('.t-card'); if (!card) return;
     card.style.transition = 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)';
     const currentX = new WebKitCSSMatrix(window.getComputedStyle(card).transform).m41;
-
-    if (currentX < -40) {
-        card.style.transform = `translateX(-100px)`;
-        activeSwipeEl = card;
-    } else {
-        card.style.transform = `translateX(0px)`;
-        activeSwipeEl = null;
-    }
+    if (currentX < -40) { card.style.transform = `translateX(-100px)`; activeSwipeEl = card; } 
+    else { card.style.transform = `translateX(0px)`; activeSwipeEl = null; }
     touchStartX = 0;
 });
-
-function closeSwipe(el) {
-    if(!el) return;
-    el.style.transform = 'translateX(0px)';
-    activeSwipeEl = null;
-}
+function closeSwipe(el) { if(!el) return; el.style.transform = 'translateX(0px)'; activeSwipeEl = null; }
 
 const SyncManager = {
     queue: [], isSyncing: false, totalTasks: 0, completed: 0,
@@ -571,7 +516,7 @@ const CloudStatus = {
         clearTimeout(this.timer); this.el.className = 'show ' + state;
         if (state === 'success') { this.icon.innerHTML = '✅'; this.text.innerText = customText || '已儲存'; this.timer = setTimeout(() => { this.el.className = ''; }, 2000); } 
         else if (state === 'syncing') { this.icon.innerHTML = '<div class="spin-circle"></div>'; this.text.innerText = customText || '雲端同步中...'; } 
-        else if (state === 'error') { this.icon.innerHTML = '❌'; this.text.innerText = '同步失敗 (點此重試)'; this.el.onclick = () => SyncManager.process(); }
+        else if (state === 'error') { this.icon.innerHTML = '❌'; this.text.innerText = '同步失敗'; this.el.onclick = () => SyncManager.process(); }
     }
 };
 
@@ -582,8 +527,16 @@ const DataLoader = {
             const res = await fetch(`${API_URL}?password=${encodeURIComponent(USER_PASSWORD)}`);
             const json = await res.json();
             if(json.error) throw new Error(json.error);
-            GLOBAL_DATA = { wallet: { data: mapNormalize(json.wallet.data).reverse(), templates: mapNormalize(json.wallet.templates) }, crypto: { data: mapNormalize(json.crypto.data), methods: json.crypto.methods, rate: json.crypto.rate } };
+            GLOBAL_DATA = { 
+                wallet: { data: mapNormalize(json.wallet.data).reverse(), templates: mapNormalize(json.wallet.templates) }, 
+                crypto: { data: mapNormalize(json.crypto.data), methods: json.crypto.methods, rate: json.crypto.rate },
+                config: json.config || {budget: 0} 
+            };
             localStorage.setItem('myBillPass', USER_PASSWORD);
+            
+            // Populate settings
+            document.getElementById('budgetInput').value = GLOBAL_DATA.config.budget;
+
             if(isInit) { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('app-hub').classList.remove('hidden-layer'); }
             if(!document.getElementById('app-wallet').classList.contains('hidden-layer')) WalletApp.render();
             if(!document.getElementById('app-crypto').classList.contains('hidden-layer')) CryptoApp.render();
@@ -598,13 +551,19 @@ const DataLoader = {
 };
 
 function verifyLogin() { USER_PASSWORD = document.getElementById('passwordInput').value; if(!USER_PASSWORD) return; setBtnLoading('loginBtn', true, '驗證中...'); DataLoader.load(true); }
+// 🟢 Fix: Robust Money Parsing
 function formatMoney(num) { if(!num && num !== 0) return '0'; return Number(num).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
-function parseMoney(numStr) { return parseFloat(numStr) || 0; }
+function parseMoney(numStr) { 
+    if(typeof numStr === 'number') return numStr;
+    if(!numStr) return 0;
+    // Remove commas and spaces, then parse
+    const cleanStr = String(numStr).replace(/,/g, '').replace(/\s/g, '');
+    return parseFloat(cleanStr) || 0; 
+}
 
 // --- Wallet Logic ---
 const WalletApp = {
-    chart: null,
-    chartType: 'pie', // pie or bar
+    chart: null, chartType: 'pie',
     render: function() {
         const fragList = document.createDocumentFragment();
         const listSel = document.getElementById('w-list-month');
@@ -630,57 +589,32 @@ const WalletApp = {
             const rec = data.find(r => r.bank === t.bankname);
             let right = `<div class="badge-todo">待登錄</div>`, cls = 't-card unlogged', click = `WalletApp.fill('${t.bankname}')`;
             let delFunc = ``;
-            
             if(rec) {
-                total += parseMoney(rec.amount); count++;
-                cls = 't-card logged';
+                total += parseMoney(rec.amount); count++; cls = 't-card logged';
                 right = `<div class="t-amount">$${formatMoney(rec.amount)}</div>`;
-                click = ``; // Disable click on card, using swipe
-                delFunc = `WalletApp.askDelete('${rec.uuid}', '${rec.bank}')`; // For swipe button
+                click = ``; delFunc = `WalletApp.askDelete('${rec.uuid}', '${rec.bank}')`;
             } else {
                 const billDay = parseInt(t.billdate);
                 if (billDay) { const cutoff = new Date(year, month - 1, billDay + 1); if (now > cutoff) alertList.push(t.bankname); }
             }
             
-            // 🟡 Swipe Structure
-            const container = document.createElement('div');
-            container.className = 'swipe-item-container';
-            container.innerHTML = `
-                <div class="swipe-bg-action" onclick="${delFunc}">刪除</div>
-                <div class="t-card ${rec ? 'logged' : 'unlogged'}" onclick="${click}">
-                    <div class="t-icon">${t.bankname.charAt(0)}</div>
-                    <div class="t-content">
-                        <div class="t-bank">${t.bankname}</div>
-                        <div style="font-size:12px;color:#888">結帳日 ${t.billdate} / 扣款日 ${t.paymentdate}</div>
-                        ${rec && rec.note ? `<div style="font-size:12px;color:#6B7280;margin-top:2px;">${rec.note}</div>` : ''}
-                    </div>
-                    ${right}
-                </div>
-            `;
+            const container = document.createElement('div'); container.className = 'swipe-item-container';
+            container.innerHTML = `<div class="swipe-bg-action" onclick="${delFunc}">刪除</div><div class="t-card ${rec ? 'logged' : 'unlogged'}" onclick="${click}"><div class="t-icon">${t.bankname.charAt(0)}</div><div class="t-content"><div class="t-bank">${t.bankname}</div><div style="font-size:12px;color:#888">結帳日 ${t.billdate} / 扣款日 ${t.paymentdate}</div>${rec && rec.note ? `<div style="font-size:12px;color:#6B7280;margin-top:2px;">${rec.note}</div>` : ''}</div>${right}</div>`;
             fragList.appendChild(container);
         });
         
-        document.getElementById('w-list').innerHTML = '';
-        document.getElementById('w-list').appendChild(fragList);
-        document.getElementById('w-total').innerText = `$${formatMoney(total)}`;
-        document.getElementById('w-count').innerText = `${count} 筆紀錄`;
+        document.getElementById('w-list').innerHTML = ''; document.getElementById('w-list').appendChild(fragList);
+        document.getElementById('w-total').innerText = `$${formatMoney(total)}`; document.getElementById('w-count').innerText = `${count} 筆紀錄`;
         
-        // 🟡 Budget Calculation
         this.updateBudgetUI(total);
-
-        // Alerts
         const alertContainer = document.getElementById('alertContainer');
-        if (alertList.length > 0) alertContainer.innerHTML = `<div class="alert-box"><span class="alert-icon">🔔</span><div class="alert-content"><span class="alert-title">待登錄提醒</span>${alertList.join('、')} 帳單已結帳，請核對並登錄金額。</div></div>`; 
-        else alertContainer.innerHTML = '';
-
-        // Update Chart if open
+        if (alertList.length > 0) alertContainer.innerHTML = `<div class="alert-box"><span class="alert-icon">🔔</span><div class="alert-content"><span class="alert-title">待登錄提醒</span>${alertList.join('、')} 帳單已結帳，請核對並登錄金額。</div></div>`; else alertContainer.innerHTML = '';
         if(document.getElementById('chartDrawer').classList.contains('open')) this.renderChart(data);
     },
     updateBudgetUI: function(currentTotal) {
-        const budget = parseInt(localStorage.getItem('myBudgetLimit')) || 0;
+        const budget = GLOBAL_DATA.config.budget || 0;
         const container = document.getElementById('budgetContainer');
         const fill = document.getElementById('budgetFill');
-        const txtStatus = document.getElementById('budgetStatusText');
         const txtLeft = document.getElementById('budgetLeftText');
 
         if(budget > 0) {
@@ -688,141 +622,33 @@ const WalletApp = {
             const pct = Math.min((currentTotal / budget) * 100, 100);
             const left = budget - currentTotal;
             fill.style.width = `${pct}%`;
-            
-            if (pct < 80) { fill.style.backgroundColor = '#10B981'; } // Green
-            else if (pct < 100) { fill.style.backgroundColor = '#F59E0B'; } // Yellow
-            else { fill.style.backgroundColor = '#EF4444'; } // Red
-
-            if(left >= 0) txtLeft.innerText = `剩餘 $${formatMoney(left)}`;
+            if (pct < 80) { fill.style.backgroundColor = '#10B981'; } else if (pct < 100) { fill.style.backgroundColor = '#F59E0B'; } else { fill.style.backgroundColor = '#EF4444'; }
+            if(left >= 0) { txtLeft.innerText = `剩餘 $${formatMoney(left)}`; txtLeft.style.color = '#1F2937'; }
             else { txtLeft.innerText = `超支 $${formatMoney(Math.abs(left))}`; txtLeft.style.color = '#EF4444'; }
-        } else {
-            container.style.display = 'none';
-        }
+        } else { container.style.display = 'none'; }
     },
-    toggleChart: function() { 
-        const drawer = document.getElementById('chartDrawer'); 
-        const btnText = document.getElementById('chartBtnText'); 
-        const btnIcon = document.getElementById('chartBtnIcon'); 
-        if (drawer.classList.contains('open')) { 
-            drawer.classList.remove('open'); btnText.innerText = "分析"; btnIcon.innerText = "📊"; 
-        } else { 
-            drawer.classList.add('open'); btnText.innerText = "收起"; btnIcon.innerText = "🔼"; 
-            const m = document.getElementById('w-list-month').value;
-            const data = GLOBAL_DATA.wallet.data.filter(r => String(r.month).trim() === m);
-            this.renderChart(data);
-        } 
-    },
-    setChartType: function(type) {
-        this.chartType = type;
-        document.getElementById('btnChartPie').className = type === 'pie' ? 'chart-type-btn active' : 'chart-type-btn';
-        document.getElementById('btnChartBar').className = type === 'bar' ? 'chart-type-btn active' : 'chart-type-btn';
-        const m = document.getElementById('w-list-month').value;
-        const data = GLOBAL_DATA.wallet.data.filter(r => String(r.month).trim() === m);
-        this.renderChart(data);
-    },
+    toggleChart: function() { const drawer = document.getElementById('chartDrawer'); const btnText = document.getElementById('chartBtnText'); const btnIcon = document.getElementById('chartBtnIcon'); if (drawer.classList.contains('open')) { drawer.classList.remove('open'); btnText.innerText = "分析"; btnIcon.innerText = "📊"; } else { drawer.classList.add('open'); btnText.innerText = "收起"; btnIcon.innerText = "🔼"; const m = document.getElementById('w-list-month').value; const data = GLOBAL_DATA.wallet.data.filter(r => String(r.month).trim() === m); this.renderChart(data); } },
+    setChartType: function(type) { this.chartType = type; document.getElementById('btnChartPie').className = type === 'pie' ? 'chart-type-btn active' : 'chart-type-btn'; document.getElementById('btnChartBar').className = type === 'bar' ? 'chart-type-btn active' : 'chart-type-btn'; const m = document.getElementById('w-list-month').value; const data = GLOBAL_DATA.wallet.data.filter(r => String(r.month).trim() === m); this.renderChart(data); },
     renderChart: function(currentMonthData) {
-        if(this.chart) this.chart.destroy();
-        const ctx = document.getElementById('expenseChart').getContext('2d');
-        
+        if(this.chart) this.chart.destroy(); const ctx = document.getElementById('expenseChart').getContext('2d');
         if (this.chartType === 'pie') {
-            // Pie Chart Logic (Existing)
-            const grouped = {};
-            currentMonthData.forEach(r => { grouped[r.bank] = (grouped[r.bank] || 0) + parseMoney(r.amount); });
-            const labels = Object.keys(grouped);
-            const data = Object.values(grouped);
-            
-            this.chart = new Chart(ctx, { 
-                type:'doughnut', 
-                data:{
-                    labels: labels, 
-                    datasets:[{data: data, backgroundColor:['#4F46E5','#7C3AED','#EC4899','#F59E0B','#10B981', '#3B82F6'], borderWidth:2, borderColor:'rgba(255,255,255,0.2)'}]
-                }, 
-                options:{responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{legend:{display:true,position:'right',labels:{color:'white',boxWidth:10}}}} 
-            });
+            const grouped = {}; currentMonthData.forEach(r => { grouped[r.bank] = (grouped[r.bank] || 0) + parseMoney(r.amount); });
+            const labels = Object.keys(grouped); const data = Object.values(grouped);
+            this.chart = new Chart(ctx, { type:'doughnut', data:{labels: labels, datasets:[{data: data, backgroundColor:['#4F46E5','#7C3AED','#EC4899','#F59E0B','#10B981', '#3B82F6'], borderWidth:2, borderColor:'rgba(255,255,255,0.2)'}]}, options:{responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{legend:{display:true,position:'right',labels:{color:'white',boxWidth:10}}}} });
         } else {
-            // 🟡 Bar Chart Logic (Last 6 Months)
-            const labels = [];
-            const data = [];
-            const d = new Date();
-            // Generate last 6 months
+            const labels = []; const data = []; const d = new Date();
             for(let i=5; i>=0; i--) {
-                const tempD = new Date(d.getFullYear(), d.getMonth() - i, 1);
-                const mStr = `${tempD.getFullYear()}${String(tempD.getMonth()+1).padStart(2,'0')}`;
+                const tempD = new Date(d.getFullYear(), d.getMonth() - i, 1); const mStr = `${tempD.getFullYear()}${String(tempD.getMonth()+1).padStart(2,'0')}`;
                 labels.push(`${tempD.getMonth()+1}月`);
-                
-                // Sum data for this month
-                const sum = GLOBAL_DATA.wallet.data
-                    .filter(r => String(r.month).trim() === mStr)
-                    .reduce((acc, curr) => acc + parseMoney(curr.amount), 0);
+                const sum = GLOBAL_DATA.wallet.data.filter(r => String(r.month).trim() === mStr).reduce((acc, curr) => acc + parseMoney(curr.amount), 0);
                 data.push(sum);
             }
-
-            this.chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: '總支出',
-                        data: data,
-                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => '$' + c.parsed.y.toLocaleString() } } },
-                    scales: {
-                        x: { ticks: { color: 'white' }, grid: { display: false } },
-                        y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } }
-                    }
-                }
-            });
+            this.chart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: '總支出', data: data, backgroundColor: 'rgba(255, 255, 255, 0.8)', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => '$' + c.parsed.y.toLocaleString() } } }, scales: { x: { ticks: { color: 'white' }, grid: { display: false } }, y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } } } } });
         }
     },
-    submit: function() {
-        const bank = document.getElementById('w-bank').value;
-        const amt = document.getElementById('w-amount').value;
-        const note = document.getElementById('w-note').value;
-        const month = document.getElementById('w-input-month').value;
-        if(bank=="選擇銀行" || !amt) return showToast('⚠️ 請填寫完整');
-        
-        const isDup = GLOBAL_DATA.wallet.data.some(r => r.bank === bank && String(r.month).trim() === month);
-        if(isDup) customConfirm('此銀行本月已有紀錄，確定要新增嗎？', () => this.executeSubmit(bank, amt, note, month));
-        else this.executeSubmit(bank, amt, note, month);
-    },
-    executeSubmit: function(bank, amt, note, month) {
-        const tpl = GLOBAL_DATA.wallet.templates.find(t=>t.bankname===bank);
-        GLOBAL_DATA.wallet.data.unshift({bank, amount:amt, note, month, uuid: 'temp', paymentdate: tpl?tpl.paymentdate:'-'});
-        document.getElementById('w-list-month').value = month;
-        this.render();
-        document.getElementById('w-amount').value=''; document.getElementById('w-note').value='';
-        setBtnLoading('w-submit', true, '排程中...'); setTimeout(() => setBtnLoading('w-submit', false), 500);
-        SyncManager.add({ appName:'wallet', action:'post', bank, amount:amt, note, month, paymentDate: tpl?tpl.paymentdate:'-' });
-    },
-    askDelete: function(uuid, bank) {
-        // Reset Swipe
-        if(activeSwipeEl) closeSwipe(activeSwipeEl);
-        
-        document.getElementById('actionTitle').innerText = bank;
-        const rec = GLOBAL_DATA.wallet.data.find(r => r.uuid === uuid);
-        document.getElementById('actionSubtitle').innerText = rec ? `已登錄：$${formatMoney(rec.amount)}` : '';
-        document.getElementById('btnActionEdit').onclick = () => { 
-            this.fill(bank); 
-            if(rec) { document.getElementById('w-amount').value = rec.amount; document.getElementById('w-note').value = rec.note; }
-            closeModal('actionModal'); 
-        };
-        document.getElementById('btnActionDelete').onclick = () => { 
-            closeModal('actionModal');
-            customConfirm(`確定要刪除 ${bank} 的紀錄嗎？`, () => {
-                if(uuid === 'temp') GLOBAL_DATA.wallet.data = GLOBAL_DATA.wallet.data.filter(r => r.bank !== bank);
-                else GLOBAL_DATA.wallet.data = GLOBAL_DATA.wallet.data.filter(r => r.uuid !== uuid);
-                this.render();
-                SyncManager.add({ appName:'wallet', action:'delete', uuid });
-            });
-        };
-        openModal('actionModal');
-    },
+    submit: function() { const bank = document.getElementById('w-bank').value; const amt = document.getElementById('w-amount').value; const note = document.getElementById('w-note').value; const month = document.getElementById('w-input-month').value; if(bank=="選擇銀行" || !amt) return showToast('⚠️ 請填寫完整'); const isDup = GLOBAL_DATA.wallet.data.some(r => r.bank === bank && String(r.month).trim() === month); if(isDup) customConfirm('此銀行本月已有紀錄，確定要新增嗎？', () => this.executeSubmit(bank, amt, note, month)); else this.executeSubmit(bank, amt, note, month); },
+    executeSubmit: function(bank, amt, note, month) { const tpl = GLOBAL_DATA.wallet.templates.find(t=>t.bankname===bank); GLOBAL_DATA.wallet.data.unshift({bank, amount:amt, note, month, uuid: 'temp', paymentdate: tpl?tpl.paymentdate:'-'}); document.getElementById('w-list-month').value = month; this.render(); document.getElementById('w-amount').value=''; document.getElementById('w-note').value=''; setBtnLoading('w-submit', true, '排程中...'); setTimeout(() => setBtnLoading('w-submit', false), 500); SyncManager.add({ appName:'wallet', action:'post', bank, amount:amt, note, month, paymentDate: tpl?tpl.paymentdate:'-' }); },
+    askDelete: function(uuid, bank) { if(activeSwipeEl) closeSwipe(activeSwipeEl); document.getElementById('actionTitle').innerText = bank; const rec = GLOBAL_DATA.wallet.data.find(r => r.uuid === uuid); document.getElementById('actionSubtitle').innerText = rec ? `已登錄：$${formatMoney(rec.amount)}` : ''; document.getElementById('btnActionEdit').onclick = () => { this.fill(bank); if(rec) { document.getElementById('w-amount').value = rec.amount; document.getElementById('w-note').value = rec.note; } closeModal('actionModal'); }; document.getElementById('btnActionDelete').onclick = () => { closeModal('actionModal'); customConfirm(`確定要刪除 ${bank} 的紀錄嗎？`, () => { if(uuid === 'temp') GLOBAL_DATA.wallet.data = GLOBAL_DATA.wallet.data.filter(r => r.bank !== bank); else GLOBAL_DATA.wallet.data = GLOBAL_DATA.wallet.data.filter(r => r.uuid !== uuid); this.render(); SyncManager.add({ appName:'wallet', action:'delete', uuid }); }); }; openModal('actionModal'); },
     fill: function(bank) { document.getElementById('w-bank').value = bank; document.getElementById('w-amount').focus(); document.querySelector('.input-panel').scrollIntoView({behavior:'smooth'}); }
 };
 
@@ -830,75 +656,25 @@ const WalletApp = {
 const CryptoApp = {
     mode: 'twd',
     render: function() {
-        const fragList = document.createDocumentFragment();
-        const data = GLOBAL_DATA.crypto.data.sort((a,b) => new Date(b.date) - new Date(a.date));
-        const methods = GLOBAL_DATA.crypto.methods;
-        const rate = GLOBAL_DATA.crypto.rate;
-        
-        const sel = document.getElementById('c-method');
+        const fragList = document.createDocumentFragment(); const data = GLOBAL_DATA.crypto.data.sort((a,b) => new Date(b.date) - new Date(a.date)); const methods = GLOBAL_DATA.crypto.methods; const rate = GLOBAL_DATA.crypto.rate; const sel = document.getElementById('c-method');
         if(!document.getElementById('c-date').value) document.getElementById('c-date').valueAsDate = new Date();
-        if(sel.options.length <= 1) {
-            let ops = ['<option disabled selected>選擇管道</option>'];
-            if(methods) methods.forEach(m => ops.push(`<option value="${m}">${m}</option>`));
-            sel.innerHTML = ops.join('');
-        }
-        
+        if(sel.options.length <= 1) { let ops = ['<option disabled selected>選擇管道</option>']; if(methods) methods.forEach(m => ops.push(`<option value="${m}">${m}</option>`)); sel.innerHTML = ops.join(''); }
         const totalTwd = data.reduce((sum, r) => sum + parseMoney(r.cost_twd || r.cost), 0);
-        document.getElementById('c-total-twd').innerText = `$${formatMoney(totalTwd)} TWD`;
-        document.getElementById('c-total-usd').innerText = `≈ $${formatMoney(totalTwd/rate)} USD`;
-
+        document.getElementById('c-total-twd').innerText = `$${formatMoney(totalTwd)} TWD`; document.getElementById('c-total-usd').innerText = `≈ $${formatMoney(totalTwd/rate)} USD`;
         data.forEach(r => {
-            let dateObj = new Date(r.date);
-            let subInfo = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
+            let dateObj = new Date(r.date); let subInfo = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
             let rightSide = `<div class="t-amount">$${formatMoney(r.cost_twd || r.cost)}</div>`;
-            if (r.type === 'USD') {
-                const cost = parseMoney(r.cost_twd || r.cost); const amt = parseMoney(r.amount_usd);
-                const calcRate = (amt > 0) ? (cost / amt).toFixed(2) : '0.00';
-                rightSide += `<div class="c-sub-value">≈ $${formatMoney(amt)} USD <span class="c-rate">(@${calcRate})</span></div>`;
-            }
+            if (r.type === 'USD') { const cost = parseMoney(r.cost_twd || r.cost); const amt = parseMoney(r.amount_usd); const calcRate = (amt > 0) ? (cost / amt).toFixed(2) : '0.00'; rightSide += `<div class="c-sub-value">≈ $${formatMoney(amt)} USD <span class="c-rate">(@${calcRate})</span></div>`; }
             let icon = r.type === 'USD' ? '🇺🇸' : '🪙';
-            
-            // 🟡 Swipe Structure
-            const container = document.createElement('div');
-            container.className = 'swipe-item-container';
-            container.innerHTML = `
-                <div class="swipe-bg-action" onclick="CryptoApp.askDelete('${r.uuid}')">刪除</div>
-                <div class="t-card" onclick="">
-                    <div class="t-icon">${icon}</div>
-                    <div class="t-content">
-                        <div class="t-bank">${r.method}</div>
-                        <div style="font-size:12px;color:#888">${subInfo} ${r.note ? '- '+r.note : ''}</div>
-                    </div>
-                    <div>${rightSide}</div>
-                </div>
-            `;
+            const container = document.createElement('div'); container.className = 'swipe-item-container';
+            container.innerHTML = `<div class="swipe-bg-action" onclick="CryptoApp.askDelete('${r.uuid}')">刪除</div><div class="t-card" onclick=""><div class="t-icon">${icon}</div><div class="t-content"><div class="t-bank">${r.method}</div><div style="font-size:12px;color:#888">${subInfo} ${r.note ? '- '+r.note : ''}</div></div><div>${rightSide}</div></div>`;
             fragList.appendChild(container);
         });
-        document.getElementById('c-list').innerHTML = '';
-        document.getElementById('c-list').appendChild(fragList);
+        document.getElementById('c-list').innerHTML = ''; document.getElementById('c-list').appendChild(fragList);
     },
     setMode: function(m) { this.mode = m; document.getElementById('seg-twd').className = m=='twd'?'segment-btn active':'segment-btn'; document.getElementById('seg-usd').className = m=='usd'?'segment-btn active':'segment-btn'; document.getElementById('c-usd-field').style.display = m=='usd'?'block':'none'; },
-    submit: function() {
-        const date = document.getElementById('c-date').value; const method = document.getElementById('c-method').value;
-        const cost = document.getElementById('c-cost').value; const usd = document.getElementById('c-usd').value; const note = document.getElementById('c-note').value;
-        if(method == "選擇管道" || !cost) return showToast('⚠️ 請填寫完整');
-        if(this.mode === 'usd' && !usd) return showToast('⚠️ 請輸入外幣金額');
-        const now = new Date(); const fullDate = new Date(date); fullDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
-        const isoDate = fullDate.toISOString();
-        GLOBAL_DATA.crypto.data.unshift({ date: isoDate, method, cost_twd: cost, note, type: this.mode === 'usd' ? 'USD' : 'TWD', amount_usd: this.mode === 'usd' ? usd : 0, uuid: 'temp' });
-        this.render();
-        document.getElementById('c-cost').value = ''; document.getElementById('c-usd').value = ''; document.getElementById('c-note').value = ''; document.getElementById('c-cost').focus();
-        setBtnLoading('c-submit', true, '排程中...'); setTimeout(() => setBtnLoading('c-submit', false), 500);
-        SyncManager.add({ appName: 'crypto', action: 'post', date: isoDate, method, cost, note, type: this.mode === 'usd' ? 'USD' : 'TWD', amount_usd: this.mode === 'usd' ? usd : 0 });
-    },
-    askDelete: function(uuid) {
-        if(activeSwipeEl) closeSwipe(activeSwipeEl);
-        customConfirm('刪除此紀錄?', () => {
-            GLOBAL_DATA.crypto.data = GLOBAL_DATA.crypto.data.filter(r => r.uuid !== uuid);
-            this.render();
-            SyncManager.add({ appName: 'crypto', action: 'delete', uuid });
-        });
-    },
+    submit: function() { const date = document.getElementById('c-date').value; const method = document.getElementById('c-method').value; const cost = document.getElementById('c-cost').value; const usd = document.getElementById('c-usd').value; const note = document.getElementById('c-note').value; if(method == "選擇管道" || !cost) return showToast('⚠️ 請填寫完整'); if(this.mode === 'usd' && !usd) return showToast('⚠️ 請輸入外幣金額'); const now = new Date(); const fullDate = new Date(date); fullDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds()); const isoDate = fullDate.toISOString(); GLOBAL_DATA.crypto.data.unshift({ date: isoDate, method, cost_twd: cost, note, type: this.mode === 'usd' ? 'USD' : 'TWD', amount_usd: this.mode === 'usd' ? usd : 0, uuid: 'temp' }); this.render(); document.getElementById('c-cost').value = ''; document.getElementById('c-usd').value = ''; document.getElementById('c-note').value = ''; document.getElementById('c-cost').focus(); setBtnLoading('c-submit', true, '排程中...'); setTimeout(() => setBtnLoading('c-submit', false), 500); SyncManager.add({ appName: 'crypto', action: 'post', date: isoDate, method, cost, note, type: this.mode === 'usd' ? 'USD' : 'TWD', amount_usd: this.mode === 'usd' ? usd : 0 }); },
+    askDelete: function(uuid) { if(activeSwipeEl) closeSwipe(activeSwipeEl); customConfirm('刪除此紀錄?', () => { GLOBAL_DATA.crypto.data = GLOBAL_DATA.crypto.data.filter(r => r.uuid !== uuid); this.render(); SyncManager.add({ appName: 'crypto', action: 'delete', uuid }); }); },
     openSettings: function() { this.renderSettingsList(); const rate = GLOBAL_DATA.crypto.rate || '--.--'; document.getElementById('cryptoSettingsRate').innerText = `🇺🇸 1 USD ≈ ${rate} TWD`; document.getElementById('cryptoSettingsModal').classList.add('show'); },
     renderSettingsList: function() { const d = document.getElementById('cryptoMethodList'); d.innerHTML = ''; GLOBAL_DATA.crypto.methods.forEach(m => { const row = document.createElement('div'); row.className = 'setup-row'; row.innerHTML = `<div><div style="font-weight:700">${m}</div></div><button class="btn-setup-action" style="color:#EF4444;" onclick="CryptoApp.deleteMethod('${m}')">🗑️</button>`; d.appendChild(row); }); },
     addMethod: function() { const val = document.getElementById('newCryptoMethod').value; if(!val) return showToast('⚠️ 請輸入名稱'); setBtnLoading('btnAddCryptoMethod', true, '新增中...'); GLOBAL_DATA.crypto.methods.push(val); this.renderSettingsList(); this.render(); document.getElementById('newCryptoMethod').value = ''; CloudStatus.set('syncing'); fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, appName:'crypto', action:'config_add', methodName:val}) }).then(() => { setBtnLoading('btnAddCryptoMethod', false); CloudStatus.set('success'); DataLoader.load().then(() => CryptoApp.renderSettingsList()); }); },
@@ -906,7 +682,21 @@ const CryptoApp = {
 };
 
 // --- Shared Logic ---
-function saveBudget() { const b = document.getElementById('budgetInput').value; localStorage.setItem('myBudgetLimit', b); WalletApp.render(); closeModal('settingsModal'); showToast('預算已更新'); }
+function saveBudget() { 
+    const b = parseInt(document.getElementById('budgetInput').value) || 0;
+    setBtnLoading('btnSaveBudget', true, '儲存中...');
+    GLOBAL_DATA.config.budget = b;
+    WalletApp.render();
+    CloudStatus.set('syncing');
+    fetch(API_URL, {
+        method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({password:USER_PASSWORD, action:'config_update', key:'Budget', value:b})
+    }).then(() => {
+        setBtnLoading('btnSaveBudget', false);
+        closeModal('settingsModal'); 
+        CloudStatus.set('success');
+    });
+}
 function openWalletSettings() { renderTemplateList(); document.getElementById('settingsModal').classList.add('show'); }
 function openCryptoSettings() { CryptoApp.openSettings(); }
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
@@ -926,7 +716,20 @@ function openEditTemplateModal(index, bank, bill, pay) { document.getElementById
 function renderTemplateList() { const d = document.getElementById('templateList'); d.innerHTML=''; const sorted = [...GLOBAL_DATA.wallet.templates].sort((a,b) => (parseInt(a.billdate)||0) - (parseInt(b.billdate)||0)); sorted.forEach(t => { const n = t.bankname; const b = t.billdate; const p = t.paymentdate; const row = document.createElement('div'); row.className='setup-row'; row.innerHTML = `<div><div style="font-weight:700">${n}</div><div style="font-size:12px;color:#888;">結帳日 ${b} / 扣款日 ${p}</div></div><div style="display:flex; gap:5px;"><button class="btn-setup-action" style="color:#4F46E5;" onclick="openEditTemplateModal(${t.templateindex}, '${n}', '${b}', '${p}')">✎ 編輯</button><button class="btn-setup-action" style="color:#EF4444;" onclick="deleteTemplate(${t.templateindex})">🗑️ 刪除</button></div>`; d.appendChild(row); }); }
 
 // Core Functions
-function mapNormalize(arr) { if(!Array.isArray(arr)) return []; return arr.map(obj => { const newObj = {}; for(let k in obj) { const cleanKey = k.trim(); const mappedKey = DATA_KEY_MAP[cleanKey] || cleanKey.toLowerCase(); newObj[mappedKey] = obj[k]; } return newObj; }); }
+function mapNormalize(arr) { 
+    if(!Array.isArray(arr)) return []; 
+    return arr.map(obj => { 
+        const newObj = {}; 
+        for(let k in obj) { 
+            const cleanKey = k.trim(); 
+            const lowerKey = cleanKey.toLowerCase();
+            const mappedKey = DATA_KEY_MAP[cleanKey] || DATA_KEY_MAP[lowerKey] || lowerKey; 
+            newObj[mappedKey] = obj[k]; 
+        } 
+        return newObj; 
+    }); 
+}
+
 function initMonthSelect(id) { 
     const s=document.getElementById(id); if (!s) return;
     const startD = new Date(); startD.setMonth(startD.getMonth() + 1);
