@@ -4,16 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
+    <!-- PWA Settings -->
     <meta name="theme-color" content="#F2F4F8">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <title>My Wallet V16.61 Hotfix</title>
+    <title>My Wallet V16.62 Tactile</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.js"></script>
     <style>
-        /* --- ❄️ V16.61 System: Stable & Fluid --- */
+        /* --- ❄️ V16.62 System: Tactile Feedback --- */
         :root { 
             --bg-body: #F2F4F8;
             --primary: #007AFF; 
@@ -21,7 +22,8 @@
             --text-sub: #86868B;
             --danger: #FF3B30; 
             --success: #34C759;
-            --spring-easing: cubic-bezier(0.25, 0.8, 0.25, 1);
+            /* Q彈的回彈曲線，用於放開按鈕時 */
+            --spring-easing: cubic-bezier(0.34, 1.56, 0.64, 1);
             
             /* Layout */
             --app-width: 480px; 
@@ -55,7 +57,7 @@
             -webkit-transform: translateZ(0); transform: translateZ(0);
         }
 
-        /* Background */
+        /* Optimized Background */
         .ambient-light { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             overflow: hidden; z-index: var(--z-bg); pointer-events: none; 
@@ -71,7 +73,7 @@
         .blob:nth-child(3) { bottom: 40%; left: 30%; width: 60vw; height: 60vw; background: #FFE4E6; opacity: 0.4; animation-delay: -8s; }
         @keyframes floatBlob { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(30px, -30px, 0); } }
 
-        /* --- View Container (Fixed Visibility Logic) --- */
+        /* View Container */
         .view-container {
             width: 100%; max-width: var(--app-width); margin: 0 auto; 
             padding-top: var(--header-spacing); 
@@ -82,26 +84,79 @@
             -webkit-overflow-scrolling: touch; 
             position: relative;
             display: flex; flex-direction: column;
-            /* Remove hardcoded opacity: 0 to prevent blank screens */
         }
 
         .hidden-layer { display: none !important; }
         
-        /* iOS Entry Animation */
         @keyframes iosSlideUp {
             0% { opacity: 0; transform: scale(0.95) translateY(10px); }
             100% { opacity: 1; transform: scale(1) translateY(0); }
         }
-
         .animate-entry {
             animation: iosSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             transform-origin: center center;
         }
 
-        /* --- App Hub UI --- */
+        /* --- 🟢 UNIVERSAL INTERACTIVE FEEDBACK 🟢 --- */
+        
+        /* 1. Base State: Smooth Spring Return */
+        button, .app-card, .t-card, .segment-btn, .action-btn, .refresh-btn, .mini-action-btn, .chart-type-btn, .btn-liquid, .btn-submit, .btn-icon, #versionTag {
+            transition: transform 0.4s var(--spring-easing), opacity 0.2s, background-color 0.2s, box-shadow 0.2s;
+            cursor: pointer; 
+            transform: translateZ(0); /* GPU Keep Alive */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 2. Active State: Instant Shrink (Snappy) */
+        button:active, .segment-btn:active, .action-btn:active, .refresh-btn:active, .mini-action-btn:active, .chart-type-btn:active, .btn-liquid:active, .btn-submit:active, .btn-icon:active, #versionTag:active {
+            transform: scale(0.92) translateZ(0);
+            opacity: 0.85;
+            transition: transform 0.05s ease-out, opacity 0.05s; /* Instant response */
+        }
+
+        /* Special Case: App Cards (Larger items shrink less) */
+        .app-card:active {
+            transform: scale(0.96) translateZ(0);
+            box-shadow: 0 5px 15px -5px rgba(0,0,0,0.1);
+            transition: transform 0.05s ease-out;
+        }
+
+        /* Special Case: List Cards (Very subtle to not break list flow) */
+        .t-card:active {
+            transform: scale(0.98) translate3d(0,0,0);
+            background-color: #F2F2F7; /* Highlight color */
+            transition: transform 0.05s ease-out, background-color 0.05s;
+        }
+
+        /* --- Component Styling --- */
+
+        /* Buttons */
+        .btn-liquid {
+            width: 100%; border: none; padding: 14px; border-radius: 22px;
+            font-size: 16px; font-weight: 700; color: #FFF; margin-top: 0;
+            background: linear-gradient(135deg, #FF9500 0%, #FF2D55 100%);
+            box-shadow: 0 10px 20px rgba(255, 45, 85, 0.3), inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 5px rgba(0,0,0,0.1);
+            position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .btn-text { z-index: 2; }
+
+        .btn-submit {
+            width: 100%; border: none; padding: 14px; border-radius: 20px; 
+            font-size: 16px; font-weight: 700; color: white; margin-top: 12px;
+            background: var(--primary); box-shadow: 0 8px 20px rgba(0,122,255,0.25);
+            position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center;
+        }
+        
+        .btn-icon { 
+            background: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,1); 
+            padding: 6px 12px; border-radius: 14px; font-weight: 600; font-size: 14px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: #1D1D1F; backdrop-filter: blur(10px);
+        }
+
+        /* Hub */
         .hub-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-shrink: 0; padding: 0 5px; }
         .hub-title { font-size: 34px; font-weight: 800; color: #000; letter-spacing: -0.5px; }
-        
         .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; padding-bottom: 40px; } 
         
         .app-card {
@@ -113,11 +168,7 @@
             height: clamp(160px, 23vh, 190px);
             display: flex; flex-direction: column; justify-content: space-between;
             position: relative; overflow: hidden;
-            transition: transform 0.2s var(--spring-easing);
-            transform: translateZ(0);
         }
-        .app-card:active { transform: scale(0.95); }
-
         .app-icon-wrapper {
             width: 56px; height: 56px; background: rgba(255,255,255,0.5);
             border-radius: 18px; display: flex; justify-content: center; align-items: center;
@@ -126,7 +177,7 @@
         .app-name { font-size: 20px; font-weight: 700; letter-spacing: 0.3px; color: #1D1D1F; margin-top: auto; }
         .app-ver { position: absolute; top: 20px; right: 20px; font-size: 12px; color: #8E8E93; font-weight: 600; opacity: 0.7; }
 
-        /* --- Common UI --- */
+        /* Common UI */
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0; }
         .app-title { font-size: 30px; font-weight: 800; color: #000; }
         
@@ -136,7 +187,6 @@
             border-radius: 32px; padding: 24px;
             box-shadow: 0 20px 50px -10px rgba(0,122,255,0.1);
             position: relative; overflow: hidden; margin-bottom: var(--section-gap); flex-shrink: 0;
-            transform: translateZ(0);
         }
         .card-label { font-size: 14px; opacity: 0.6; font-weight: 600; color: #000; }
         .total-amount { font-size: 42px; font-weight: 800; letter-spacing: -1.5px; color: #000; margin: 5px 0; line-height: 1.1; }
@@ -148,7 +198,6 @@
             border-radius: 28px; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05);
             border: 1px solid rgba(255,255,255,0.5);
             margin-bottom: var(--section-gap); flex-shrink: 0;
-            transform: translateZ(0);
         }
         .styled-input {
             width: 100%; padding: 13px 14px; border-radius: 16px; border: 1px solid transparent;
@@ -159,36 +208,9 @@
         .styled-input:focus { background: #FFF; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0,122,255,0.1); }
         .form-label { font-size: 13px; font-weight: 600; color: var(--text-sub); margin-bottom: 6px; margin-left: 4px; display: block; }
         .segment-control { display: flex; background: #E5E5EA; padding: 4px; border-radius: 16px; margin-bottom: 16px; }
-        .segment-btn { flex: 1; padding: 8px; text-align: center; font-size: 14px; font-weight: 600; color: #8E8E93; border-radius: 12px; transition: 0.2s; }
+        .segment-btn { flex: 1; padding: 8px; text-align: center; font-size: 14px; font-weight: 600; color: #8E8E93; border-radius: 12px; }
         .segment-btn.active { background: #FFFFFF; color: #000; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
 
-        /* Buttons */
-        .btn-liquid {
-            width: 100%; border: none; padding: 14px; border-radius: 22px;
-            font-size: 16px; font-weight: 700; color: #FFF; margin-top: 0;
-            background: linear-gradient(135deg, #FF9500 0%, #FF2D55 100%);
-            box-shadow: 0 10px 20px rgba(255, 45, 85, 0.3), inset 0 2px 0 rgba(255,255,255,0.3);
-            position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2); transform: translateZ(0);
-        }
-        .btn-liquid:active { transform: scale(0.96); }
-        .btn-text { z-index: 2; }
-
-        .btn-submit {
-            width: 100%; border: none; padding: 14px; border-radius: 20px; 
-            font-size: 16px; font-weight: 700; color: white; margin-top: 12px;
-            background: var(--primary); box-shadow: 0 8px 20px rgba(0,122,255,0.25);
-            position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; transform: translateZ(0);
-        }
-        .btn-submit:active { transform: scale(0.96); }
-        .btn-icon { 
-            background: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,1); 
-            padding: 6px 12px; border-radius: 14px; font-weight: 600; font-size: 14px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: #1D1D1F; backdrop-filter: blur(10px); transform: translateZ(0);
-        }
-        .btn-icon:active { transform: scale(0.9); }
-
-        /* List & Swipe */
         .list-section { padding-bottom: 20px; flex: 1; } 
         .list-header { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center; }
         .list-title { font-size: 20px; font-weight: 800; }
@@ -211,8 +233,9 @@
             display: flex; align-items: center; gap: 14px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.02);
             z-index: var(--z-card); 
-            will-change: transform; transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-            transform: translate3d(0,0,0); backface-visibility: hidden;
+            /* Note: transition controlled by JS during swipe, but CSS handles active state */
+            will-change: transform;
+            backface-visibility: hidden;
         }
         .t-card.unlogged { background: #FAFAFA; border: 2px dashed #C7C7CC; box-shadow: none; }
         .t-card.schedule-card { margin-bottom: 14px; }
@@ -229,38 +252,25 @@
         }
         .mini-action-btn.danger { color: #FF3B30; background: #FFF2F2; border-color: #FFDADA; }
 
-        /* Modals & Login */
-        #loginOverlay { 
-            position: fixed; top:0; left:0; width:100%; height:100%; 
-            background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            z-index: var(--z-login); display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            transition: opacity 0.3s ease;
-        }
-        .login-input { 
-            background: #FFFFFF; border: 1px solid rgba(0,0,0,0.1); width: 240px; padding: 15px; 
-            border-radius: 24px; font-size: 24px; text-align: center; margin: 25px 0; letter-spacing: 8px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: transform 0.2s;
-        }
-        .login-input:focus { border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,122,255,0.15); }
-
+        /* Modals */
         .modal-overlay { 
             position: fixed; top:0; left:0; width:100%; height:100%; 
-            background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
             z-index: var(--z-modal); display: flex; justify-content: center; align-items: center; 
             opacity: 0; pointer-events: none; transition: opacity 0.2s;
         }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
         
         .modal-box { 
-            background: rgba(255,255,255,0.95); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+            background: rgba(255,255,255,0.98); backdrop-filter: blur(50px); -webkit-backdrop-filter: blur(50px);
             width: 92%; max-width: 400px; max-height: 85vh;
             border-radius: 32px; padding: 0; 
             box-shadow: 0 30px 90px rgba(0,0,0,0.3);
-            transform: scale(0.94) translateZ(0); transition: 0.3s var(--spring-easing);
+            transform: scale(0.94); transition: 0.3s var(--spring-easing);
             display: flex; flex-direction: column;
             border: 1px solid rgba(255,255,255,0.6);
         }
-        .modal-overlay.show .modal-box { transform: scale(1) translateZ(0); }
+        .modal-overlay.show .modal-box { transform: scale(1); }
         
         .modal-header { padding: clamp(20px, 3vh, 30px); padding-bottom: 10px; flex-shrink: 0; }
         .modal-title-text { font-size: 20px; font-weight: 800; color: #000; }
@@ -276,6 +286,7 @@
         .flex-input-row .styled-input { flex: 1; background: #FFF; }
         .flex-input-row .btn-submit { margin: 0; width: auto; padding: 0 20px; height: 44px; }
 
+        /* Install & Status */
         #iosInstallPrompt {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255,255,255,0.98); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -289,6 +300,20 @@
             border-radius: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.05);
         }
 
+        #loginOverlay { 
+            position: fixed; top:0; left:0; width:100%; height:100%; 
+            background: rgba(255,255,255,0.6); backdrop-filter: blur(50px);
+            z-index: var(--z-login); 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            transition: opacity 0.5s ease;
+        }
+        .login-input { 
+            background: #FFFFFF; border: 1px solid rgba(0,0,0,0.1); width: 240px; padding: 15px; 
+            border-radius: 24px; font-size: 24px; text-align: center; margin: 25px 0; letter-spacing: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: all 0.3s;
+        }
+        .login-input:focus { border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,122,255,0.15); }
+
         #cloudStatus { 
             position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
             background: white; padding: 8px 16px; border-radius: 30px; 
@@ -298,7 +323,7 @@
         }
         #cloudStatus.show { display: flex; animation: fadeInStatus 0.3s; }
         #toast { 
-            visibility: hidden; background: rgba(20,20,20,0.8); color: white; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            visibility: hidden; background: rgba(20,20,20,0.8); color: white; backdrop-filter: blur(10px);
             padding: 12px 24px; border-radius: 50px; 
             position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); 
             z-index: var(--z-toast); opacity:0; transition:0.3s; font-weight: 600; font-size: 14px;
@@ -306,17 +331,18 @@
         }
         #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
 
-        .chart-drawer { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.6s var(--spring-easing), opacity 0.4s ease; margin-top: 0; transform: translateZ(0); }
+        .chart-drawer { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.6s var(--spring-easing), opacity 0.4s ease; margin-top: 0; }
         .chart-drawer.open { max-height: 400px; opacity: 1; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.05); }
-        .chart-type-btn { background: #F2F2F7; border:none; padding: 6px 14px; border-radius: 14px; color: #8E8E93; font-weight: 600; transition: 0.2s; font-size: 13px; }
+        .chart-type-btn { background: #F2F2F7; border:none; padding: 6px 14px; border-radius: 14px; color: #8E8E93; font-weight: 600; font-size: 13px; }
         .chart-type-btn.active { background: #1D1D1F; color: #FFF; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
         .refresh-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #E5E5EA; background: white; display: flex; justify-content: center; align-items: center; font-size: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
-        .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.6); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; margin-right: 8px; }
+        .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; margin-right: 8px; }
         #s-img-spinner { margin: 0; border-color: #CCC; border-top-color: #007AFF; }
         .btn-loading .spinner { display: inline-block; }
         .spin-circle { width: 14px; height: 14px; border: 2px solid #E5E7FF; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
         @keyframes fadeInStatus { from { opacity:0; transform: translate(-50%, -10px); } to { opacity:1; transform: translate(-50%, 0); } }
     </style>
 </head>
@@ -350,17 +376,16 @@
             <div class="spinner"></div> <span class="btn-text">解鎖</span>
         </button>
         <div id="loginError" style="color:var(--danger); margin-top:20px; min-height:20px; font-weight:600;"></div>
-        <div id="versionTag" onclick="LoginHandler.clickVersion()" style="position:absolute; bottom:40px; color:#AAA; font-size:12px; font-weight:600;">v16.61 Hotfix</div>
+        <div id="versionTag" onclick="LoginHandler.clickVersion()" style="position:absolute; bottom:40px; color:#AAA; font-size:12px; font-weight:600;">v16.62 Tactile</div>
     </div>
 
     <!-- App Hub View Container -->
-    <div id="app-hub" class="view-container">
+    <div id="app-hub" class="hidden-layer view-container">
         <div class="hub-header">
             <div class="hub-title">Apps</div>
             <button class="btn-icon" onclick="logout()" style="color:var(--danger); border-color: #FFDADA; background:#FFF2F2;">登出</button>
         </div>
         <div class="app-grid">
-            <!-- Redesigned Widget-like Cards -->
             <div class="app-card" onclick="Nav.open('wallet')">
                 <div class="app-icon-wrapper">💰</div>
                 <div class="app-name">My Wallet</div>
@@ -770,14 +795,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const Nav = {
     open: function(appId) {
-        // Reset
         const layers = document.querySelectorAll('.hidden-layer, #app-hub, #app-wallet, #app-crypto, #app-schedule');
         layers.forEach(el => {
             el.classList.add('hidden-layer');
             el.classList.remove('animate-entry');
         });
         
-        // Activate
         const target = document.getElementById('app-' + appId);
         target.classList.remove('hidden-layer');
         
