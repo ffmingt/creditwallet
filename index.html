@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V12.5</title>
+    <title>My Wallet V13.0 (Optimized)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- V12.5 Style System --- */
+        /* --- V13.0 Style System --- */
         :root { 
             --bg-body: #F9FAFB; 
             --primary: #4F46E5; 
@@ -204,7 +204,7 @@
                     <div class="total-amount" id="w-total">$0</div>
                     <div class="card-footer">
                         <div class="card-sub" id="w-count">0 筆紀錄</div>
-                        <button class="btn-chart-toggle" onclick="WalletApp.toggleChart()"><span id="chartBtnIcon">📊</span> 分析</button>
+                        <button class="btn-chart-toggle" onclick="WalletApp.toggleChart()"><span id="chartBtnIcon">📊</span> <span id="chartBtnText">分析</span></button>
                     </div>
                 </div>
                 <div class="status-emoji" id="emojiStatus">😊</div>
@@ -218,7 +218,8 @@
             </div>
             <div class="grid-2">
                 <div><label class="form-label">銀行</label><select id="w-bank" class="styled-input"></select></div>
-                <div><label class="form-label">金額</label><input type="number" id="w-amount" class="styled-input" placeholder="$0"></div>
+                <!-- 🟢 UI/UX: 使用 inputmode="decimal" 讓手機鍵盤更友善 -->
+                <div><label class="form-label">金額</label><input type="number" id="w-amount" class="styled-input" placeholder="$0" inputmode="decimal"></div>
             </div>
             <label class="form-label">備註</label><input type="text" id="w-note" class="styled-input" placeholder="選填...">
             <button id="w-submit" class="btn-submit" onclick="WalletApp.submit()">
@@ -268,8 +269,8 @@
                 <div><label class="form-label">入金管道</label><select id="c-method" class="styled-input"></select></div>
             </div>
             <div class="grid-2">
-                <div><label class="form-label">投入成本 (TWD)</label><input type="number" id="c-cost" class="styled-input" placeholder="台幣金額"></div>
-                <div id="c-usd-field" style="display:none;"><label class="form-label">換得金額 (U)</label><input type="number" id="c-usd" class="styled-input" placeholder="美金/U"></div>
+                <div><label class="form-label">投入成本 (TWD)</label><input type="number" id="c-cost" class="styled-input" placeholder="台幣金額" inputmode="decimal"></div>
+                <div id="c-usd-field" style="display:none;"><label class="form-label">換得金額 (U)</label><input type="number" id="c-usd" class="styled-input" placeholder="美金/U" inputmode="decimal"></div>
             </div>
             <label class="form-label">備註</label><input type="text" id="c-note" class="styled-input" placeholder="選填...">
             <button id="c-submit" class="btn-submit" onclick="CryptoApp.submit()">
@@ -383,6 +384,34 @@ const API_URL = "https://script.google.com/macros/s/AKfycby60jdswu4PguQ0YNMpYdfd
 let USER_PASSWORD = "";
 let GLOBAL_DATA = { wallet: {data:[], templates:[]}, crypto: {data:[], methods:[], rate: 32.5} };
 
+// 🟢 優化：將 Key Map 移出函式，避免重複建立，提升效能
+const DATA_KEY_MAP = { 
+    '銀行名稱': 'bankname', 'bankname': 'bankname', 
+    '結帳日': 'billdate', 'billdate': 'billdate', 
+    '扣款日': 'paymentdate', 'paymentdate': 'paymentdate', 
+    '銀行': 'bank', 'bank': 'bank', 
+    '金額': 'amount', 'amount': 'amount', 
+    '備註': 'note', 'note': 'note', 
+    '月份': 'month', 'month': 'month', 
+    'uuid': 'uuid', 'UUID': 'uuid', 
+    '日期': 'date', 'date': 'date', 
+    '管道': 'method', 'method': 'method', 
+    '台幣成本': 'cost_twd', 'cost_twd': 'cost_twd', 'cost': 'cost_twd', 
+    '外幣金額': 'amount_usd', 'amount_usd': 'amount_usd', 
+    '幣別': 'type', 'type': 'type' 
+};
+
+// 🟢 優化：自動登入邏輯
+document.addEventListener('DOMContentLoaded', () => {
+    const savedPass = localStorage.getItem('myBillPass');
+    if(savedPass) {
+        document.getElementById('passwordInput').value = savedPass;
+        USER_PASSWORD = savedPass;
+        setBtnLoading('loginBtn', true, '自動登入中...');
+        DataLoader.load(true);
+    }
+});
+
 const Nav = {
     open: function(appId) {
         document.querySelectorAll('.hidden-layer, #app-hub, #app-wallet, #app-crypto').forEach(el => el.classList.add('hidden-layer'));
@@ -398,17 +427,47 @@ const Nav = {
 
 const SyncManager = {
     queue: [], isSyncing: false, totalTasks: 0, completed: 0,
-    add: function(payload) { this.queue.push(payload); if (!this.isSyncing) { this.totalTasks = this.queue.length; this.completed = 0; } else { this.totalTasks++; } this.updateUI(); this.process(); },
-    updateUI: function() { const pending = this.queue.length; if (pending > 0) { const current = this.totalTasks - pending + 1; CloudStatus.set('syncing', `同步中 (${current}/${this.totalTasks})...`); } else { CloudStatus.set('success'); this.totalTasks = 0; this.completed = 0; } },
+    add: function(payload) { 
+        this.queue.push(payload); 
+        if (!this.isSyncing) { this.totalTasks = this.queue.length; this.completed = 0; } 
+        else { this.totalTasks++; } 
+        this.updateUI(); 
+        this.process(); 
+    },
+    updateUI: function() { 
+        const pending = this.queue.length; 
+        if (pending > 0) { 
+            const current = this.totalTasks - pending + 1; 
+            CloudStatus.set('syncing', `同步中 (${current}/${this.totalTasks})...`); 
+        } else { 
+            CloudStatus.set('success'); 
+            this.totalTasks = 0; this.completed = 0; 
+        } 
+    },
     process: async function() {
         if (this.isSyncing || this.queue.length === 0) return;
         this.isSyncing = true;
         while (this.queue.length > 0) {
-            this.updateUI(); const currentTask = this.queue[0];
+            this.updateUI(); 
+            const currentTask = this.queue[0];
             let success = false;
             for(let i=0; i<3; i++) { // Retry 3 times
                 try {
-                    await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...currentTask, password: USER_PASSWORD }) });
+                    // 🟢 優化：加上超時控制，避免 no-cors 卡死
+                    const fetchPromise = fetch(API_URL, { 
+                        method: 'POST', 
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ ...currentTask, password: USER_PASSWORD }) 
+                    });
+                    
+                    // 設定 8 秒超時
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout')), 8000)
+                    );
+
+                    await Promise.race([fetchPromise, timeoutPromise]);
+                    
                     success = true; break;
                 } catch(e) { await new Promise(r => setTimeout(r, 1500)); }
             }
@@ -444,8 +503,10 @@ const DataLoader = {
     load: async function(isInit=false, isManual=false) {
         try {
             if(isManual) CloudStatus.set('syncing', '資料更新中...');
+            
             const res = await fetch(`${API_URL}?password=${encodeURIComponent(USER_PASSWORD)}`);
             const json = await res.json();
+            
             if(json.error) throw new Error(json.error);
             
             GLOBAL_DATA = {
@@ -460,7 +521,7 @@ const DataLoader = {
                 }
             };
             
-            // 🟢 Fix: 成功載入後，儲存密碼
+            // 🟢 成功載入後，更新 LocalStorage
             localStorage.setItem('myBillPass', USER_PASSWORD);
 
             if(isInit) {
@@ -474,9 +535,11 @@ const DataLoader = {
             if(isManual) CloudStatus.set('success', '資料已更新');
 
         } catch(e) {
+            console.error(e);
             if(isInit) {
                 document.getElementById('loginError').innerText = e.message.includes("密碼") ? '❌ 密碼錯誤' : '⚠️ 連線失敗';
                 setBtnLoading('loginBtn', false);
+                if(e.message.includes("密碼")) localStorage.removeItem('myBillPass');
             } else {
                 CloudStatus.set('error');
             }
@@ -491,14 +554,27 @@ function verifyLogin() {
     DataLoader.load(true);
 }
 
+// 🟢 輔助函式：金額格式化 (修復浮點數 bug)
+function formatMoney(num) {
+    if(!num && num !== 0) return '0';
+    return Number(num).toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+function parseMoney(numStr) {
+    return parseFloat(numStr) || 0;
+}
+
 // --- App 1: Wallet Logic ---
 const WalletApp = {
     chart: null,
     render: function() {
+        // 🟢 UI/UX: 使用 DocumentFragment 優化渲染
+        const fragList = document.createDocumentFragment();
+        const fragInput = document.createDocumentFragment();
+
         const listSel = document.getElementById('w-list-month');
-        if(listSel.innerHTML == "") this.initMonthSelect('w-list-month');
+        if(listSel.innerHTML == "") initMonthSelect('w-list-month'); 
         const inputSel = document.getElementById('w-input-month');
-        if(inputSel.innerHTML == "") this.initMonthSelect('w-input-month');
+        if(inputSel.innerHTML == "") initMonthSelect('w-input-month');
 
         const m = listSel.value;
         const data = GLOBAL_DATA.wallet.data.filter(r => String(r.month).trim() === m);
@@ -506,11 +582,15 @@ const WalletApp = {
         
         const sel = document.getElementById('w-bank');
         const currentVal = sel.value;
-        sel.innerHTML = '<option disabled selected>選擇銀行</option>';
-        templates.forEach(t => sel.innerHTML += `<option value="${t.bankname}">${t.bankname}</option>`);
+        
+        // 🟢 優化：使用 Array Join
+        let ops = ['<option disabled selected>選擇銀行</option>'];
+        templates.forEach(t => ops.push(`<option value="${t.bankname}">${t.bankname}</option>`));
+        sel.innerHTML = ops.join('');
+        
         if(currentVal && currentVal !== '選擇銀行') sel.value = currentVal;
 
-        let html = '', total = 0, count = 0, cLabels=[], cData=[], cColors=[];
+        let total = 0, count = 0, cLabels=[], cData=[], cColors=[];
         const now = new Date();
         const year = parseInt(m.substring(0, 4));
         const month = parseInt(m.substring(4, 6));
@@ -521,11 +601,11 @@ const WalletApp = {
             let right = `<div class="badge-todo">待登錄</div>`, cls = 't-card unlogged', click = `WalletApp.fill('${t.bankname}')`;
             
             if(rec) {
-                total += Number(rec.amount); count++;
+                total += parseMoney(rec.amount); count++;
                 cls = 't-card logged';
-                right = `<div class="t-amount">$${Number(rec.amount).toLocaleString()}</div>`;
+                right = `<div class="t-amount">$${formatMoney(rec.amount)}</div>`;
                 click = `WalletApp.askDelete('${rec.uuid}', '${rec.bank}')`;
-                cLabels.push(t.bankname); cData.push(rec.amount); cColors.push('#4F46E5');
+                cLabels.push(t.bankname); cData.push(parseMoney(rec.amount)); cColors.push('#4F46E5');
             } else {
                 const billDay = parseInt(t.billdate);
                 if (billDay) {
@@ -533,7 +613,12 @@ const WalletApp = {
                     if (now > cutoff) alertList.push(t.bankname);
                 }
             }
-            html += `<div class="${cls}" onclick="${click}">
+            
+            // 使用 Template Literal 建立 HTML
+            const el = document.createElement('div');
+            el.className = cls;
+            el.setAttribute('onclick', click);
+            el.innerHTML = `
                 <div class="t-icon">${t.bankname.charAt(0)}</div>
                 <div class="t-content">
                     <div class="t-bank">${t.bankname}</div>
@@ -541,11 +626,14 @@ const WalletApp = {
                     ${rec && rec.note ? `<div style="font-size:12px;color:#6B7280;margin-top:2px;">${rec.note}</div>` : ''}
                 </div>
                 ${right}
-            </div>`;
+            `;
+            fragList.appendChild(el);
         });
         
-        document.getElementById('w-list').innerHTML = html;
-        document.getElementById('w-total').innerText = `$${total.toLocaleString()}`;
+        document.getElementById('w-list').innerHTML = '';
+        document.getElementById('w-list').appendChild(fragList);
+        
+        document.getElementById('w-total').innerText = `$${formatMoney(total)}`;
         document.getElementById('w-count').innerText = `${count} 筆紀錄`;
         
         const alertContainer = document.getElementById('alertContainer');
@@ -581,7 +669,7 @@ const WalletApp = {
     askDelete: function(uuid, bank) {
         document.getElementById('actionTitle').innerText = bank;
         const rec = GLOBAL_DATA.wallet.data.find(r => r.uuid === uuid);
-        document.getElementById('actionSubtitle').innerText = rec ? `已登錄：$${Number(rec.amount).toLocaleString()}` : '';
+        document.getElementById('actionSubtitle').innerText = rec ? `已登錄：$${formatMoney(rec.amount)}` : '';
         
         document.getElementById('btnActionEdit').onclick = () => { 
             this.fill(bank); 
@@ -604,16 +692,20 @@ const WalletApp = {
         document.getElementById('w-amount').focus();
         document.querySelector('.input-panel').scrollIntoView({behavior:'smooth'});
     },
-    toggleChart: function() { document.getElementById('chartDrawer').classList.toggle('open'); },
-    initMonthSelect: function(id) {
-        const s = document.getElementById(id);
-        const d = new Date(); d.setMonth(d.getMonth()+1);
-        for(let i=0; i<12; i++) {
-            const v = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`;
-            const o = document.createElement('option'); o.value=v; o.text=v; s.appendChild(o);
-            d.setMonth(d.getMonth()-1);
-        }
-        s.value = `${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}`;
+    toggleChart: function() { 
+        const drawer = document.getElementById('chartDrawer'); 
+        const btnText = document.getElementById('chartBtnText'); 
+        const btnIcon = document.getElementById('chartBtnIcon'); 
+        if (drawer.classList.contains('open')) { 
+            drawer.classList.remove('open'); 
+            btnText.innerText = "分析"; 
+            btnIcon.innerText = "📊"; 
+        } else { 
+            drawer.classList.add('open'); 
+            btnText.innerText = "收起"; 
+            btnIcon.innerText = "🔼"; 
+            if(GLOBAL_DATA.wallet.data.length > 0) WalletApp.render(); 
+        } 
     }
 };
 
@@ -625,18 +717,25 @@ const CryptoApp = {
         const methods = GLOBAL_DATA.crypto.methods;
         const rate = GLOBAL_DATA.crypto.rate;
         
-        // 🟢 Fix: Force rebuild selector every render to show new methods
         const sel = document.getElementById('c-method');
         const currentVal = sel.value;
-        sel.innerHTML = '<option disabled selected>選擇管道</option>';
-        if(methods) methods.forEach(m => sel.innerHTML += `<option value="${m}">${m}</option>`);
+        
+        // 🟢 UI/UX: 進入時如果日期沒填，自動填入「今天」
+        if(!document.getElementById('c-date').value) {
+            document.getElementById('c-date').valueAsDate = new Date();
+        }
+        
+        let ops = ['<option disabled selected>選擇管道</option>'];
+        if(methods) methods.forEach(m => ops.push(`<option value="${m}">${m}</option>`));
+        sel.innerHTML = ops.join('');
+        
         if(currentVal && currentVal !== '選擇管道') sel.value = currentVal;
-        if(!document.getElementById('c-date').value) document.getElementById('c-date').valueAsDate = new Date();
 
-        const totalTwd = data.reduce((sum, r) => sum + Number(r.cost_twd || r.cost), 0);
-        const displayTotal = this.showInUsd ? `$${Math.round(totalTwd/rate).toLocaleString()} USD` : `$${totalTwd.toLocaleString()} TWD`;
-        document.getElementById('c-total-twd').innerText = `$${totalTwd.toLocaleString()} TWD`;
-        document.getElementById('c-total-usd').innerText = `≈ $${Math.round(totalTwd/rate).toLocaleString()} USD`;
+        // 🟢 Bug Fix: 修復浮點數累加的誤差
+        const totalTwd = data.reduce((sum, r) => sum + parseMoney(r.cost_twd || r.cost), 0);
+        
+        document.getElementById('c-total-twd').innerText = `$${formatMoney(totalTwd)} TWD`;
+        document.getElementById('c-total-usd').innerText = `≈ $${formatMoney(totalTwd/rate)} USD`;
 
         let html = '';
         data.forEach(r => {
@@ -647,12 +746,13 @@ const CryptoApp = {
                          String(dateObj.getHours()).padStart(2, '0') + ':' + 
                          String(dateObj.getMinutes()).padStart(2, '0');
 
-            let rightSide = `<div class="t-amount">$${Number(r.cost_twd || r.cost).toLocaleString()}</div>`;
+            let rightSide = `<div class="t-amount">$${formatMoney(r.cost_twd || r.cost)}</div>`;
             if (r.type === 'USD') {
-                const cost = Number(r.cost_twd || r.cost);
-                const amt = Number(r.amount_usd);
+                const cost = parseMoney(r.cost_twd || r.cost);
+                const amt = parseMoney(r.amount_usd);
+                // 🟢 Bug Fix: 匯率計算防呆
                 const calcRate = (amt > 0) ? (cost / amt).toFixed(2) : '0.00';
-                rightSide += `<div class="c-sub-value">≈ $${amt.toLocaleString()} USD <span class="c-rate">(@${calcRate})</span></div>`;
+                rightSide += `<div class="c-sub-value">≈ $${formatMoney(amt)} USD <span class="c-rate">(@${calcRate})</span></div>`;
             }
             let icon = r.type === 'USD' ? '🇺🇸' : '🪙';
             html += `<div class="t-card" onclick="CryptoApp.askDelete('${r.uuid}')"><div class="t-icon">${icon}</div><div class="t-content"><div class="t-bank">${r.method}</div><div style="font-size:12px;color:#888">${subInfo} ${r.note ? '- '+r.note : ''}</div></div><div>${rightSide}</div></div>`;
@@ -723,7 +823,7 @@ const CryptoApp = {
         
         GLOBAL_DATA.crypto.methods.push(val);
         this.renderSettingsList();
-        this.render(); // 🟢 Fix: Refresh main list dropdown immediately
+        this.render(); 
         document.getElementById('newCryptoMethod').value = '';
         
         CloudStatus.set('syncing');
@@ -731,7 +831,6 @@ const CryptoApp = {
         .then(() => { 
             setBtnLoading('btnAddCryptoMethod', false); 
             CloudStatus.set('success'); 
-            // 🟢 Fix: Reload data and update list if modal is still open
             DataLoader.load().then(() => CryptoApp.renderSettingsList()); 
         });
     },
@@ -766,7 +865,6 @@ function setBtnLoading(btnId, isLoading, text) {
 }
 function showToast(m) { const t=document.getElementById('toast'); t.innerText=m; t.className='show'; setTimeout(()=>t.className='', 2500); }
 function manualReload() { if (SyncManager.isSyncing) { showToast("⚠️ 雲端同步中，請稍後再刷新"); return; } CloudStatus.set('syncing', '資料更新中...'); DataLoader.load(false, true); }
-function toggleChart() { const drawer = document.getElementById('chartDrawer'); const btnText = document.getElementById('chartBtnText'); const btnIcon = document.getElementById('chartBtnIcon'); if (drawer.classList.contains('open')) { drawer.classList.remove('open'); btnText.innerText = "分析"; btnIcon.innerText = "📊"; } else { drawer.classList.add('open'); btnText.innerText = "收起"; btnIcon.innerText = "🔼"; if(GLOBAL_DATA.wallet.data.length > 0) WalletApp.render(); } }
 
 function customConfirm(msg, callback) {
     document.getElementById('confirmMsg').innerText = msg;
@@ -830,16 +928,51 @@ function renderTemplateList() {
     });
 }
 
-// Core: Map Normalize
+// 🟢 Core: Map Normalize (Optimized)
 function mapNormalize(arr) {
     if(!Array.isArray(arr)) return [];
-    const keyMap = { '銀行名稱': 'bankname', 'bankname': 'bankname', '結帳日': 'billdate', 'billdate': 'billdate', '扣款日': 'paymentdate', 'paymentdate': 'paymentdate', '銀行': 'bank', 'bank': 'bank', '金額': 'amount', 'amount': 'amount', '備註': 'note', 'note': 'note', '月份': 'month', 'month': 'month', 'uuid': 'uuid', 'UUID': 'uuid', '日期': 'date', 'date': 'date', '管道': 'method', 'method': 'method', '台幣成本': 'cost_twd', 'cost_twd': 'cost_twd', 'cost': 'cost_twd', '外幣金額': 'amount_usd', 'amount_usd': 'amount_usd', '幣別': 'type', 'type': 'type' };
-    return arr.map(obj => { const newObj = {}; for(let k in obj) { const cleanKey = k.trim(); const mappedKey = keyMap[cleanKey] || cleanKey.toLowerCase(); newObj[mappedKey] = obj[k]; } return newObj; });
+    return arr.map(obj => { 
+        const newObj = {}; 
+        for(let k in obj) { 
+            const cleanKey = k.trim(); 
+            // 使用全域 DATA_KEY_MAP，避免重複創建
+            const mappedKey = DATA_KEY_MAP[cleanKey] || cleanKey.toLowerCase(); 
+            newObj[mappedKey] = obj[k]; 
+        } 
+        return newObj; 
+    });
 }
+
+// 🟢 Utility: Unified Month Select Initializer
+function initMonthSelect(id) { 
+    const s=document.getElementById(id);
+    if (!s) return;
+    
+    const d=new Date(); 
+    // 🟢 UI/UX: 修正邏輯，預設選單從「這個月」開始，而不是下個月
+    // 原本是 d.setMonth(d.getMonth()+1); 改為不加
+    
+    // 我們往後推一個月當作 buffer (如預繳)，往前推 23 個月
+    const startD = new Date();
+    startD.setMonth(startD.getMonth() + 1);
+
+    const frag = document.createDocumentFragment(); 
+    for(let i=0; i<24; i++){ 
+        const v=`${startD.getFullYear()}${String(startD.getMonth()+1).padStart(2,'0')}`; 
+        const o=document.createElement('option'); o.value=v; o.text=`${startD.getFullYear()} / ${String(startD.getMonth()+1).padStart(2,'0')}`; 
+        frag.appendChild(o); 
+        startD.setMonth(startD.getMonth()-1); 
+    }
+    s.appendChild(frag);
+
+    // 🟢 預設選取「當前月份」
+    const currentMonthVal = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`;
+    s.value = currentMonthVal;
+}
+
 function getVal(t,k) { return t[k.toLowerCase()] || '-'; } 
 function strColor(s) { let h=0;for(let i=0;i<s.length;i++)h=s.charCodeAt(i)+((h<<5)-h); return '#'+("00000"+(h&0xFFFFFF).toString(16)).substr(-6); }
-function getCurrentMonthVal() { const d=new Date(); return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`; }
-function initMonthSelect(id) { const s=document.getElementById(id),d=new Date(); d.setMonth(d.getMonth()+1); for(let i=0;i<24;i++){ const v=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`; const o=document.createElement('option'); o.value=v; o.text=`${d.getFullYear()} / ${String(d.getMonth()+1).padStart(2,'0')}`; s.appendChild(o); d.setMonth(d.getMonth()-1); } }
+
 </script>
 </body>
 </html>
