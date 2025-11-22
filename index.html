@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V14.3</title>
+    <title>My Wallet V14.4</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- V14.3 Style System --- */
+        /* --- V14.4 Style System --- */
         :root { 
             --bg-body: #F9FAFB; 
             --primary: #4F46E5; 
@@ -23,11 +23,37 @@
 
         .hidden-layer { display: none !important; }
 
-        /* Login: z-index 2000 */
+        /* Z-INDEX HIERARCHY */
+        /* Login Overlay: 2000 */
+        /* Version Tag: 2001 */
+        /* iOS Install Prompt: 5000 (New) */
+        /* Modals: 1,000,000 */
+        /* Toast: 2,000,000 */
+
+        /* Login */
         #loginOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(249,250,251,0.98); backdrop-filter: blur(5px); z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.3s; }
         .login-input { width:240px; padding:15px; border:1px solid #E5E7EB; border-radius:16px; font-size:24px; text-align:center; outline:none; margin:20px 0; letter-spacing:8px; background:white; box-shadow: var(--shadow); }
         .login-input:focus { border-color: var(--primary); }
         #versionTag { position: absolute; bottom: 30px; font-size: 12px; color: #9CA3AF; font-weight: 500; cursor: pointer; padding: 10px; z-index: 2001; }
+
+        /* 🟢 iOS Install Prompt Styles (v14.4) */
+        #iosInstallPrompt { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(10px); z-index: 5000; 
+            flex-direction: column; justify-content: center; align-items: center; padding: 40px; text-align: center; 
+            animation: fadeIn 0.3s ease;
+        }
+        .install-icon { font-size: 60px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-radius: 18px; background: white; width: 80px; height: 80px; display: flex; justify-content: center; align-items: center; }
+        .install-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: #111; }
+        .install-desc { font-size: 15px; color: #666; line-height: 1.6; margin-bottom: 30px; }
+        .install-step { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-weight: 600; color: #333; font-size: 14px; }
+        .share-icon { display: inline-block; width: 20px; height: 20px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23007AFF' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' /%3E%3C/svg%3E") no-repeat center/contain; vertical-align: text-bottom; }
+        .plus-icon { display: inline-block; width: 20px; height: 20px; background: #F3F4F6; border-radius: 4px; text-align: center; line-height: 20px; font-weight: 800; color: #333; border: 1px solid #DDD; }
+        
+        .install-arrow { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 30px; color: #007AFF; animation: bounce 1.5s infinite; }
+        .btn-dismiss { margin-top: 40px; border: none; background: transparent; color: #999; font-size: 14px; font-weight: 500; text-decoration: underline; cursor: pointer; }
+        
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform:translateX(-50%) translateY(0);} 40% {transform:translateX(-50%) translateY(-10px);} 60% {transform:translateX(-50%) translateY(-5px);} }
 
         /* Buttons & Loading */
         .btn-submit { width: 100%; background: #1F2937; color: white; border: none; padding: 15px; border-radius: 14px; font-size: 16px; font-weight: 600; margin-top: 10px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.1s, background-color 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -161,6 +187,17 @@
     <div id="cloudStatus"><div class="status-icon"><div class="spin-circle"></div></div><span id="cloudText">雲端同步中...</span></div>
     <div id="toast"></div>
 
+    <!-- 🟢 iOS Install Prompt -->
+    <div id="iosInstallPrompt">
+        <div class="install-icon">📲</div>
+        <div class="install-title">安裝 My Wallet App</div>
+        <div class="install-desc">將此網頁加入主畫面，<br>獲得全螢幕最佳體驗。</div>
+        <div class="install-step"><span class="share-icon"></span> 1. 點擊下方分享按鈕</div>
+        <div class="install-step"><span class="plus-icon">＋</span> 2. 選擇「加入主畫面」</div>
+        <div class="install-arrow">⬇</div>
+        <button class="btn-dismiss" onclick="document.getElementById('iosInstallPrompt').style.display='none'">暫時不要</button>
+    </div>
+
     <!-- Login -->
     <div id="loginOverlay">
         <div style="font-size:50px; margin-bottom:10px;">🔒</div>
@@ -171,7 +208,7 @@
         </button>
         <div id="loginError" style="color:var(--danger); margin-top:20px; min-height:20px;"></div>
         <!-- Version Tag for Cache Clear -->
-        <div id="versionTag" onclick="LoginHandler.clickVersion()">v14.3</div>
+        <div id="versionTag" onclick="LoginHandler.clickVersion()">v14.4</div>
     </div>
 
     <!-- Hub -->
@@ -183,11 +220,11 @@
         <div class="app-grid">
             <div class="app-card" onclick="Nav.open('wallet')">
                 <div><div class="app-icon">💰</div><div class="app-name">My Wallet</div></div>
-                <div class="app-ver">v9.5</div>
+                <div class="app-ver">v9.6</div>
             </div>
             <div class="app-card" onclick="Nav.open('crypto')">
                 <div><div class="app-icon">🪙</div><div class="app-name">Crypto</div></div>
-                <div class="app-ver">v1.9</div>
+                <div class="app-ver">v2.0</div>
             </div>
         </div>
     </div>
@@ -419,8 +456,6 @@ const DATA_KEY_MAP = {
     '銀行名稱': 'bankname', 'bankname': 'bankname', '結帳日': 'billdate', 'billdate': 'billdate', '扣款日': 'paymentdate', 'paymentdate': 'paymentdate', 
     '銀行': 'bank', 'bank': 'bank', '金額': 'amount', 'amount': 'amount', '備註': 'note', 'note': 'note', '月份': 'month', 'month': 'month', 
     'uuid': 'uuid', 'UUID': 'uuid', '日期': 'date', 'date': 'date', '管道': 'method', 'method': 'method', 
-    
-    // Complete Mapping Table for Crypto
     '台幣成本': 'cost_twd', 'cost_twd': 'cost_twd', 'cost': 'cost_twd', 'costtwd': 'cost_twd', 'CostTWD': 'cost_twd',
     '外幣金額': 'amount_usd', 'amount_usd': 'amount_usd', 'amountusd': 'amount_usd', 'AmountUSD': 'amount_usd',
     '幣別': 'type', 'type': 'type' 
@@ -439,6 +474,14 @@ const LoginHandler = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 🟢 iOS PWA Check (v14.4)
+    const isIos = /iphone/.test(window.navigator.userAgent.toLowerCase());
+    const isStandalone = window.navigator.standalone === true;
+    
+    if (isIos && !isStandalone) {
+        document.getElementById('iosInstallPrompt').style.display = 'flex';
+    }
+
     const savedPass = localStorage.getItem('myBillPass');
     if(savedPass) {
         document.getElementById('passwordInput').value = savedPass;
@@ -533,10 +576,7 @@ const DataLoader = {
                 config: json.config || {budget: 0} 
             };
             localStorage.setItem('myBillPass', USER_PASSWORD);
-            
-            // Populate settings
             document.getElementById('budgetInput').value = GLOBAL_DATA.config.budget;
-
             if(isInit) { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('app-hub').classList.remove('hidden-layer'); }
             if(!document.getElementById('app-wallet').classList.contains('hidden-layer')) WalletApp.render();
             if(!document.getElementById('app-crypto').classList.contains('hidden-layer')) CryptoApp.render();
@@ -555,7 +595,6 @@ function formatMoney(num) { if(!num && num !== 0) return '0'; return Number(num)
 function parseMoney(numStr) { 
     if(typeof numStr === 'number') return numStr;
     if(!numStr) return 0;
-    // Remove commas and spaces, then parse
     const cleanStr = String(numStr).replace(/,/g, '').replace(/\s/g, '');
     return parseFloat(cleanStr) || 0; 
 }
@@ -596,15 +635,12 @@ const WalletApp = {
                 const billDay = parseInt(t.billdate);
                 if (billDay) { const cutoff = new Date(year, month - 1, billDay + 1); if (now > cutoff) alertList.push(t.bankname); }
             }
-            
             const container = document.createElement('div'); container.className = 'swipe-item-container';
             container.innerHTML = `<div class="swipe-bg-action" onclick="${delFunc}">刪除</div><div class="t-card ${rec ? 'logged' : 'unlogged'}" onclick="${click}"><div class="t-icon">${t.bankname.charAt(0)}</div><div class="t-content"><div class="t-bank">${t.bankname}</div><div style="font-size:12px;color:#888">結帳日 ${t.billdate} / 扣款日 ${t.paymentdate}</div>${rec && rec.note ? `<div style="font-size:12px;color:#6B7280;margin-top:2px;">${rec.note}</div>` : ''}</div>${right}</div>`;
             fragList.appendChild(container);
         });
-        
         document.getElementById('w-list').innerHTML = ''; document.getElementById('w-list').appendChild(fragList);
         document.getElementById('w-total').innerText = `$${formatMoney(total)}`; document.getElementById('w-count').innerText = `${count} 筆紀錄`;
-        
         this.updateBudgetUI(total);
         const alertContainer = document.getElementById('alertContainer');
         if (alertList.length > 0) alertContainer.innerHTML = `<div class="alert-box"><span class="alert-icon">🔔</span><div class="alert-content"><span class="alert-title">待登錄提醒</span>${alertList.join('、')} 帳單已結帳，請核對並登錄金額。</div></div>`; else alertContainer.innerHTML = '';
@@ -615,7 +651,6 @@ const WalletApp = {
         const container = document.getElementById('budgetContainer');
         const fill = document.getElementById('budgetFill');
         const txtLeft = document.getElementById('budgetLeftText');
-
         if(budget > 0) {
             container.style.display = 'block';
             const pct = Math.min((currentTotal / budget) * 100, 100);
@@ -655,30 +690,19 @@ const WalletApp = {
 const CryptoApp = {
     mode: 'twd',
     render: function() {
-        const fragList = document.createDocumentFragment(); 
-        const data = GLOBAL_DATA.crypto.data.sort((a,b) => new Date(b.date) - new Date(a.date)); 
-        const methods = GLOBAL_DATA.crypto.methods; 
+        const fragList = document.createDocumentFragment(); const data = GLOBAL_DATA.crypto.data.sort((a,b) => new Date(b.date) - new Date(a.date)); const methods = GLOBAL_DATA.crypto.methods; const sel = document.getElementById('c-method');
         
-        // 🟢 Fix: Safe Rate Parsing
-        let rate = parseFloat(GLOBAL_DATA.crypto.rate);
-        if (isNaN(rate) || rate <= 0) { rate = 32.5; console.warn('Using default rate 32.5'); }
+        // 🟢 Fix Rate
+        let rate = parseFloat(GLOBAL_DATA.crypto.rate); if (isNaN(rate) || rate <= 0) rate = 32.5;
 
-        const sel = document.getElementById('c-method');
         if(!document.getElementById('c-date').value) document.getElementById('c-date').valueAsDate = new Date();
         if(sel.options.length <= 1) { let ops = ['<option disabled selected>選擇管道</option>']; if(methods) methods.forEach(m => ops.push(`<option value="${m}">${m}</option>`)); sel.innerHTML = ops.join(''); }
-        
         const totalTwd = data.reduce((sum, r) => sum + parseMoney(r.cost_twd || r.cost), 0);
-        document.getElementById('c-total-twd').innerText = `$${formatMoney(totalTwd)} TWD`; 
-        document.getElementById('c-total-usd').innerText = `≈ $${formatMoney(totalTwd/rate)} USD`;
-        
+        document.getElementById('c-total-twd').innerText = `$${formatMoney(totalTwd)} TWD`; document.getElementById('c-total-usd').innerText = `≈ $${formatMoney(totalTwd/rate)} USD`;
         data.forEach(r => {
             let dateObj = new Date(r.date); let subInfo = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
             let rightSide = `<div class="t-amount">$${formatMoney(r.cost_twd || r.cost)}</div>`;
-            if (r.type === 'USD') { 
-                const cost = parseMoney(r.cost_twd || r.cost); const amt = parseMoney(r.amount_usd); 
-                const calcRate = (amt > 0) ? (cost / amt).toFixed(2) : '0.00'; 
-                rightSide += `<div class="c-sub-value">≈ $${formatMoney(amt)} USD <span class="c-rate">(@${calcRate})</span></div>`; 
-            }
+            if (r.type === 'USD') { const cost = parseMoney(r.cost_twd || r.cost); const amt = parseMoney(r.amount_usd); const calcRate = (amt > 0) ? (cost / amt).toFixed(2) : '0.00'; rightSide += `<div class="c-sub-value">≈ $${formatMoney(amt)} USD <span class="c-rate">(@${calcRate})</span></div>`; }
             let icon = r.type === 'USD' ? '🇺🇸' : '🪙';
             const container = document.createElement('div'); container.className = 'swipe-item-container';
             container.innerHTML = `<div class="swipe-bg-action" onclick="CryptoApp.askDelete('${r.uuid}')">刪除</div><div class="t-card" onclick=""><div class="t-icon">${icon}</div><div class="t-content"><div class="t-bank">${r.method}</div><div style="font-size:12px;color:#888">${subInfo} ${r.note ? '- '+r.note : ''}</div></div><div>${rightSide}</div></div>`;
