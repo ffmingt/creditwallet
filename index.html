@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <title>My Wallet V16.60 Ultimate</title>
+    <title>My Wallet V16.60 Gesture Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.js"></script>
@@ -45,7 +45,7 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         
         html {
-            background: #F2F4F8; /* 與 ambient-light 統一底色，避免閃爍 */
+            background: #F2F4F8; 
             height: 100%;
             overflow: hidden; 
             overscroll-behavior: none;
@@ -62,9 +62,6 @@
             width: 100%;
             /* Hardware Acceleration */
             -webkit-transform: translateZ(0);
-            -moz-transform: translateZ(0);
-            -ms-transform: translateZ(0);
-            -o-transform: translateZ(0);
             transform: translateZ(0);
         }
 
@@ -78,16 +75,13 @@
         .blob { 
             position: absolute; 
             border-radius: 50%; 
-            /* 移除 mix-blend-mode: multiply，這是造成 Android/iOS 卡頓的主因 */
             opacity: 0.5;  
-            /* 降低模糊半徑，減少 GPU 負擔 */
             filter: blur(60px); 
             will-change: transform; 
             transform: translate3d(0, 0, 0);
             animation: floatBlob 20s infinite alternate ease-in-out;
         }
         
-        /* 顏色調整為直接顯示的顏色，不需要混合模式 */
         .blob:nth-child(1) { top: -10%; left: -10%; width: 90vw; height: 90vw; background: #CDEFFF; }
         .blob:nth-child(2) { bottom: 0%; right: -20%; width: 80vw; height: 80vw; background: #E8DFF5; animation-delay: -5s; }
         .blob:nth-child(3) { bottom: 40%; left: 30%; width: 60vw; height: 60vw; background: #FFE4E6; opacity: 0.4; animation-delay: -8s; }
@@ -171,13 +165,10 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: #1D1D1F; backdrop-filter: blur(10px);
         }
 
-        /* Fix 3: New High Contrast Liquid Button */
         .btn-liquid {
             width: 100%; border: none; padding: 14px; border-radius: 22px;
             font-size: 16px; font-weight: 700; color: #FFF; margin-top: 0;
-            /* Vivid Gradient */
             background: linear-gradient(135deg, #FF9500 0%, #FF2D55 100%);
-            /* Inner shine for glass/liquid effect */
             box-shadow: 
                 0 10px 20px rgba(255, 45, 85, 0.3),
                 inset 0 2px 0 rgba(255,255,255,0.3),
@@ -204,7 +195,6 @@
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0; }
         .app-title { font-size: 30px; font-weight: 800; color: #000; }
         
-        /* Fix 1: Unified Total Card Style (Remove specific colors) */
         .total-card {
             background: rgba(255,255,255,0.6); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
             border: 1px solid rgba(255,255,255,0.6);
@@ -376,7 +366,7 @@
             <div class="spinner"></div> <span class="btn-text">解鎖</span>
         </button>
         <div id="loginError" style="color:var(--danger); margin-top:20px; min-height:20px; font-weight:600;"></div>
-        <div id="versionTag" onclick="LoginHandler.clickVersion()" style="position:absolute; bottom:40px; color:#AAA; font-size:12px; font-weight:600;">v16.60 Ult</div>
+        <div id="versionTag" onclick="LoginHandler.clickVersion()" style="position:absolute; bottom:40px; color:#AAA; font-size:12px; font-weight:600;">v16.60 Ultimate</div>
     </div>
 
     <!-- App Hub View Container -->
@@ -477,7 +467,6 @@
                     <button class="btn-icon" onclick="Nav.home()" style="color:var(--primary);">🏠</button>
                 </div>
             </div>
-            <!-- Fix 1: Unified Header Style (Removed color overrides) -->
             <div class="total-card">
                 <div style="position:relative; z-index:2;">
                     <div class="card-label">總投入成本</div>
@@ -519,7 +508,6 @@
                     <button class="btn-icon" onclick="Nav.home()" style="color:var(--primary);">🏠</button>
                 </div>
             </div>
-            <!-- Fix 1: Unified Header Style (Removed color overrides) -->
             <div class="total-card">
                 <div style="position:relative; z-index:2;">
                     <div class="card-label">當月班表</div>
@@ -532,7 +520,6 @@
         <div style="padding:15px 0; display:flex; gap:10px;">
             <select id="s-month-selector" class="styled-input" style="flex:1;" onchange="ScheduleApp.render()"></select>
             <div style="position:relative; flex:1;">
-                <!-- Fix 3: Liquid Glass Button -->
                 <button id="s-upload-btn" class="btn-liquid">
                     <div id="uploadSpinner" class="spinner"></div>
                     <span class="btn-text">📷 上傳</span>
@@ -687,29 +674,48 @@ const DomUtils = {
     }
 };
 
-/* --- Swipe Logic --- */
-let isDragging = false; let startX = 0; let activeSwipeEl = null;
+/* --- Swipe Logic with Direction Lock --- */
+let isDragging = false; let startX = 0; let startY = 0; let activeSwipeEl = null;
 
-function handleStart(x, target) {
+function handleStart(e) {
+    const target = e.target;
     if(target.closest('.schedule-viewer')) return; 
     if (target.classList.contains('swipe-bg-action') || target.closest('.swipe-bg-action')) return;
+    
     const card = target.closest('.t-card');
     if (!card || !card.classList.contains('swipable')) { 
         if (activeSwipeEl) closeSwipe(activeSwipeEl); 
         return; 
     }
+    
     if (activeSwipeEl && activeSwipeEl !== card) closeSwipe(activeSwipeEl);
-    isDragging = true; startX = x; card.style.transition = 'none';
+    
+    isDragging = true; 
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    card.style.transition = 'none';
     
     const container = card.closest('.swipe-item-container');
     if(container) container.classList.add('active-swipe');
 }
 
-function handleMove(x, target, e) {
+function handleMove(e) {
     if (!isDragging) return;
-    const card = target.closest('.t-card');
+    const card = e.target.closest('.t-card');
     if (!card) return;
+    
+    const x = e.touches[0].clientX;
+    const y = e.touches[0].clientY;
     const diffX = x - startX;
+    const diffY = y - startY;
+
+    // Direction Lock: if vertical scroll > horizontal swipe, ignore swipe
+    if (Math.abs(diffY) > Math.abs(diffX)) {
+        isDragging = false; // Cancel drag to allow scroll
+        return; 
+    }
+
+    // Horizontal swipe logic
     if (diffX < 0 && diffX > -120) { 
         if(e.cancelable) e.preventDefault(); 
         card.style.transform = `translate3d(${diffX}px, 0, 0)`; 
@@ -718,13 +724,15 @@ function handleMove(x, target, e) {
     }
 }
 
-function handleEnd(target) {
+function handleEnd(e) {
     if (!isDragging) return;
     isDragging = false;
-    const card = target.closest('.t-card');
+    const card = e.target.closest('.t-card');
     if (!card) return;
-    card.style.transition = 'transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1)';
+    
+    card.style.transition = 'transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1)';
     const currentX = new WebKitCSSMatrix(window.getComputedStyle(card).transform).m41;
+    
     if (currentX < -40) { 
         card.style.transform = `translate3d(-100px, 0, 0)`; 
         activeSwipeEl = card; 
@@ -736,12 +744,9 @@ function handleEnd(target) {
     }
 }
 
-document.addEventListener('touchstart', (e) => handleStart(e.touches[0].clientX, e.target), { passive: true });
-document.addEventListener('touchmove', (e) => handleMove(e.touches[0].clientX, e.target, e), { passive: false });
-document.addEventListener('touchend', (e) => handleEnd(e.target));
-document.addEventListener('mousedown', (e) => handleStart(e.clientX, e.target));
-document.addEventListener('mousemove', (e) => handleMove(e.clientX, e.target, e));
-document.addEventListener('mouseup', (e) => handleEnd(e.target));
+document.addEventListener('touchstart', handleStart, { passive: true });
+document.addEventListener('touchmove', handleMove, { passive: false });
+document.addEventListener('touchend', handleEnd);
 
 function closeSwipe(el) { 
     if(!el) return; 
@@ -784,12 +789,10 @@ const Nav = {
             el.classList.add('hidden-layer');
             el.classList.remove('fade-in-layer');
         });
-        
         const target = document.getElementById('app-' + appId);
         target.classList.remove('hidden-layer');
         void target.offsetWidth; 
         target.classList.add('fade-in-layer');
-        
         if(appId === 'wallet') WalletApp.render();
         if(appId === 'crypto') CryptoApp.render();
         if(appId === 'schedule') ScheduleApp.render();
