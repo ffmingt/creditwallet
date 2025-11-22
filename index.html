@@ -4,19 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- 2. 修復 iOS 頂部背景與狀態列顏色 -->
-    <!-- 設定瀏覽器網址列顏色 (配合頂部淺藍色漸層) -->
+    <!-- iOS PWA Settings -->
     <meta name="theme-color" content="#E0F7FA">
-    <!-- 設定加入主畫面後的狀態列為透明穿透 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <title>My Wallet V16.60 Final Fix</title>
+    <title>My Wallet V16.60 Performance</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.js"></script>
     <style>
-        /* --- ❄️ V16.60 System: Final Fix --- */
+        /* --- ❄️ V16.60 System: High Performance & Native Feel --- */
         :root { 
             --bg-body: #F2F4F8;
             --primary: #007AFF; 
@@ -47,48 +45,85 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         
         html {
-            /* 讓背景延伸到瀏海區 */
-            background: #E0F7FA; /* 設定一個跟頂部 blob 接近的底色 */
-            min-height: 100%;
+            background: #E0F7FA; 
+            height: 100%;
+            overflow: hidden; /* 禁止 html 層級滾動 */
+            overscroll-behavior: none; /* 禁止橡皮筋效果 */
         }
 
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; 
-            /* 修改：Body 背景改為透明，讓 ambient-light 或是 html 的底色透出來 */
             background: transparent; 
             color: var(--text-main); 
             margin: 0; 
-            padding-bottom: clamp(80px, 10vh, 120px);
+            height: 100%;
+            overflow: hidden; /* 禁止 body 層級滾動 */
             user-select: none; -webkit-user-select: none; 
-            overflow-x: hidden; overscroll-behavior-y: none;
             width: 100%;
-            min-height: 100vh;
+            /* iOS GPU Acceleration Hacks */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        /* Background */
-        .ambient-light { position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: var(--z-bg); pointer-events: none; background: #F2F4F8; /* 這是基底色 */ }
-        .blob { position: absolute; filter: blur(90px); border-radius: 50%; opacity: 0.6; mix-blend-mode: multiply; animation: floatBlob 15s infinite alternate; }
-        /* 調整 blob 1 位置與顏色，確保頂部是漂亮的淺藍色 */
+        /* Optimized Background */
+        .ambient-light { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            overflow: hidden; z-index: var(--z-bg); pointer-events: none; 
+            background: #F2F4F8;
+            /* GPU Hack */
+            transform: translateZ(0); 
+        }
+        
+        .blob { 
+            position: absolute; 
+            border-radius: 50%; 
+            opacity: 0.6; 
+            mix-blend-mode: multiply; 
+            /* GPU Animation Optimization */
+            filter: blur(80px); /* 降低模糊半徑以提升 FPS */
+            will-change: transform;
+            transform: translate3d(0, 0, 0);
+            animation: floatBlob 15s infinite alternate ease-in-out;
+        }
+        
         .blob:nth-child(1) { top: -10%; left: -10%; width: 90vw; height: 90vw; background: #A0E8FA; }
         .blob:nth-child(2) { bottom: 0%; right: -20%; width: 80vw; height: 80vw; background: #E0C3FC; animation-delay: -5s; }
         .blob:nth-child(3) { bottom: 40%; left: 30%; width: 50vw; height: 50vw; background: #FDE2E4; opacity: 0.4; animation-delay: -8s; }
-        @keyframes floatBlob { from { transform: translate(0,0); } to { transform: translate(40px, -40px); } }
+        
+        @keyframes floatBlob { 
+            from { transform: translate3d(0, 0, 0); } 
+            to { transform: translate3d(40px, -40px, 0); } 
+        }
 
-        /* Container */
+        /* Scrollable Container (The only thing that scrolls) */
         .view-container {
             width: 100%; max-width: var(--app-width); margin: 0 auto; 
             padding-top: var(--header-spacing); 
             padding-left: var(--page-padding); padding-right: var(--page-padding);
-            padding-bottom: 30px;
-            display: flex; flex-direction: column; min-height: 100vh; position: relative;
+            /* 重要：底部留白給內容，並開啟滾動 */
+            padding-bottom: calc(env(safe-area-inset-bottom) + 40px);
+            
+            height: 100%; /* 佔滿螢幕高度 */
+            overflow-y: auto; /* 內容多時才滾動 */
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch; /* iOS 慣性滾動 */
+            position: relative;
+            display: flex; flex-direction: column;
         }
-        .hidden-layer { display: none !important; opacity: 0; pointer-events: none; }
-        .fade-in-layer { animation: fadeIn 0.4s ease-out forwards; }
 
-        /* Components */
+        .hidden-layer { display: none !important; opacity: 0; pointer-events: none; }
+        
+        /* Optimized Fade In */
+        .fade-in-layer { 
+            animation: fadeIn 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; 
+            will-change: opacity, transform;
+        }
+
+        /* --- Components --- */
+
         #iosInstallPrompt {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.98); backdrop-filter: blur(20px);
+            background: rgba(255,255,255,0.98); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             z-index: var(--z-prompt);
             flex-direction: column; justify-content: center; align-items: center;
             padding: 40px; text-align: center;
@@ -101,25 +136,29 @@
 
         #loginOverlay { 
             position: fixed; top:0; left:0; width:100%; height:100%; 
-            background: rgba(255,255,255,0.6); backdrop-filter: blur(50px);
+            background: rgba(255,255,255,0.6); backdrop-filter: blur(50px); -webkit-backdrop-filter: blur(50px);
             z-index: var(--z-login); 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            transition: opacity 0.5s ease;
+            transition: opacity 0.3s ease;
         }
         .login-input { 
             background: #FFFFFF; border: 1px solid rgba(0,0,0,0.1); width: 240px; padding: 15px; 
             border-radius: 24px; font-size: 24px; text-align: center; margin: 25px 0; letter-spacing: 8px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: transform 0.2s;
         }
         .login-input:focus { border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,122,255,0.15); }
 
+        /* GPU Accelerated Elements */
         button, .app-card, .t-card, .segment-btn, .action-btn, .refresh-btn, .mini-action-btn {
-            transition: transform 0.2s var(--spring-easing), background-color 0.2s, box-shadow 0.2s, opacity 0.2s;
+            transition: transform 0.2s var(--spring-easing), background-color 0.2s, opacity 0.2s;
             cursor: pointer;
+            transform: translateZ(0); /* Force GPU */
+            -webkit-tap-highlight-color: transparent;
         }
         button:active, .app-card:active, .segment-btn:active, .refresh-btn:active, .action-btn:active, .mini-action-btn:active {
-            transform: scale(0.96); opacity: 0.9;
+            transform: scale(0.96) translateZ(0); opacity: 0.9;
         }
+
         .btn-submit {
             width: 100%; border: none; padding: 14px; border-radius: 20px; 
             font-size: 16px; font-weight: 700; color: white; margin-top: 12px;
@@ -129,14 +168,15 @@
         .btn-icon { 
             background: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,1); 
             padding: 6px 12px; border-radius: 14px; font-weight: 600; font-size: 14px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: #1D1D1F; backdrop-filter: blur(10px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: #1D1D1F; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         }
 
-        .hub-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--section-gap); }
+        .hub-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--section-gap); flex-shrink: 0;}
         .hub-title { font-size: 32px; font-weight: 800; color: #000; letter-spacing: -0.5px; }
-        .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(12px, 3vw, 20px); } 
+        
+        .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(12px, 3vw, 20px); padding-bottom: 40px; } 
         .app-card {
-            background: rgba(255,255,255,0.7); backdrop-filter: blur(30px);
+            background: rgba(255,255,255,0.7); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
             border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 15px 35px -10px rgba(0,0,0,0.05);
             border-radius: 28px; padding: 20px; height: clamp(150px, 22vh, 180px);
             display: flex; flex-direction: column; justify-content: space-between;
@@ -145,25 +185,27 @@
         .app-name { font-size: 17px; font-weight: 700; letter-spacing: 0.5px; }
         .app-ver { position: absolute; bottom: 16px; right: 16px; font-size: 11px; background: rgba(0,0,0,0.05); padding: 3px 8px; border-radius: 10px; color: #8E8E93; font-weight: 600; }
         
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0; }
         .app-title { font-size: 30px; font-weight: 800; color: #000; }
         
         .total-card {
-            background: rgba(255,255,255,0.5); backdrop-filter: blur(50px);
+            background: rgba(255,255,255,0.5); backdrop-filter: blur(50px); -webkit-backdrop-filter: blur(50px);
             border: 1px solid rgba(255,255,255,0.6);
             border-radius: 32px; padding: 24px;
             box-shadow: 0 20px 50px -10px rgba(0,122,255,0.15);
-            position: relative; overflow: hidden; margin-bottom: var(--section-gap);
+            position: relative; overflow: hidden; margin-bottom: var(--section-gap); flex-shrink: 0;
+            transform: translateZ(0);
         }
         .total-amount { font-size: 42px; font-weight: 800; letter-spacing: -1.5px; color: #000; margin: 5px 0; line-height: 1.1; }
         .status-emoji { position: absolute; top: 20px; right: 20px; font-size: 48px; opacity: 1; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1)); }
 
         .input-panel {
             padding: 20px;
-            background: rgba(255,255,255,0.75); backdrop-filter: blur(40px);
+            background: rgba(255,255,255,0.75); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
             border-radius: 28px; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05);
             border: 1px solid rgba(255,255,255,0.5);
-            margin-bottom: var(--section-gap);
+            margin-bottom: var(--section-gap); flex-shrink: 0;
+            transform: translateZ(0);
         }
         .styled-input {
             width: 100%; padding: 13px 14px; border-radius: 16px; border: 1px solid transparent;
@@ -177,12 +219,15 @@
         .segment-btn { flex: 1; padding: 8px; text-align: center; font-size: 14px; font-weight: 600; color: #8E8E93; border-radius: 12px; }
         .segment-btn.active { background: #FFFFFF; color: #000; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
 
-        .list-section { padding-bottom: 20px; } 
+        .list-section { padding-bottom: 20px; flex: 1; } 
         .list-header { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center; }
         .list-title { font-size: 20px; font-weight: 800; }
         .month-selector { border:none; background:transparent; font-size:16px; font-weight:700; color:var(--primary); text-align: right; padding-right: 0; }
         
-        .swipe-item-container { position: relative; margin-bottom: 12px; height: 80px; border-radius: 24px; }
+        .swipe-item-container { 
+            position: relative; margin-bottom: 12px; height: 80px; border-radius: 24px; 
+            transform: translateZ(0); /* GPU */
+        }
         .swipe-bg-action { 
             position: absolute; top: 0; bottom: 0; right: 0; width: 90px; 
             background: #FF3B30; color: white; font-weight: 700; 
@@ -199,8 +244,11 @@
             display: flex; align-items: center; gap: 14px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.02);
             z-index: var(--z-card); 
-            transition: transform 0.25s var(--spring-easing);
+            /* High Performance Animation Props */
             will-change: transform;
+            transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transform: translate3d(0,0,0);
+            backface-visibility: hidden;
         }
         .t-card.unlogged { background: #FAFAFA; border: 2px dashed #C7C7CC; box-shadow: none; }
         .t-card.schedule-card { margin-bottom: 14px; }
@@ -219,22 +267,22 @@
 
         .modal-overlay { 
             position: fixed; top:0; left:0; width:100%; height:100%; 
-            background: rgba(0,0,0,0.3); backdrop-filter: blur(8px);
+            background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
             z-index: var(--z-modal); display: flex; justify-content: center; align-items: center; 
             opacity: 0; pointer-events: none; transition: opacity 0.2s;
         }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
         
         .modal-box { 
-            background: rgba(255,255,255,0.98); backdrop-filter: blur(50px);
+            background: rgba(255,255,255,0.98); backdrop-filter: blur(50px); -webkit-backdrop-filter: blur(50px);
             width: 92%; max-width: 400px; max-height: 85vh;
             border-radius: 32px; padding: 0; 
             box-shadow: 0 30px 90px rgba(0,0,0,0.3);
-            transform: scale(0.94); transition: 0.3s var(--spring-easing);
+            transform: scale(0.94) translateZ(0); transition: 0.3s var(--spring-easing);
             display: flex; flex-direction: column;
             border: 1px solid rgba(255,255,255,0.6);
         }
-        .modal-overlay.show .modal-box { transform: scale(1); }
+        .modal-overlay.show .modal-box { transform: scale(1) translateZ(0); }
         
         .modal-header { padding: clamp(20px, 3vh, 30px); padding-bottom: 10px; flex-shrink: 0; }
         .modal-title-text { font-size: 20px; font-weight: 800; color: #000; }
@@ -259,7 +307,7 @@
         }
         #cloudStatus.show { display: flex; animation: fadeInStatus 0.3s; }
         #toast { 
-            visibility: hidden; background: rgba(20,20,20,0.8); color: white; backdrop-filter: blur(10px);
+            visibility: hidden; background: rgba(20,20,20,0.8); color: white; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
             padding: 12px 24px; border-radius: 50px; 
             position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); 
             z-index: var(--z-toast); opacity:0; transition:0.3s; font-weight: 600; font-size: 14px;
@@ -267,7 +315,7 @@
         }
         #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
 
-        .chart-drawer { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.6s var(--spring-easing), opacity 0.4s ease; margin-top: 0; }
+        .chart-drawer { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.6s var(--spring-easing), opacity 0.4s ease; margin-top: 0; transform: translateZ(0); }
         .chart-drawer.open { max-height: 400px; opacity: 1; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.05); }
         .chart-type-btn { background: #F2F2F7; border:none; padding: 6px 14px; border-radius: 14px; color: #8E8E93; font-weight: 600; transition: 0.2s; font-size: 13px; }
         .chart-type-btn.active { background: #1D1D1F; color: #FFF; }
@@ -277,7 +325,7 @@
         .btn-loading .spinner { display: inline-block; }
         .spin-circle { width: 14px; height: 14px; border: 2px solid #E5E7FF; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity:0; transform: translate3d(0, 10px, 0); } to { opacity:1; transform: translate3d(0, 0, 0); } }
         @keyframes fadeInStatus { from { opacity:0; transform: translate(-50%, -10px); } to { opacity:1; transform: translate(-50%, 0); } }
     </style>
 </head>
@@ -311,7 +359,7 @@
             <div class="spinner"></div> <span class="btn-text">解鎖</span>
         </button>
         <div id="loginError" style="color:var(--danger); margin-top:20px; min-height:20px; font-weight:600;"></div>
-        <div id="versionTag" onclick="LoginHandler.clickVersion()" style="position:absolute; bottom:40px; color:#AAA; font-size:12px; font-weight:600;">v16.60 Final Fix</div>
+        <div id="versionTag" onclick="LoginHandler.clickVersion()" style="position:absolute; bottom:40px; color:#AAA; font-size:12px; font-weight:600;">v16.60 High Perf</div>
     </div>
 
     <!-- App Hub View Container -->
@@ -646,9 +694,9 @@ function handleMove(x, target, e) {
     const diffX = x - startX;
     if (diffX < 0 && diffX > -120) { 
         if(e.cancelable) e.preventDefault(); 
-        card.style.transform = `translateX(${diffX}px)`; 
+        card.style.transform = `translate3d(${diffX}px, 0, 0)`; 
     } else if (diffX > 0) { 
-        card.style.transform = `translateX(0px)`; 
+        card.style.transform = `translate3d(0, 0, 0)`; 
     }
 }
 
@@ -660,10 +708,10 @@ function handleEnd(target) {
     card.style.transition = 'transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1)';
     const currentX = new WebKitCSSMatrix(window.getComputedStyle(card).transform).m41;
     if (currentX < -40) { 
-        card.style.transform = `translateX(-100px)`; 
+        card.style.transform = `translate3d(-100px, 0, 0)`; 
         activeSwipeEl = card; 
     } else { 
-        card.style.transform = `translateX(0px)`; 
+        card.style.transform = `translate3d(0, 0, 0)`; 
         activeSwipeEl = null; 
         const container = card.closest('.swipe-item-container');
         if(container) container.classList.remove('active-swipe');
@@ -679,7 +727,7 @@ document.addEventListener('mouseup', (e) => handleEnd(e.target));
 
 function closeSwipe(el) { 
     if(!el) return; 
-    el.style.transform = 'translateX(0px)'; 
+    el.style.transform = 'translate3d(0, 0, 0)'; 
     activeSwipeEl = null; 
     const container = el.closest('.swipe-item-container');
     if(container) container.classList.remove('active-swipe');
@@ -928,7 +976,7 @@ const CryptoApp = {
             let subInfo = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
             
             const tAmount = DomUtils.createEl('div', 't-amount', `$${formatMoney(r.cost_twd || r.cost)}`); 
-            // 1. 修正：強制右對齊
+            // Force right align
             const rightSide = DomUtils.createEl('div', '', '', [], {style: 'text-align:right; min-width:80px;'}); 
             rightSide.appendChild(tAmount);
             
