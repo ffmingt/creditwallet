@@ -3,280 +3,321 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>My Wallet V16.10 Instant</title>
+    <title>My Wallet V16.60 Fixed</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-    <!-- 🟢 引入 Viewer.js -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.js"></script>
     <style>
-        /* --- V16.10 Style System --- */
+        /* --- ❄️ V16.60 System: Refined & Fixed --- */
         :root { 
-            --bg-body: #F9FAFB; 
-            --primary: #4F46E5; 
-            --primary-gradient: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-            --crypto-gradient: linear-gradient(135deg, #1F2937 0%, #059669 100%);
-            --schedule-gradient: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-            --text-main: #1F2937; --text-sub: #6B7280; 
-            --danger: #EF4444; --success: #10B981;
-            --warning-bg: #FFF7ED; --warning-border: #FED7AA; --warning-text: #9A3412;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --bg-body: #F2F4F8;
+            --primary: #007AFF; 
+            --text-main: #1D1D1F; 
+            --text-sub: #86868B;
+            --danger: #FF3B30; 
+            --success: #34C759;
+            --spring-easing: cubic-bezier(0.25, 0.8, 0.25, 1);
+            
+            /* Layout */
+            --app-width: 480px; 
+            --page-padding: clamp(16px, 4vw, 24px); /* 稍微加大最小邊距以確保對齊 */
+            --header-top-gap: clamp(10px, 2vh, 25px);
+            --header-spacing: calc(env(safe-area-inset-top) + var(--header-top-gap)); 
+            --section-gap: clamp(15px, 2.5vh, 24px);
             
             /* Z-Index Hierarchy */
-            --z-base: 1;
-            --z-login: 2000;
-            --z-modal: 3000;
-            --z-toast: 4000;
-            --z-ios-prompt: 5000;
+            --z-bg: -1;
+            --z-swipe-action: 1;  
+            --z-card: 10;         
+            --z-nav: 100;         
+            --z-login: 2000; 
+            --z-modal: 3000;      
+            --z-prompt: 9999; /* Ensure iOS prompt is on top */    
+            --z-toast: 5000;      
         }
         
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; padding-bottom: 140px; user-select: none; -webkit-user-select: none; overscroll-behavior-y: none; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; 
+            background: var(--bg-body); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding-bottom: clamp(80px, 10vh, 120px);
+            user-select: none; -webkit-user-select: none; 
+            overflow-x: hidden; overscroll-behavior-y: none;
+            width: 100%;
+            min-height: 100vh;
+        }
 
-        .hidden-layer { display: none !important; }
+        /* Background */
+        .ambient-light { position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: var(--z-bg); pointer-events: none; }
+        .blob { position: absolute; filter: blur(90px); border-radius: 50%; opacity: 0.6; mix-blend-mode: multiply; animation: floatBlob 15s infinite alternate; }
+        .blob:nth-child(1) { top: -10%; left: -10%; width: 80vw; height: 80vw; background: #A0E8FA; }
+        .blob:nth-child(2) { bottom: 0%; right: -20%; width: 80vw; height: 80vw; background: #E0C3FC; animation-delay: -5s; }
+        .blob:nth-child(3) { bottom: 40%; left: 30%; width: 50vw; height: 50vw; background: #FDE2E4; opacity: 0.4; animation-delay: -8s; }
+        @keyframes floatBlob { from { transform: translate(0,0); } to { transform: translate(40px, -40px); } }
+
+        /* Container */
+        .view-container {
+            width: 100%; max-width: var(--app-width); margin: 0 auto; 
+            padding-top: var(--header-spacing); 
+            padding-left: var(--page-padding); padding-right: var(--page-padding);
+            padding-bottom: 30px;
+            display: flex; flex-direction: column; min-height: 100vh; position: relative;
+        }
+        .hidden-layer { display: none !important; opacity: 0; pointer-events: none; }
+        .fade-in-layer { animation: fadeIn 0.4s ease-out forwards; }
+
+        /* --- Components --- */
+
+        /* iOS Prompt (Fix 1) */
+        #iosInstallPrompt {
+            display: none; /* JS controls flex */
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.98); backdrop-filter: blur(20px);
+            z-index: var(--z-prompt);
+            flex-direction: column; justify-content: center; align-items: center;
+            padding: 40px; text-align: center;
+        }
+        .install-icon { 
+            font-size: 50px; margin-bottom: 20px; background: #FFF; width: 90px; height: 90px; 
+            display: flex; justify-content: center; align-items: center;
+            border-radius: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.05);
+        }
 
         /* Login */
-        #loginOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(249,250,251,0.98); backdrop-filter: blur(5px); z-index: var(--z-login); display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.3s; }
-        .login-input { width:240px; padding:15px; border:1px solid #E5E7EB; border-radius:16px; font-size:24px; text-align:center; outline:none; margin:20px 0; letter-spacing:8px; background:white; box-shadow: var(--shadow); }
-        .login-input:focus { border-color: var(--primary); }
-        #versionTag { position: absolute; bottom: 30px; font-size: 12px; color: #9CA3AF; font-weight: 500; cursor: pointer; padding: 10px; z-index: 2001; }
+        #loginOverlay { 
+            position: fixed; top:0; left:0; width:100%; height:100%; 
+            background: rgba(255,255,255,0.6); backdrop-filter: blur(50px);
+            z-index: var(--z-login); 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            transition: opacity 0.5s ease;
+        }
+        .login-input { 
+            background: #FFFFFF; border: 1px solid rgba(0,0,0,0.1); width: 240px; padding: 15px; 
+            border-radius: 24px; font-size: 24px; text-align: center; margin: 25px 0; letter-spacing: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: all 0.3s;
+        }
+        .login-input:focus { border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,122,255,0.15); }
 
-        /* iOS Install Prompt */
-        #iosInstallPrompt { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(10px); z-index: var(--z-ios-prompt); flex-direction: column; justify-content: center; align-items: center; padding: 40px; text-align: center; animation: fadeIn 0.3s ease; }
-        .install-icon { font-size: 60px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-radius: 18px; background: white; width: 80px; height: 80px; display: flex; justify-content: center; align-items: center; }
-        .install-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: #111; }
-        .install-desc { font-size: 15px; color: #666; line-height: 1.6; margin-bottom: 30px; }
-        .install-step { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-weight: 600; color: #333; font-size: 14px; }
-        .share-icon { display: inline-block; width: 20px; height: 20px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23007AFF' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' /%3E%3C/svg%3E") no-repeat center/contain; vertical-align: text-bottom; }
-        .plus-icon { display: inline-block; width: 20px; height: 20px; background: #F3F4F6; border-radius: 4px; text-align: center; line-height: 20px; font-weight: 800; color: #333; border: 1px solid #DDD; }
-        .install-arrow { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 30px; color: #007AFF; animation: bounce 1.5s infinite; }
-        .btn-dismiss { margin-top: 40px; border: none; background: transparent; color: #999; font-size: 14px; font-weight: 500; text-decoration: underline; cursor: pointer; }
-        @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform:translateX(-50%) translateY(0);} 40% {transform:translateX(-50%) translateY(-10px);} 60% {transform:translateX(-50%) translateY(-5px);} }
+        /* Buttons */
+        button, .app-card, .t-card, .segment-btn, .action-btn, .refresh-btn, .mini-action-btn {
+            transition: transform 0.2s var(--spring-easing), background-color 0.2s, box-shadow 0.2s, opacity 0.2s;
+            cursor: pointer;
+        }
+        button:active, .app-card:active, .segment-btn:active, .refresh-btn:active, .action-btn:active, .mini-action-btn:active {
+            transform: scale(0.96); opacity: 0.9;
+        }
+        .btn-submit {
+            width: 100%; border: none; padding: 14px; border-radius: 20px; 
+            font-size: 16px; font-weight: 700; color: white; margin-top: 12px;
+            background: var(--primary); box-shadow: 0 8px 20px rgba(0,122,255,0.25);
+            position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center;
+        }
+        .btn-icon { 
+            background: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,1); 
+            padding: 6px 12px; border-radius: 14px; font-weight: 600; font-size: 14px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: #1D1D1F; backdrop-filter: blur(10px);
+        }
 
-        /* Buttons & Loading */
-        .btn-submit { width: 100%; background: #1F2937; color: white; border: none; padding: 15px; border-radius: 14px; font-size: 16px; font-weight: 600; margin-top: 10px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.1s, background-color 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; overflow: hidden;}
-        .btn-submit:active, .btn-submit.active-state { transform: scale(0.96); background-color: #000; }
-        .btn-submit:disabled { background: #6B7280; opacity: 0.8; cursor: not-allowed; transform: none; }
+        /* UI Elements */
+        .hub-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--section-gap); }
+        .hub-title { font-size: 32px; font-weight: 800; color: #000; letter-spacing: -0.5px; }
+        .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(12px, 3vw, 20px); } 
+        .app-card {
+            background: rgba(255,255,255,0.7); backdrop-filter: blur(30px);
+            border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 15px 35px -10px rgba(0,0,0,0.05);
+            border-radius: 28px; padding: 20px; height: clamp(150px, 22vh, 180px);
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .app-icon { font-size: 40px; margin-bottom: 8px; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.1)); }
+        .app-name { font-size: 17px; font-weight: 700; letter-spacing: 0.5px; }
+        .app-ver { position: absolute; bottom: 16px; right: 16px; font-size: 11px; background: rgba(0,0,0,0.05); padding: 3px 8px; border-radius: 10px; color: #8E8E93; font-weight: 600; }
         
-        .spinner { width: 18px; height: 18px; min-width: 18px; margin-right: 8px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; display: none; }
-        .btn-loading .spinner { display: inline-block; } 
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Button Feedback Fix */
-        .btn-icon { background:white; border:1px solid #E5E7EB; padding:8px 12px; border-radius:12px; font-size:13px; font-weight:600; color:#555; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:transform 0.1s, background 0.1s; cursor: pointer; display: flex; align-items: center; justify-content: center; user-select: none; }
-        .btn-icon:active, .btn-icon.active { transform:scale(0.90); background: #F3F4F6; border-color: #D1D5DB; }
-
-        /* Cloud Status */
-        #cloudStatus { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-200%); opacity: 0; background: white; padding: 8px 16px; border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-main); z-index: var(--z-toast); transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none; }
-        #cloudStatus.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-        #cloudStatus.syncing { color: var(--primary); border: 1px solid #E0E7FF; }
-        #cloudStatus.success { color: var(--success); border: 1px solid #D1FAE5; }
-        #cloudStatus.error { color: var(--danger); border: 1px solid #FEE2E2; pointer-events: auto; cursor: pointer; }
-        .status-icon { width: 16px; height: 16px; display: flex; justify-content: center; align-items: center; }
-        .spin-circle { width: 14px; height: 14px; border: 2px solid #E0E7FF; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
-
-        /* Hub Layout */
-        #app-hub { padding: 20px 24px; animation: fadeIn 0.4s ease; display: flex; flex-direction: column; height: 80vh; }
-        .hub-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-shrink: 0; }
-        .hub-title { font-size: 28px; font-weight: 800; color: var(--text-main); margin: 0; }
-        .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; flex: 1; align-content: start; }
-        .app-card { background: white; border-radius: 24px; padding: 20px; box-shadow: var(--shadow); border: 1px solid transparent; display: flex; flex-direction: column; justify-content: space-between; height: 140px; cursor: pointer; transition: transform 0.1s; position: relative; }
-        .app-card:active { transform: scale(0.96); background: #F3F4F6; }
-        .app-icon { font-size: 32px; margin-bottom: 10px; }
-        .app-name { font-size: 16px; font-weight: 700; color: var(--text-main); }
-        .app-ver { position: absolute; bottom: 15px; right: 15px; font-size: 11px; color: #4B5563; font-weight: 500; background: #E5E7EB; padding: 2px 6px; border-radius: 6px; }
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .app-title { font-size: 30px; font-weight: 800; color: #000; }
         
-        /* Rate Bar */
-        .rate-bar { margin-top: auto; background: #ECFDF5; border: 1px solid #D1FAE5; color: #047857; font-weight: 600; font-size: 14px; padding: 12px; border-radius: 16px; text-align: center; font-family: monospace; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .total-card {
+            background: rgba(255,255,255,0.5); backdrop-filter: blur(50px);
+            border: 1px solid rgba(255,255,255,0.6);
+            border-radius: 32px; padding: 24px;
+            box-shadow: 0 20px 50px -10px rgba(0,122,255,0.15);
+            position: relative; overflow: hidden; margin-bottom: var(--section-gap);
+        }
+        .total-amount { font-size: 42px; font-weight: 800; letter-spacing: -1.5px; color: #000; margin: 5px 0; line-height: 1.1; }
+        .status-emoji { position: absolute; top: 20px; right: 20px; font-size: 48px; opacity: 1; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1)); }
 
-        /* Wallet & Crypto Layout */
-        .hero { padding: 20px 24px 10px 24px; }
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .app-title { font-size: 24px; font-weight: 800; color: #111; }
+        .input-panel {
+            padding: 20px;
+            background: rgba(255,255,255,0.75); backdrop-filter: blur(40px);
+            border-radius: 28px; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.5);
+            margin-bottom: var(--section-gap);
+        }
         
-        .total-card { background: var(--primary-gradient); border-radius: 28px; padding: 25px; color: white; box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.4); position: relative; overflow: hidden; transition: all 0.3s ease; }
-        .crypto-bg { background: var(--crypto-gradient) !important; box-shadow: 0 20px 25px -5px rgba(5, 150, 105, 0.4) !important; }
+        /* Input & Form - Fix 2 & 3: Alignment */
+        .styled-input {
+            width: 100%; padding: 13px 14px; border-radius: 16px; border: 1px solid transparent;
+            background: #F2F2F7; font-size: 16px; color: #1D1D1F; transition: 0.2s;
+            -webkit-appearance: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
+            box-sizing: border-box; /* Ensure padding doesn't break width */
+        }
+        .styled-input:focus { background: #FFF; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0,122,255,0.1); }
+        .form-label { font-size: 13px; font-weight: 600; color: var(--text-sub); margin-bottom: 6px; margin-left: 4px; display: block; }
+        .segment-control { display: flex; background: #E5E5EA; padding: 4px; border-radius: 16px; margin-bottom: 16px; }
+        .segment-btn { flex: 1; padding: 8px; text-align: center; font-size: 14px; font-weight: 600; color: #8E8E93; border-radius: 12px; }
+        .segment-btn.active { background: #FFFFFF; color: #000; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+
+        /* Lists */
+        .list-section { padding-bottom: 20px; } 
+        .list-header { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center; }
+        .list-title { font-size: 20px; font-weight: 800; }
+        .month-selector { border:none; background:transparent; font-size:16px; font-weight:700; color:var(--primary); text-align: right; padding-right: 0; }
         
-        .total-amount { font-size: 42px; font-weight: 800; margin: 5px 0; letter-spacing: -1px; }
-        .total-amount-group { display: flex; flex-direction: column; margin-top: 5px; }
-        .total-amount-main { font-size: 42px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
-        .total-amount-sub { font-size: 18px; opacity: 0.9; font-weight: 500; color: #A7F3D0; margin-top: 4px; font-family: monospace; }
-        .card-content { position: relative; z-index: 2; }
-        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
-        .card-sub { font-size: 13px; opacity: 0.8; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; }
-        
-        /* Budget Progress Bar */
-        .budget-container { margin-top: 15px; margin-bottom: 5px; }
-        .budget-bar-bg { background: rgba(0,0,0,0.2); height: 6px; border-radius: 3px; overflow: hidden; position: relative; }
-        .budget-bar-fill { height: 100%; background: white; width: 0%; transition: width 0.5s ease, background-color 0.3s; border-radius: 3px; }
-        .budget-text { font-size: 12px; font-weight: 600; margin-top: 4px; display: flex; justify-content: space-between; opacity: 0.9; }
+        /* Swipe Cards */
+        .swipe-item-container { position: relative; margin-bottom: 12px; height: 80px; border-radius: 24px; }
+        .swipe-bg-action { 
+            position: absolute; top: 0; bottom: 0; right: 0; width: 90px; 
+            background: #FF3B30; color: white; font-weight: 700; 
+            border-radius: 24px; display: flex; justify-content: center; align-items: center;
+            z-index: var(--z-swipe-action); 
+            box-shadow: inset 5px 0 15px rgba(0,0,0,0.1);
+            opacity: 0; transition: opacity 0.1s;
+        }
+        .swipe-item-container.active-swipe .swipe-bg-action { opacity: 1; }
 
-        .status-emoji { position:absolute; top:30px; right:25px; font-size:48px; animation: float 3s ease-in-out infinite; pointer-events: none; z-index: 1; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-
-        .btn-chart-toggle { background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; backdrop-filter: blur(5px); }
-        .chart-drawer { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.4s ease, opacity 0.3s ease; }
-        .chart-drawer.open { max-height: 320px; opacity: 1; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; }
-        .chart-actions { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
-        .chart-type-btn { background: rgba(255,255,255,0.15); border: none; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
-        .chart-type-btn.active { background: white; color: var(--primary); }
-
-        /* Inputs */
-        .input-panel { margin: 20px 24px 0; padding: 24px; background: white; border-radius: 24px; box-shadow: var(--shadow); border: 1px solid #F3F4F6; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-        .form-label { font-size: 12px; font-weight: 600; color: var(--text-sub); margin-bottom: 6px; display: block; }
-        .styled-input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid #E5E7EB; background: #F9FAFB; font-size: 16px; color: #333; outline: none; -webkit-appearance: none; }
-        .styled-input:disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }
-        .segment-control { display: flex; background: #F3F4F6; padding: 4px; border-radius: 14px; margin-bottom: 15px; }
-        .segment-btn { flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 600; color: #6B7280; border-radius: 10px; cursor: pointer; transition: 0.2s; }
-        .segment-btn.active { background: white; color: #1F2937; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-
-        /* Lists & Swipe */
-        .list-section { padding: 30px 24px; }
-        .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #EEE; }
-        .list-title { font-size: 18px; font-weight: 800; color: var(--text-main); }
-        .month-selector { border: none; background: transparent; font-size: 15px; font-weight: 600; color: var(--text-main); text-align: right; outline: none; cursor: pointer; }
-        .refresh-btn { border: none; background: white; border-radius: 50%; width: 32px; height: 32px; margin-left: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 16px; transition: transform 0.2s; }
-        .refresh-btn:active { transform: rotate(180deg); }
-
-        .swipe-item-container { position: relative; margin-bottom: 12px; height: 76px; overflow: hidden; border-radius: 18px; box-shadow: var(--shadow); }
-        .swipe-bg-action { position: absolute; top: 0; bottom: 0; right: 0; width: 100px; background: var(--danger); display: flex; justify-content: center; align-items: center; color: white; font-weight: 700; font-size: 14px; letter-spacing: 1px; z-index: 1; border-radius: 18px; cursor: pointer; }
-        
-        .t-card { position: relative; z-index: 2; height: 100%; background: white; border-radius: 18px; padding: 16px; display: flex; align-items: center; gap: 14px; border: 1px solid #E5E7EB; transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); touch-action: pan-y; margin-bottom: 0; box-shadow: none; user-select: none; }
-        .t-card.logged { border: 1px solid #E5E7EB; }
-        .t-card.logged::before { content:''; position:absolute; left:0; top:0; bottom:0; width:5px; background: var(--success); }
-        .t-card.unlogged { background: #F9FAFB; border: 1px dashed #D1D5DB; opacity: 0.98; }
-        .t-card.unlogged .t-icon { background: #E5E7EB; color: #9CA3AF; }
-        .t-icon { width: 42px; height: 42px; border-radius: 12px; background: #F3F4F6; color: #374151; font-size: 18px; font-weight: 700; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+        .t-card {
+            position: relative; width: 100%; height: 100%;
+            background: #FFFFFF; border-radius: 24px; padding: 16px;
+            display: flex; align-items: center; gap: 14px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.02);
+            z-index: var(--z-card); 
+            transition: transform 0.25s var(--spring-easing);
+            will-change: transform;
+        }
+        .t-card.unlogged { background: #FAFAFA; border: 2px dashed #C7C7CC; box-shadow: none; }
+        .t-card.schedule-card { margin-bottom: 14px; }
+        .t-icon { width: 44px; height: 44px; border-radius: 14px; background: #F2F2F7; display: flex; justify-content: center; align-items: center; font-size: 20px; flex-shrink: 0; }
         .t-content { flex: 1; min-width: 0; }
-        .t-bank { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
-        .t-amount { font-size: 18px; font-weight: 800; color: var(--text-main); text-align: right; }
-        .c-sub-value { font-size: 12px; color: #059669; font-weight: 600; text-align: right; margin-top: 3px; font-family: monospace; }
-        .c-rate { font-size: 11px; color: #9CA3AF; font-weight: 400; margin-left: 3px; }
-        .badge-todo { font-size: 12px; font-weight: 600; color: #6B7280; background: #E5E7EB; padding: 4px 10px; border-radius: 20px; }
+        .t-bank { font-size: 16px; font-weight: 700; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .t-amount { font-weight: 800; font-size: 18px; flex-shrink: 0; }
 
-        .alert-box { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-text); padding: 16px; border-radius: 16px; margin-bottom: 20px; font-size: 14px; line-height: 1.6; display: flex; align-items: flex-start; gap: 12px; width: 100%; box-sizing: border-box; }
-        .alert-icon { font-size: 20px; margin-top: -2px; flex-shrink: 0; }
-        .alert-content { flex: 1; }
-        .alert-title { font-weight: 700; margin-bottom: 2px; display: block; color: #7C2D12; }
-
-        /* 🟢 Schedule App Styles */
-        .schedule-bg { background: var(--schedule-gradient) !important; box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.4) !important; }
-        
-        /* Beautified Viewer */
-        .schedule-viewer { 
-            margin: 20px 24px; 
-            border-radius: 24px; 
-            overflow: hidden; 
-            background: #F9FAFB;
-            min-height: 300px; 
-            position: relative; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.03); 
-            border: 2px dashed #E5E7EB;
-            cursor: pointer; /* Hint clickable */
+        /* Mini Action Buttons (Fix 4: History Buttons) */
+        .mini-action-btn {
+            width: 36px; height: 36px; border-radius: 12px;
+            display: flex; justify-content: center; align-items: center; font-size: 16px;
+            border: 1px solid #E5E5EA; background: #FFF;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
         }
-        
-        .schedule-img { 
-            width: 100%; 
-            height: auto; 
-            display: block; 
-            transform-origin: 0 0; 
-            will-change: transform; 
-            opacity: 0; 
-            transition: opacity 0.3s ease;
-        }
-        .schedule-img.loaded { opacity: 1; }
+        .mini-action-btn.danger { color: #FF3B30; background: #FFF2F2; border-color: #FFDADA; }
 
-        .schedule-empty { color: #9CA3AF; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: none;}
-        
-        /* Zoom Hint Overlay */
-        .zoom-hint {
-            position: absolute;
-            bottom: 15px;
-            right: 15px;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            font-size: 12px;
-            padding: 4px 10px;
-            border-radius: 20px;
-            backdrop-filter: blur(2px);
-            pointer-events: none;
-            opacity: 0.8;
-        }
-
-        /* Image Loading Spinner */
-        .img-loading-spinner {
-            position: absolute;
-            width: 40px; height: 40px;
-            border: 4px solid #E5E7EB;
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            display: none;
-            z-index: 5;
-        }
-
-        .schedule-actions { margin: 20px 24px; display: flex; gap: 10px; }
-        .btn-upload-wrapper { position: relative; flex: 1; }
-        .file-input { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2; }
-        
-        /* Schedule Card Action Buttons */
-        .card-actions { display:flex; gap:8px; align-items:center; }
-        .schedule-card { margin-bottom: 12px !important; }
-        
         /* Modals */
-        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: var(--z-modal); display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .modal-overlay { 
+            position: fixed; top:0; left:0; width:100%; height:100%; 
+            background: rgba(0,0,0,0.3); backdrop-filter: blur(8px);
+            z-index: var(--z-modal); display: flex; justify-content: center; align-items: center; 
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
+        }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
-        .modal-box { background: white; width: 85%; max-width: 380px; border-radius: 24px; padding: 0; transform: scale(0.95); transition: 0.2s; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        .modal-box { 
+            background: rgba(255,255,255,0.98); backdrop-filter: blur(50px);
+            width: 92%; max-width: 400px; max-height: 85vh;
+            border-radius: 32px; padding: 0; 
+            box-shadow: 0 30px 90px rgba(0,0,0,0.3);
+            transform: scale(0.94); transition: 0.3s var(--spring-easing);
+            display: flex; flex-direction: column;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
         .modal-overlay.show .modal-box { transform: scale(1); }
-        .modal-header { padding: 24px 24px 15px 24px; flex-shrink: 0; background: white; z-index: 10; }
-        .modal-content-scroll { padding: 0 24px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
-        .modal-footer { padding: 15px 24px 24px 24px; flex-shrink: 0; background: white; border-top: 1px solid #F3F4F6; }
-        .action-btn { display: block; width: 100%; padding: 14px; margin-bottom: 10px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
-        .btn-edit { background: #F3F4F6; color: var(--text-main); }
-        .btn-delete { background: #FEF2F2; color: var(--danger); }
-        .setup-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #F3F4F6; }
-        .btn-setup-action { border: none; background: none; cursor: pointer; font-size: 14px; padding: 5px; transition: opacity 0.1s, transform 0.1s;}
-        .btn-setup-action:active { opacity: 0.6; transform: scale(0.95); }
+        
+        .modal-header { padding: clamp(20px, 3vh, 30px); padding-bottom: 10px; flex-shrink: 0; }
+        .modal-title-text { font-size: 20px; font-weight: 800; color: #000; }
+        .modal-content-scroll { padding: 0 clamp(20px, 3vh, 30px); overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; }
+        .modal-footer { padding: 15px clamp(20px, 3vh, 30px) 25px; flex-shrink: 0; }
+        
+        .modal-box .styled-input { font-size: 15px; padding: 12px; background: #F2F4F8; border: 1px solid #E5E5EA; }
+        .action-btn { width: 100%; padding: 12px; border-radius: 16px; font-weight: 700; border: none; margin-bottom: 10px; font-size: 15px; }
 
-        /* Toast */
-        #toast { visibility: hidden; background: #333; color: #fff; padding: 12px 24px; border-radius: 50px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: var(--z-toast); opacity:0; transition:0.3s; }
-        #toast.show { visibility: visible; opacity: 1; bottom: 40px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Alignment Helper for Modal Inputs (Fix 2) */
+        .settings-group { background: #F2F4F8; padding: 16px; border-radius: 20px; margin-bottom: 16px; }
+        .settings-label { font-size: 12px; color: #FF9500; font-weight: 700; margin-bottom: 8px; display:block; }
+        .flex-input-row { display: flex; gap: 10px; align-items: center; width: 100%; }
+        .flex-input-row .styled-input { flex: 1; background: #FFF; }
+        .flex-input-row .btn-submit { margin: 0; width: auto; padding: 0 20px; height: 44px; }
+
+        /* Notifications */
+        #cloudStatus { 
+            position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
+            background: white; padding: 8px 16px; border-radius: 30px; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15); font-weight: 600; font-size: 12px;
+            display: none; align-items: center; gap: 8px; z-index: var(--z-toast);
+            border: 1px solid rgba(0,0,0,0.05); width: auto; white-space: nowrap;
+        }
+        #cloudStatus.show { display: flex; animation: fadeInStatus 0.3s; }
+        #toast { 
+            visibility: hidden; background: rgba(20,20,20,0.8); color: white; backdrop-filter: blur(10px);
+            padding: 12px 24px; border-radius: 50px; 
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); 
+            z-index: var(--z-toast); opacity:0; transition:0.3s; font-weight: 600; font-size: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: auto; white-space: nowrap;
+        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+
+        /* Misc */
+        .chart-drawer { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.6s var(--spring-easing), opacity 0.4s ease; margin-top: 0; }
+        .chart-drawer.open { max-height: 400px; opacity: 1; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.05); }
+        .chart-type-btn { background: #F2F2F7; border:none; padding: 6px 14px; border-radius: 14px; color: #8E8E93; font-weight: 600; transition: 0.2s; font-size: 13px; }
+        .chart-type-btn.active { background: #1D1D1F; color: #FFF; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        .refresh-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #E5E5EA; background: white; display: flex; justify-content: center; align-items: center; font-size: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; margin-right: 8px; }
+        .btn-loading .spinner { display: inline-block; }
+        .spin-circle { width: 14px; height: 14px; border: 2px solid #E5E7FF; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+        @keyframes fadeInStatus { from { opacity:0; transform: translate(-50%, -10px); } to { opacity:1; transform: translate(-50%, 0); } }
     </style>
 </head>
 <body ontouchstart="">
+
+    <div class="ambient-light">
+        <div class="blob"></div>
+        <div class="blob"></div>
+        <div class="blob"></div>
+    </div>
 
     <div id="cloudStatus"><div class="status-icon"><div class="spin-circle"></div></div><span id="cloudText">雲端同步中...</span></div>
     <div id="toast"></div>
 
     <div id="iosInstallPrompt">
         <div class="install-icon">📲</div>
-        <div class="install-title">安裝 My Wallet App</div>
-        <div class="install-desc">將此網頁加入主畫面，<br>獲得全螢幕最佳體驗。</div>
-        <div class="install-step"><span class="share-icon"></span> 1. 點擊下方分享按鈕</div>
-        <div class="install-step"><span class="plus-icon">＋</span> 2. 選擇「加入主畫面」</div>
-        <div class="install-arrow">⬇</div>
-        <button class="btn-dismiss" onclick="document.getElementById('iosInstallPrompt').style.display='none'">暫時不要</button>
+        <div style="font-size: 22px; font-weight: 800; margin-bottom: 10px; color:#000;">安裝 My Wallet</div>
+        <div style="color: #666; margin-bottom: 25px; line-height: 1.5;">請將此網頁加入主畫面<br>以獲得最佳全螢幕體驗</div>
+        <div style="background:#F2F2F7; padding:20px; border-radius:20px; width:100%; margin-bottom:20px;">
+            <div style="color: #333; font-weight: 600; margin-bottom: 10px; text-align:left;">1. 點擊瀏覽器下方分享按鈕</div>
+            <div style="color: #333; font-weight: 600; text-align:left;">2. 選擇「加入主畫面」</div>
+        </div>
+        <button class="action-btn" onclick="document.getElementById('iosInstallPrompt').style.display='none'" style="background:transparent; color:#8E8E93; margin-top:10px;">暫時不要</button>
     </div>
 
     <div id="loginOverlay">
-        <div style="font-size:50px; margin-bottom:10px;">🔒</div>
-        <div style="font-weight:800; font-size:22px;">App Hub</div>
+        <div style="font-size:64px; margin-bottom:20px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1));">🔒</div>
+        <div style="font-weight:800; font-size:26px; color:#1D1D1F;">App Hub</div>
         <input type="password" id="passwordInput" class="login-input" placeholder="••••" maxlength="8" inputmode="numeric">
         <button id="loginBtn" class="btn-submit" onclick="verifyLogin()" style="width:240px;">
             <div class="spinner"></div> <span class="btn-text">解鎖</span>
         </button>
-        <div id="loginError" style="color:var(--danger); margin-top:20px; min-height:20px;"></div>
-        <div id="versionTag" onclick="LoginHandler.clickVersion()">v16.10 Instant</div>
+        <div id="loginError" style="color:var(--danger); margin-top:20px; min-height:20px; font-weight:600;"></div>
+        <div id="versionTag" onclick="LoginHandler.clickVersion()" style="position:absolute; bottom:40px; color:#AAA; font-size:12px; font-weight:600;">v16.60 Fixed</div>
     </div>
 
-    <div id="app-hub" class="hidden-layer">
+    <!-- App Hub View Container -->
+    <div id="app-hub" class="hidden-layer view-container">
         <div class="hub-header">
             <div class="hub-title">Apps</div>
-            <button class="btn-icon" onclick="logout()" style="color:var(--danger);">登出</button>
+            <button class="btn-icon" onclick="logout()" style="color:var(--danger); border-color: #FFDADA; background:#FFF2F2;">登出</button>
         </div>
         <div class="app-grid">
             <div class="app-card" onclick="Nav.open('wallet')">
@@ -294,41 +335,48 @@
         </div>
     </div>
 
-    <div id="app-wallet" class="hidden-layer">
+    <!-- Wallet View Container -->
+    <div id="app-wallet" class="hidden-layer view-container">
         <div class="hero">
             <div class="header-row">
                 <div class="app-title">My Wallet</div>
                 <div style="display:flex; gap:8px;">
-                    <button class="btn-icon" onclick="openWalletSettings()">⚙️ 設定</button>
-                    <button class="btn-icon" onclick="Nav.home()" style="color:#4F46E5;">🏠 首頁</button>
+                    <button class="btn-icon" onclick="openWalletSettings()">⚙️</button>
+                    <button class="btn-icon" onclick="Nav.home()" style="color:var(--primary);">🏠</button>
                 </div>
             </div>
             <div class="total-card">
-                <div class="card-content">
-                    <div style="font-size:14px; opacity:0.9;">本月總支出</div>
+                <div style="position:relative; z-index:2;">
+                    <div style="font-size:14px; opacity:0.6; font-weight:600;">本月總支出</div>
                     <div class="total-amount" id="w-total">$0</div>
-                    <div class="budget-container" id="budgetContainer" style="display:none;">
-                        <div class="budget-bar-bg"><div id="budgetFill" class="budget-bar-fill"></div></div>
-                        <div class="budget-text"><span id="budgetStatusText">預算監控</span><span id="budgetLeftText">剩餘 $0</span></div>
+                    <div class="budget-container" id="budgetContainer" style="display:none; margin-top:15px;">
+                        <div style="background:rgba(0,0,0,0.05); height:8px; border-radius:4px;">
+                            <div id="budgetFill" style="height:100%; background:#34C759; width:0%; border-radius:4px; transition:width 0.5s;"></div>
+                        </div>
+                        <div style="margin-top:8px; display:flex; justify-content:space-between; font-size:12px; font-weight:600; color:#8E8E93;">
+                            <span id="budgetStatusText">預算監控</span><span id="budgetLeftText">剩餘 $0</span>
+                        </div>
                     </div>
-                    <div class="card-footer">
-                        <div class="card-sub" id="w-count">0 筆紀錄</div>
-                        <button class="btn-chart-toggle" onclick="WalletApp.toggleChart()"><span id="chartBtnIcon">📊</span> <span id="chartBtnText">分析</span></button>
+                    <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-size:13px; opacity:0.5; font-weight:600;" id="w-count">0 筆紀錄</div>
+                        <button class="btn-icon" onclick="WalletApp.toggleChart()" style="background:rgba(255,255,255,0.9);">
+                            <span id="chartBtnIcon">📊</span> <span id="chartBtnText">分析</span>
+                        </button>
                     </div>
                 </div>
                 <div class="status-emoji" id="emojiStatus">😊</div>
                 <div class="chart-drawer" id="chartDrawer">
-                    <div class="chart-actions">
+                    <div style="display:flex; justify-content:center; gap:10px; margin-bottom:15px;">
                         <button class="chart-type-btn active" id="btnChartPie" onclick="WalletApp.setChartType('pie')">圓餅圖</button>
-                        <button class="chart-type-btn" id="btnChartBar" onclick="WalletApp.setChartType('bar')">近半年趨勢</button>
+                        <button class="chart-type-btn" id="btnChartBar" onclick="WalletApp.setChartType('bar')">趨勢</button>
                     </div>
-                    <div style="position:relative; height:200px; display:flex; justify-content:center;"><canvas id="expenseChart"></canvas></div>
+                    <div style="height:200px; display:flex; justify-content:center;"><canvas id="expenseChart"></canvas></div>
                 </div>
             </div>
         </div>
         <div class="input-panel">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
-                <span style="font-weight:600; color:#555;">記帳月份</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <span style="font-weight:600; color:var(--text-sub);">記帳月份</span>
                 <select id="w-input-month" style="border:none; font-size:16px; font-weight:700; color:var(--primary); outline:none; background:transparent;"></select>
             </div>
             <div class="grid-2">
@@ -336,33 +384,39 @@
                 <div><label class="form-label">金額</label><input type="number" id="w-amount" class="styled-input" placeholder="$0" inputmode="decimal" pattern="[0-9]*"></div>
             </div>
             <label class="form-label">備註</label><input type="text" id="w-note" class="styled-input" placeholder="選填...">
-            <button id="w-submit" class="btn-submit" onclick="WalletApp.submit()"><div class="spinner"></div> <span class="btn-text">＋ 確認記帳</span></button>
+            <button id="w-submit" class="btn-submit" onclick="WalletApp.submit()">
+                <div class="spinner"></div> <span class="btn-text">＋ 確認記帳</span>
+            </button>
         </div>
         <div class="list-section">
             <div class="list-header">
                 <span class="list-title">帳單明細</span>
-                <div style="display:flex; align-items:center;"><select id="w-list-month" class="month-selector" onchange="WalletApp.render()"></select><button class="refresh-btn" onclick="manualReload()">↻</button></div>
+                <div style="display:flex; align-items:center;">
+                    <select id="w-list-month" class="month-selector" onchange="WalletApp.render()"></select>
+                    <button class="refresh-btn" onclick="manualReload()">↻</button>
+                </div>
             </div>
             <div id="alertContainer"></div>
             <div id="w-list"></div>
         </div>
     </div>
 
-    <div id="app-crypto" class="hidden-layer">
+    <!-- Crypto View Container -->
+    <div id="app-crypto" class="hidden-layer view-container">
         <div class="hero">
             <div class="header-row">
                 <div class="app-title">Crypto</div>
                 <div style="display:flex; gap:8px;">
-                    <button class="btn-icon" onclick="openCryptoSettings()">⚙️ 設定</button>
-                    <button class="btn-icon" onclick="Nav.home()" style="color:#4F46E5;">🏠 首頁</button>
+                    <button class="btn-icon" onclick="openCryptoSettings()">⚙️</button>
+                    <button class="btn-icon" onclick="Nav.home()" style="color:var(--primary);">🏠</button>
                 </div>
             </div>
-            <div class="total-card crypto-bg">
-                <div class="card-content">
-                    <div style="font-size:14px; opacity:0.9;">總投入成本</div>
-                    <div class="total-amount-group">
-                        <div class="total-amount-main" id="c-total-twd">$0 TWD</div>
-                        <div class="total-amount-sub" id="c-total-usd">≈ $0 USD</div>
+            <div class="total-card" style="border-color:rgba(52, 199, 89, 0.3); background: linear-gradient(135deg, rgba(240, 253, 244, 0.8) 0%, rgba(255,255,255,0.5) 100%);">
+                <div style="position:relative; z-index:2;">
+                    <div style="font-size:14px; opacity:0.6; color:#000;">總投入成本</div>
+                    <div style="margin-top:10px;">
+                        <div style="font-size:36px; font-weight:800; color:#1D1D1F;" id="c-total-twd">$0 TWD</div>
+                        <div style="font-size:16px; opacity:0.6; font-family:monospace; color:#333;" id="c-total-usd">≈ $0 USD</div>
                     </div>
                 </div>
             </div>
@@ -377,11 +431,13 @@
                 <div><label class="form-label">入金管道</label><select id="c-method" class="styled-input"></select></div>
             </div>
             <div class="grid-2">
-                <div><label class="form-label">投入成本 (TWD)</label><input type="number" id="c-cost" class="styled-input" placeholder="台幣金額" inputmode="decimal" pattern="[0-9]*"></div>
-                <div id="c-usd-field" style="display:none;"><label class="form-label">換得金額 (U)</label><input type="number" id="c-usd" class="styled-input" placeholder="美金/U" inputmode="decimal" pattern="[0-9]*"></div>
+                <div><label class="form-label">成本 (TWD)</label><input type="number" id="c-cost" class="styled-input" placeholder="台幣" inputmode="decimal"></div>
+                <div id="c-usd-field" style="display:none;"><label class="form-label">金額 (U)</label><input type="number" id="c-usd" class="styled-input" placeholder="美金/U" inputmode="decimal"></div>
             </div>
             <label class="form-label">備註</label><input type="text" id="c-note" class="styled-input" placeholder="選填...">
-            <button id="c-submit" class="btn-submit" onclick="CryptoApp.submit()"><div class="spinner"></div> <span class="btn-text">＋ 新增紀錄</span></button>
+            <button id="c-submit" class="btn-submit" onclick="CryptoApp.submit()" style="background: linear-gradient(135deg, #34C759, #00C7BE);">
+                <div class="spinner"></div> <span class="btn-text">＋ 新增紀錄</span>
+            </button>
         </div>
         <div class="list-section">
             <div class="list-header"><span class="list-title">投資紀錄</span><button class="refresh-btn" onclick="manualReload()">↻</button></div>
@@ -389,50 +445,43 @@
         </div>
     </div>
 
-    <div id="app-schedule" class="hidden-layer">
+    <!-- Schedule View Container -->
+    <div id="app-schedule" class="hidden-layer view-container">
         <div class="hero">
             <div class="header-row">
                 <div class="app-title">班表</div>
                 <div style="display:flex; gap:8px;">
-                    <button class="btn-icon" onclick="Nav.home()" style="color:#4F46E5;">🏠 首頁</button>
+                    <button class="btn-icon" onclick="Nav.home()" style="color:var(--primary);">🏠</button>
                 </div>
             </div>
-            <div class="total-card schedule-bg">
-                <div class="card-content">
-                    <div style="font-size:14px; opacity:0.9;">當月班表</div>
-                    <div style="font-size:24px; font-weight:800; margin-top:5px;" id="s-display-month">-- / --</div>
+            <div class="total-card" style="border-color:rgba(255, 149, 0, 0.3); background: linear-gradient(135deg, rgba(255, 247, 237, 0.8) 0%, rgba(255,255,255,0.5) 100%);">
+                <div style="position:relative; z-index:2;">
+                    <div style="font-size:14px; opacity:0.6; color:#000;">當月班表</div>
+                    <div style="font-size:32px; font-weight:800; margin-top:10px; color:#1D1D1F;" id="s-display-month">-- / --</div>
                 </div>
-                <div class="status-emoji">📅</div>
+                <div class="status-emoji" style="position:absolute; top:20px; right:20px; font-size:50px;">📅</div>
             </div>
         </div>
         
-        <div class="schedule-actions">
+        <div style="padding:15px 0; display:flex; gap:10px;">
             <select id="s-month-selector" class="styled-input" style="flex:1;" onchange="ScheduleApp.render()"></select>
-            <div class="btn-upload-wrapper">
-                <!-- PC Feedback Fix -->
-                <button id="s-upload-btn" class="btn-submit" style="margin-top:0; background:#D97706;">
+            <div style="position:relative; flex:1;">
+                <button id="s-upload-btn" class="btn-submit" style="margin-top:0; background: linear-gradient(135deg, #FF9500, #FF2D55);">
                     <div id="uploadSpinner" class="spinner"></div>
                     <span class="btn-text">📷 上傳</span>
                 </button>
-                <input type="file" id="s-upload-input" class="file-input" accept="image/*" 
-                       onchange="ScheduleApp.handleUpload(this)"
-                       onmousedown="document.getElementById('s-upload-btn').classList.add('active-state')"
-                       onmouseup="document.getElementById('s-upload-btn').classList.remove('active-state')"
-                       onmouseleave="document.getElementById('s-upload-btn').classList.remove('active-state')">
+                <input type="file" id="s-upload-input" style="position:absolute; left:0; top:0; width:100%; height:100%; opacity:0;" accept="image/*" onchange="ScheduleApp.handleUpload(this)">
             </div>
         </div>
 
-        <!-- Viewer.js Container -->
-        <div class="schedule-viewer" id="s-viewer-container">
-            <div id="s-img-spinner" class="img-loading-spinner"></div>
-            <div id="s-empty-msg" class="schedule-empty">
+        <div class="schedule-viewer" id="s-viewer-container" style="margin:0 0 30px 0; border-radius:24px; height:300px; display:flex; justify-content:center; align-items:center; position:relative; background:#F2F2F7; border:2px dashed #D1D1D6;">
+            <div id="s-img-spinner" class="spinner" style="border-color:#CCC; border-top-color:#007AFF;"></div>
+            <div id="s-empty-msg" style="color:#8E8E93; text-align:center;">
                 <div style="font-size:40px;">📄</div>
                 <div>本月尚無班表</div>
             </div>
-            <img id="s-image" class="schedule-img" style="display:none;" onload="ScheduleApp.onImageLoad()" onerror="ScheduleApp.onImageError()">
-            <div class="zoom-hint" id="s-zoom-hint" style="display:none;">🔍 點擊放大</div>
+            <img id="s-image" style="max-width:100%; max-height:100%; display:none; border-radius:20px;" onload="ScheduleApp.onImageLoad()" onerror="ScheduleApp.onImageError()">
         </div>
-
         <div class="list-section">
             <div class="list-header"><span class="list-title">歷史紀錄</span></div>
             <div id="s-list"></div>
@@ -441,110 +490,117 @@
 
     <!-- Modals -->
     <div id="actionModal" class="modal-overlay">
-        <div class="modal-box" style="display:block; padding:24px;">
-            <div style="text-align:center; margin-bottom:20px;">
-                <div id="actionTitle" style="font-size:18px; font-weight:800;"></div>
-                <div id="actionSubtitle" style="font-size:14px; color:#6B7280; margin-top:5px;"></div>
+        <div class="modal-box">
+            <div class="modal-header" style="text-align:center;">
+                <div id="actionTitle" class="modal-title-text"></div>
+                <div id="actionSubtitle" style="font-size:14px; color:#8E8E93; margin:5px 0 0 0;"></div>
             </div>
-            <button class="action-btn btn-edit" id="btnActionEdit">✏️ 修改 / 填入</button>
-            <button class="action-btn btn-delete" id="btnActionDelete">🗑️ 刪除紀錄</button>
-            <button class="action-btn" style="background:white; color:#888; margin-bottom:0;" onclick="closeModal('actionModal')">取消</button>
+            <div style="padding: 0 clamp(20px, 3vh, 30px) 25px;">
+                <button class="action-btn" id="btnActionEdit" style="background:#F2F2F7; color:#007AFF;">✎ 修改 / 填入</button>
+                <button class="action-btn" id="btnActionDelete" style="background:#FFF2F2; color:#FF3B30;">🗑️ 刪除紀錄</button>
+                <button class="action-btn" onclick="closeModal('actionModal')" style="background:transparent; color:#8E8E93;">取消</button>
+            </div>
         </div>
     </div>
 
+    <!-- Settings Modal (Fix 2: Alignment) -->
     <div id="settingsModal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
-                <div style="font-size:18px; font-weight:800; margin-bottom:15px;">Wallet 設定</div>
-                <div style="background:#FFF7ED; padding:15px; border-radius:16px; margin-bottom:15px; border:1px solid #FED7AA;">
-                    <label class="form-label" style="color:#9A3412;">每月預算目標 ($)</label>
-                    <div style="display:flex; gap:10px;">
-                        <input type="number" id="budgetInput" class="styled-input" placeholder="例如: 30000" style="background:white;" inputmode="numeric" pattern="[0-9]*">
-                        <button id="btnSaveBudget" class="btn-submit" onclick="saveBudget()" style="width:80px; margin-top:0; background:#9A3412;"><div class="spinner"></div><span class="btn-text">儲存</span></button>
+                <div class="modal-title-text" style="margin-bottom:15px;">設定</div>
+                
+                <!-- 預算目標 Block -->
+                <div class="settings-group">
+                    <label class="settings-label">預算目標</label>
+                    <div class="flex-input-row">
+                        <input type="number" id="budgetInput" class="styled-input">
+                        <button class="btn-submit" onclick="saveBudget()" id="btnSaveBudget" style="background:#FF9500;">儲存</button>
                     </div>
                 </div>
-                <div style="font-size:14px; font-weight:700; margin-bottom:10px;">新增銀行卡片</div>
-                <div style="background:#F9FAFB; padding:15px; border-radius:16px;">
-                    <input type="text" id="newBank" class="styled-input" placeholder="銀行名稱 (例: 中信)" style="margin-bottom:10px; background:white;">
-                    <div class="grid-2">
-                        <input type="number" id="newBill" class="styled-input" placeholder="結帳日" style="background:white;" pattern="[0-9]*">
-                        <input type="number" id="newPay" class="styled-input" placeholder="扣款日" style="background:white;" pattern="[0-9]*">
-                    </div>
-                    <button id="btnAddTemp" class="btn-submit" onclick="addTemplate()" style="padding:10px; font-size:14px;"><div class="spinner"></div><span class="btn-text">＋ 新增</span></button>
-                </div>
-                <div style="font-size:12px; color:#999; margin-top:15px; font-weight:700;">已儲存的銀行</div>
             </div>
-            <div class="modal-content-scroll"><div id="templateList"></div></div>
-            <div class="modal-footer"><button class="btn-submit" onclick="closeModal('settingsModal')" style="background:#F3F4F6; color:#333; margin-top:0;">關閉</button></div>
+            
+            <div class="modal-content-scroll">
+                <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:#8E8E93;">新增銀行卡片</div>
+                <!-- 新增卡片 Block -->
+                <div class="settings-group">
+                    <input type="text" id="newBank" class="styled-input" placeholder="名稱" style="margin-bottom:10px; background:#FFF;">
+                    <div class="grid-2">
+                        <input type="number" id="newBill" class="styled-input" placeholder="結帳日" style="background:#FFF;">
+                        <input type="number" id="newPay" class="styled-input" placeholder="扣款日" style="background:#FFF;">
+                    </div>
+                    <button id="btnAddTemp" class="btn-submit" onclick="addTemplate()" style="margin-top:5px;">＋ 新增</button>
+                </div>
+                <div style="font-size:12px; color:#C7C7CC; margin:20px 0 10px 0; font-weight:700;">已儲存</div>
+                <div id="templateList" style="padding-bottom: 20px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-submit" onclick="closeModal('settingsModal')" style="background:#E5E5EA; color:#000; margin:0;">關閉</button>
+            </div>
         </div>
     </div>
 
     <div id="cryptoSettingsModal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
-                <div style="font-size:18px; font-weight:800; margin-bottom:15px;">入金管道設定</div>
-                <div style="background:#F9FAFB; padding:15px; border-radius:16px;">
-                    <label class="form-label">新增管道</label>
-                    <input type="text" id="newCryptoMethod" class="styled-input" placeholder="例如: MAX, 信用卡..." style="background:white;">
-                    <button id="btnAddCryptoMethod" class="btn-submit" onclick="CryptoApp.addMethod()" style="padding:10px; font-size:14px;"><div class="spinner"></div><span class="btn-text">＋ 新增</span></button>
+                <div class="modal-title-text" style="margin-bottom:15px;">入金管道</div>
+                <div class="flex-input-row">
+                    <input type="text" id="newCryptoMethod" class="styled-input" placeholder="名稱">
+                    <button id="btnAddCryptoMethod" class="btn-submit" onclick="CryptoApp.addMethod()">新增</button>
                 </div>
-                <div style="font-size:12px; color:#999; margin-top:15px; font-weight:700;">已儲存管道</div>
             </div>
-            <div class="modal-content-scroll"><div id="cryptoMethodList"></div></div>
+            <div class="modal-content-scroll" id="cryptoMethodList"></div>
             <div class="modal-footer">
-                <div id="cryptoSettingsRate" class="rate-bar">Loading...</div>
-                <button class="btn-submit" onclick="closeModal('cryptoSettingsModal')" style="background:#F3F4F6; color:#333; margin-top:0;">關閉</button>
+                <div id="cryptoSettingsRate" style="text-align:center; color:#34C759; font-weight:600; font-size:13px; margin-bottom:10px;"></div>
+                <button class="btn-submit" onclick="closeModal('cryptoSettingsModal')" style="background:#E5E5EA; color:#000; margin:0;">關閉</button>
             </div>
         </div>
     </div>
 
     <div id="editTemplateModal" class="modal-overlay">
-        <div class="modal-box" style="display:block; padding:24px;">
-            <div style="font-size:18px; font-weight:800; margin-bottom:15px;">編輯銀行資訊</div>
-            <input type="hidden" id="editIndex">
-            <label class="form-label">銀行名稱 (不可修改)</label>
-            <input type="text" id="editBankName" class="styled-input" style="margin-bottom:15px;" disabled>
-            <div class="grid-2">
-                <div><label class="form-label">結帳日</label><input type="number" id="editBill" class="styled-input" pattern="[0-9]*"></div>
-                <div><label class="form-label">扣款日</label><input type="number" id="editPay" class="styled-input" pattern="[0-9]*"></div>
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title-text" style="margin-bottom:15px;">編輯</div>
+                <input type="hidden" id="editIndex">
+                <input type="text" id="editBankName" class="styled-input" disabled style="color:#8E8E93; margin-bottom:10px;">
+                <div class="grid-2">
+                    <input type="number" id="editBill" class="styled-input" placeholder="結帳日">
+                    <input type="number" id="editPay" class="styled-input" placeholder="扣款日">
+                </div>
             </div>
-            <div style="display:flex; gap:10px; margin-top:15px;">
-                <button class="btn-submit" onclick="closeModal('editTemplateModal')" style="background:#F3F4F6; color:#333; margin-top:0;">取消</button>
-                <button id="btnSaveEdit" class="btn-submit" onclick="saveTemplateEdit()" style="margin-top:0;"><div class="spinner"></div> <span class="btn-text">儲存</span></button>
+            <div style="display:flex; gap:10px; padding: 0 clamp(20px, 3vh, 30px) 25px;">
+                <button class="btn-submit" onclick="closeModal('editTemplateModal')" style="background:#E5E5EA; color:#000; margin:0;">取消</button>
+                <button class="btn-submit" id="btnSaveEdit" onclick="saveTemplateEdit()" style="margin:0;">儲存</button>
             </div>
         </div>
     </div>
 
     <div id="alertModal" class="modal-overlay">
-        <div class="modal-box" style="display:block; padding:24px;">
-            <div id="alertMsg" style="font-size:16px; color:#333; margin-bottom:20px; line-height:1.5;"></div>
-            <div style="display:flex; gap:10px; justify-content:flex-end;">
-                <button class="action-btn" style="width:auto; background:#1F2937; color:white; margin:0;" onclick="closeModal('alertModal')">確定</button>
+        <div class="modal-box" style="text-align:center;">
+            <div id="alertMsg" style="font-size:16px; margin: 30px 20px;"></div>
+            <div style="padding: 0 24px 24px 24px;">
+                <button class="btn-submit" onclick="closeModal('alertModal')" style="margin:0;">確定</button>
             </div>
         </div>
     </div>
-
     <div id="confirmModal" class="modal-overlay">
-        <div class="modal-box" style="display:block; padding:24px;">
-            <div id="confirmMsg" style="font-size:16px; color:#333; margin-bottom:20px; line-height:1.5;"></div>
-            <div style="display:flex; gap:10px; justify-content:flex-end;">
-                <button class="action-btn" style="width:auto; background:#F3F4F6; margin:0;" onclick="closeModal('confirmModal')">取消</button>
-                <button class="action-btn" style="width:auto; background:#1F2937; color:white; margin:0;" id="confirmBtnAction">確定</button>
+        <div class="modal-box" style="text-align:center;">
+            <div id="confirmMsg" style="font-size:16px; margin: 30px 20px;"></div>
+            <div style="display:flex; gap:10px; padding: 0 24px 24px 24px;">
+                <button class="btn-submit" onclick="closeModal('confirmModal')" style="background:#E5E5EA; color:#000; margin:0;">取消</button>
+                <button class="btn-submit" id="confirmBtnAction" style="margin:0;">確定</button>
             </div>
         </div>
     </div>
 
 <script>
+/* --- Core Logic (Stable) --- */
 const API_URL = "https://script.google.com/macros/s/AKfycby60jdswu4PguQ0YNMpYdfdOewU-YscwRvOpcVxZhV7KNpwhVzSO7tJ8vNx1fPmw_tjGw/exec";
-
-// 🟢 CLOUDINARY CONFIG
 const CLOUDINARY_CLOUD_NAME = "dmgdasluw"; 
 const CLOUDINARY_UPLOAD_PRESET = "my_wallet_preset"; 
 
 let USER_PASSWORD = "";
 let GLOBAL_DATA = { wallet: {data:[], templates:[]}, crypto: {data:[], methods:[], rate: 32.5}, schedule: {data:[]}, config: {budget: 0} };
 
-// 🟢 DOM Utility
 const DomUtils = {
     createEl: function(tag, className, text, children, attributes) {
         const el = document.createElement(tag);
@@ -569,18 +625,22 @@ const DomUtils = {
     }
 };
 
-// 🟢 Universal Swipe Logic (Touch + Mouse)
+/* --- Swipe Logic --- */
 let isDragging = false; let startX = 0; let activeSwipeEl = null;
 
 function handleStart(x, target) {
-    if(target.closest('.schedule-viewer')) return;
-    // 🔥 Fix: Don't swipe if clicking delete/action buttons
+    if(target.closest('.schedule-viewer')) return; 
     if (target.classList.contains('swipe-bg-action') || target.closest('.swipe-bg-action')) return;
-
     const card = target.closest('.t-card');
-    if (!card) { if (activeSwipeEl) closeSwipe(activeSwipeEl); return; }
+    if (!card || !card.classList.contains('swipable')) { 
+        if (activeSwipeEl) closeSwipe(activeSwipeEl); 
+        return; 
+    }
     if (activeSwipeEl && activeSwipeEl !== card) closeSwipe(activeSwipeEl);
     isDragging = true; startX = x; card.style.transition = 'none';
+    
+    const container = card.closest('.swipe-item-container');
+    if(container) container.classList.add('active-swipe');
 }
 
 function handleMove(x, target, e) {
@@ -601,21 +661,33 @@ function handleEnd(target) {
     isDragging = false;
     const card = target.closest('.t-card');
     if (!card) return;
-    card.style.transition = 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    card.style.transition = 'transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1)';
     const currentX = new WebKitCSSMatrix(window.getComputedStyle(card).transform).m41;
-    if (currentX < -40) { card.style.transform = `translateX(-100px)`; activeSwipeEl = card; } 
-    else { card.style.transform = `translateX(0px)`; activeSwipeEl = null; }
+    if (currentX < -40) { 
+        card.style.transform = `translateX(-100px)`; 
+        activeSwipeEl = card; 
+    } else { 
+        card.style.transform = `translateX(0px)`; 
+        activeSwipeEl = null; 
+        const container = card.closest('.swipe-item-container');
+        if(container) container.classList.remove('active-swipe');
+    }
 }
 
 document.addEventListener('touchstart', (e) => handleStart(e.touches[0].clientX, e.target), { passive: true });
 document.addEventListener('touchmove', (e) => handleMove(e.touches[0].clientX, e.target, e), { passive: false });
 document.addEventListener('touchend', (e) => handleEnd(e.target));
-
 document.addEventListener('mousedown', (e) => handleStart(e.clientX, e.target));
 document.addEventListener('mousemove', (e) => handleMove(e.clientX, e.target, e));
 document.addEventListener('mouseup', (e) => handleEnd(e.target));
 
-function closeSwipe(el) { if(!el) return; el.style.transform = 'translateX(0px)'; activeSwipeEl = null; }
+function closeSwipe(el) { 
+    if(!el) return; 
+    el.style.transform = 'translateX(0px)'; 
+    activeSwipeEl = null; 
+    const container = el.closest('.swipe-item-container');
+    if(container) container.classList.remove('active-swipe');
+}
 
 const LoginHandler = {
     clickCount: 0, timer: null,
@@ -629,9 +701,12 @@ const LoginHandler = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    const isIos = /iphone/.test(window.navigator.userAgent.toLowerCase());
-    const isStandalone = window.navigator.standalone === true;
-    if (isIos && !isStandalone) document.getElementById('iosInstallPrompt').style.display = 'flex';
+    const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    // Fix 1: IOS Prompt Logic
+    if (isIos && !isStandalone) {
+        document.getElementById('iosInstallPrompt').style.display = 'flex';
+    }
     const savedPass = localStorage.getItem('myBillPass');
     if(savedPass) {
         document.getElementById('passwordInput').value = savedPass;
@@ -643,15 +718,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const Nav = {
     open: function(appId) {
-        document.querySelectorAll('.hidden-layer, #app-hub, #app-wallet, #app-crypto, #app-schedule').forEach(el => el.classList.add('hidden-layer'));
-        document.getElementById('app-' + appId).classList.remove('hidden-layer');
+        const layers = document.querySelectorAll('.hidden-layer, #app-hub, #app-wallet, #app-crypto, #app-schedule');
+        layers.forEach(el => {
+            el.classList.add('hidden-layer');
+            el.classList.remove('fade-in-layer');
+        });
+        const target = document.getElementById('app-' + appId);
+        target.classList.remove('hidden-layer');
+        void target.offsetWidth; 
+        target.classList.add('fade-in-layer');
         if(appId === 'wallet') WalletApp.render();
         if(appId === 'crypto') CryptoApp.render();
         if(appId === 'schedule') ScheduleApp.render();
     },
     home: function() {
-        document.querySelectorAll('.hidden-layer, #app-wallet, #app-crypto, #app-schedule').forEach(el => el.classList.add('hidden-layer'));
-        document.getElementById('app-hub').classList.remove('hidden-layer');
+        const layers = document.querySelectorAll('.hidden-layer, #app-wallet, #app-crypto, #app-schedule');
+        layers.forEach(el => {
+            el.classList.add('hidden-layer');
+            el.classList.remove('fade-in-layer');
+        });
+        const hub = document.getElementById('app-hub');
+        hub.classList.remove('hidden-layer');
+        void hub.offsetWidth;
+        hub.classList.add('fade-in-layer');
     }
 };
 
@@ -689,7 +778,6 @@ const CloudStatus = {
     }
 };
 
-// 🟢 KEY MAPPING
 const DATA_KEY_MAP = { 
     'UUID': 'uuid', 'Month': 'month', 'ImageURL': 'imageurl', 'Timestamp': 'timestamp',
     '月份': 'month', 'month': 'month', 'imageurl': 'imageurl', 'image': 'imageurl', 'url': 'imageurl', 'timestamp': 'timestamp', 'time': 'timestamp',
@@ -707,7 +795,6 @@ const DataLoader = {
             const res = await fetch(`${API_URL}?password=${encodeURIComponent(USER_PASSWORD)}`);
             const json = await res.json();
             if(json.error) throw new Error(json.error);
-            
             GLOBAL_DATA = { 
                 wallet: { data: mapNormalize(json.wallet.data).reverse(), templates: mapNormalize(json.wallet.templates) }, 
                 crypto: { data: mapNormalize(json.crypto.data), methods: json.crypto.methods, rate: json.crypto.rate },
@@ -716,7 +803,14 @@ const DataLoader = {
             };
             localStorage.setItem('myBillPass', USER_PASSWORD);
             document.getElementById('budgetInput').value = GLOBAL_DATA.config.budget;
-            if(isInit) { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('app-hub').classList.remove('hidden-layer'); }
+            if(isInit) { 
+                const loginOverlay = document.getElementById('loginOverlay');
+                loginOverlay.style.opacity = '0';
+                setTimeout(() => {
+                    loginOverlay.style.display = 'none';
+                    Nav.home(); 
+                }, 500);
+            }
             if(!document.getElementById('app-wallet').classList.contains('hidden-layer')) WalletApp.render();
             if(!document.getElementById('app-crypto').classList.contains('hidden-layer')) CryptoApp.render();
             if(!document.getElementById('app-schedule').classList.contains('hidden-layer')) ScheduleApp.render();
@@ -746,7 +840,6 @@ const WalletApp = {
         const data = GLOBAL_DATA.wallet.data.filter(r => String(r.month).trim() === m);
         const templates = GLOBAL_DATA.wallet.templates.sort((a,b) => (parseInt(a.billdate)||0) - (parseInt(b.billdate)||0));
         
-        // Always render options to ensure sync with GLOBAL_DATA (Fix dropdown bug)
         DomUtils.renderOptions('w-bank', templates.map(t => t.bankname), '選擇銀行');
         
         let total = 0, count = 0, alertList = [];
@@ -755,25 +848,42 @@ const WalletApp = {
         templates.forEach(t => {
             const rec = data.find(r => r.bank === t.bankname);
             let rightEl, cls, clickEvent, delEvent;
-            if(rec) { total += parseMoney(rec.amount); count++; cls = 't-card logged'; rightEl = DomUtils.createEl('div', 't-amount', `$${formatMoney(rec.amount)}`); clickEvent = null; delEvent = () => WalletApp.askDelete(rec.uuid, rec.bank); } 
-            else { cls = 't-card unlogged'; rightEl = DomUtils.createEl('div', 'badge-todo', '待登錄'); clickEvent = () => WalletApp.fill(t.bankname); delEvent = null; const billDay = parseInt(t.billdate); if (billDay) { const cutoff = new Date(year, month - 1, billDay + 1); if (now > cutoff) alertList.push(t.bankname); } }
+            if(rec) { 
+                total += parseMoney(rec.amount); count++; cls = 't-card logged'; 
+                rightEl = DomUtils.createEl('div', 't-amount', `$${formatMoney(rec.amount)}`); 
+                clickEvent = null; 
+                delEvent = () => WalletApp.askDelete(rec.uuid, rec.bank); 
+            } else { 
+                cls = 't-card unlogged'; 
+                rightEl = DomUtils.createEl('div', 'badge-todo', '待登錄', [], {style:'font-size:12px; padding:4px 8px; border-radius:10px; background:rgba(0,0,0,0.05);'}); 
+                clickEvent = () => WalletApp.fill(t.bankname); 
+                delEvent = null; 
+                const billDay = parseInt(t.billdate); if (billDay) { const cutoff = new Date(year, month - 1, billDay + 1); if (now > cutoff) alertList.push(t.bankname); } 
+            }
+
             const container = DomUtils.createEl('div', 'swipe-item-container');
-            const bgAction = DomUtils.createEl('div', 'swipe-bg-action', '刪除');
-            if(delEvent) bgAction.onclick = delEvent;
             const card = DomUtils.createEl('div', cls);
             if(clickEvent) card.onclick = clickEvent;
             const content = DomUtils.createEl('div', 't-content');
             content.appendChild(DomUtils.createEl('div', 't-bank', t.bankname));
-            content.appendChild(DomUtils.createEl('div', '', `結帳日 ${t.billdate} / 扣款日 ${t.paymentdate}`, [], {style:'font-size:12px;color:#888'}));
-            if(rec && rec.note) content.appendChild(DomUtils.createEl('div', '', rec.note, [], {style:'font-size:12px;color:#6B7280;margin-top:2px;'}));
+            content.appendChild(DomUtils.createEl('div', '', `結帳日 ${t.billdate} / 扣款日 ${t.paymentdate}`, [], {style:'font-size:12px;color:#8E8E93;'}));
+            if(rec && rec.note) content.appendChild(DomUtils.createEl('div', '', rec.note, [], {style:'font-size:12px;color:#8E8E93;margin-top:2px;'}));
             card.appendChild(DomUtils.createEl('div', 't-icon', t.bankname.charAt(0))); card.appendChild(content); card.appendChild(rightEl);
-            container.appendChild(bgAction); container.appendChild(card); frag.appendChild(container);
+            
+            if(delEvent) {
+                const bgAction = DomUtils.createEl('div', 'swipe-bg-action', '刪除');
+                bgAction.onclick = delEvent;
+                container.appendChild(bgAction);
+                card.classList.add('swipable');
+            }
+
+            container.appendChild(card); frag.appendChild(container);
         });
         document.getElementById('w-list').innerHTML = ''; document.getElementById('w-list').appendChild(frag);
         document.getElementById('w-total').innerText = `$${formatMoney(total)}`; document.getElementById('w-count').innerText = `${count} 筆紀錄`;
         this.updateBudgetUI(total);
         const alertContainer = document.getElementById('alertContainer');
-        if (alertList.length > 0) { alertContainer.innerHTML = `<div class="alert-box"><span class="alert-icon">🔔</span><div class="alert-content"><span class="alert-title">待登錄提醒</span>${alertList.join('、')} 帳單已結帳，請核對並登錄金額。</div></div>`; } else { alertContainer.innerHTML = ''; }
+        if (alertList.length > 0) { alertContainer.innerHTML = `<div class="alert-box" style="background:#FFF8E1; border:1px solid #FFE082; color:#FF8F00; padding:15px; border-radius:20px; margin-bottom:20px; font-size:13px; display:flex; align-items:center; gap:10px;"><span style="font-size:20px;">🔔</span><div><span style="font-weight:800;">待登錄</span> ${alertList.join('、')}</div></div>`; } else { alertContainer.innerHTML = ''; }
         if(document.getElementById('chartDrawer').classList.contains('open')) this.renderChart(data);
     },
     updateBudgetUI: function(currentTotal) {
@@ -782,18 +892,18 @@ const WalletApp = {
         const emoji = document.getElementById('emojiStatus');
         if(budget > 0) { 
             container.style.display = 'block'; const pct = Math.min((currentTotal / budget) * 100, 100); const left = budget - currentTotal; fill.style.width = `${pct}%`; 
-            if (pct < 80) { fill.style.backgroundColor = '#10B981'; emoji.innerText = '😊'; } 
-            else if (pct < 100) { fill.style.backgroundColor = '#F59E0B'; emoji.innerText = '😓'; } 
-            else { fill.style.backgroundColor = '#EF4444'; emoji.innerText = '💸'; } 
-            if(left >= 0) { txtLeft.innerText = `剩餘 $${formatMoney(left)}`; txtLeft.style.color = '#1F2937'; } else { txtLeft.innerText = `超支 $${formatMoney(Math.abs(left))}`; txtLeft.style.color = '#EF4444'; } 
+            if (pct < 80) { fill.style.background = '#34C759'; emoji.innerText = '😊'; } 
+            else if (pct < 100) { fill.style.background = '#FF9500'; emoji.innerText = '😓'; } 
+            else { fill.style.background = '#FF3B30'; emoji.innerText = '💸'; } 
+            if(left >= 0) { txtLeft.innerText = `剩餘 $${formatMoney(left)}`; txtLeft.style.color = '#8E8E93'; } else { txtLeft.innerText = `超支 $${formatMoney(Math.abs(left))}`; txtLeft.style.color = '#FF3B30'; } 
         } else { container.style.display = 'none'; emoji.innerText = '😊'; }
     },
     toggleChart: function() { const drawer = document.getElementById('chartDrawer'); const btnText = document.getElementById('chartBtnText'); const btnIcon = document.getElementById('chartBtnIcon'); if (drawer.classList.contains('open')) { drawer.classList.remove('open'); btnText.innerText = "分析"; btnIcon.innerText = "📊"; } else { drawer.classList.add('open'); btnText.innerText = "收起"; btnIcon.innerText = "🔼"; const m = document.getElementById('w-list-month').value; const data = GLOBAL_DATA.wallet.data.filter(r => String(r.month).trim() === m); this.renderChart(data); } },
     setChartType: function(type) { this.chartType = type; document.getElementById('btnChartPie').className = type === 'pie' ? 'chart-type-btn active' : 'chart-type-btn'; document.getElementById('btnChartBar').className = type === 'bar' ? 'chart-type-btn active' : 'chart-type-btn'; const m = document.getElementById('w-list-month').value; const data = GLOBAL_DATA.wallet.data.filter(r => String(r.month).trim() === m); this.renderChart(data); },
     renderChart: function(currentMonthData) {
         if(this.chart) this.chart.destroy(); const ctx = document.getElementById('expenseChart').getContext('2d');
-        if (this.chartType === 'pie') { const grouped = {}; currentMonthData.forEach(r => { grouped[r.bank] = (grouped[r.bank] || 0) + parseMoney(r.amount); }); const labels = Object.keys(grouped); const data = Object.values(grouped); this.chart = new Chart(ctx, { type:'doughnut', data:{labels: labels, datasets:[{data: data, backgroundColor:['#4F46E5','#7C3AED','#EC4899','#F59E0B','#10B981', '#3B82F6'], borderWidth:2, borderColor:'rgba(255,255,255,0.2)'}]}, options:{responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{legend:{display:true,position:'right',labels:{color:'white',boxWidth:10}}}} }); } 
-        else { const labels = []; const data = []; const d = new Date(); for(let i=5; i>=0; i--) { const tempD = new Date(d.getFullYear(), d.getMonth() - i, 1); const mStr = `${tempD.getFullYear()}${String(tempD.getMonth()+1).padStart(2,'0')}`; labels.push(`${tempD.getMonth()+1}月`); const sum = GLOBAL_DATA.wallet.data.filter(r => String(r.month).trim() === mStr).reduce((acc, curr) => acc + parseMoney(curr.amount), 0); data.push(sum); } this.chart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: '總支出', data: data, backgroundColor: 'rgba(255, 255, 255, 0.8)', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => '$' + c.parsed.y.toLocaleString() } } }, scales: { x: { ticks: { color: 'white' }, grid: { display: false } }, y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } } } } }); }
+        if (this.chartType === 'pie') { const grouped = {}; currentMonthData.forEach(r => { grouped[r.bank] = (grouped[r.bank] || 0) + parseMoney(r.amount); }); const labels = Object.keys(grouped); const data = Object.values(grouped); this.chart = new Chart(ctx, { type:'doughnut', data:{labels: labels, datasets:[{data: data, backgroundColor:['#007AFF','#5856D6','#FF2D55','#FF9500','#34C759', '#5AC8FA'], borderWidth:0}]}, options:{responsive:true, maintainAspectRatio:false, cutout:'70%', plugins:{legend:{display:true,position:'right',labels:{color:'#1D1D1F',boxWidth:10}}}} }); } 
+        else { const labels = []; const data = []; const d = new Date(); for(let i=5; i>=0; i--) { const tempD = new Date(d.getFullYear(), d.getMonth() - i, 1); const mStr = `${tempD.getFullYear()}${String(tempD.getMonth()+1).padStart(2,'0')}`; labels.push(`${tempD.getMonth()+1}月`); const sum = GLOBAL_DATA.wallet.data.filter(r => String(r.month).trim() === mStr).reduce((acc, curr) => acc + parseMoney(curr.amount), 0); data.push(sum); } this.chart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: '總支出', data: data, backgroundColor: 'rgba(0, 122, 255, 0.6)', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => '$' + c.parsed.y.toLocaleString() } } }, scales: { x: { ticks: { color: '#8E8E93' }, grid: { display: false } }, y: { ticks: { color: '#8E8E93' }, grid: { color: '#E5E5EA' } } } } }); }
     },
     submit: function() { const bank = document.getElementById('w-bank').value; const amt = document.getElementById('w-amount').value; const note = document.getElementById('w-note').value; const month = document.getElementById('w-input-month').value; if(bank=="請選擇" || !amt) return showToast('⚠️ 請填寫完整'); const isDup = GLOBAL_DATA.wallet.data.some(r => r.bank === bank && String(r.month).trim() === month); if(isDup) customConfirm('此銀行本月已有紀錄，確定要新增嗎？', () => this.executeSubmit(bank, amt, note, month)); else this.executeSubmit(bank, amt, note, month); },
     executeSubmit: function(bank, amt, note, month) { const tpl = GLOBAL_DATA.wallet.templates.find(t=>t.bankname===bank); GLOBAL_DATA.wallet.data.unshift({bank, amount:amt, note, month, uuid: 'temp', paymentdate: tpl?tpl.paymentdate:'-'}); document.getElementById('w-list-month').value = month; this.render(); document.getElementById('w-amount').value=''; document.getElementById('w-note').value=''; setBtnLoading('w-submit', true, '排程中...'); setTimeout(() => setBtnLoading('w-submit', false), 500); SyncManager.add({ appName:'wallet', action:'post', bank, amount:amt, note, month, paymentDate: tpl?tpl.paymentdate:'-' }); },
@@ -804,17 +914,54 @@ const WalletApp = {
 const CryptoApp = {
     mode: 'twd',
     render: function() {
-        const frag = document.createDocumentFragment(); const data = GLOBAL_DATA.crypto.data.sort((a,b) => new Date(b.date) - new Date(a.date)); let rate = parseFloat(GLOBAL_DATA.crypto.rate); if (isNaN(rate) || rate <= 0) rate = 32.5;
+        const frag = document.createDocumentFragment(); 
+        const data = GLOBAL_DATA.crypto.data.sort((a,b) => new Date(b.date) - new Date(a.date)); 
+        
         if(!document.getElementById('c-date').value) document.getElementById('c-date').valueAsDate = new Date();
         this.updateMethodSelect();
-        const totalTwd = data.reduce((sum, r) => sum + parseMoney(r.cost_twd || r.cost), 0); document.getElementById('c-total-twd').innerText = `$${formatMoney(totalTwd)} TWD`; document.getElementById('c-total-usd').innerText = `≈ $${formatMoney(totalTwd/rate)} USD`;
+        const totalTwd = data.reduce((sum, r) => sum + parseMoney(r.cost_twd || r.cost), 0); 
+        
+        // Rate fallback
+        let rate = parseFloat(GLOBAL_DATA.crypto.rate);
+        if (isNaN(rate) || rate <= 0) rate = 32.5;
+        
+        document.getElementById('c-total-twd').innerText = `$${formatMoney(totalTwd)} TWD`; 
+        document.getElementById('c-total-usd').innerText = `≈ $${formatMoney(totalTwd/rate)} USD`;
+        
         data.forEach(r => {
-            let dateObj = new Date(r.date); let subInfo = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
-            const tAmount = DomUtils.createEl('div', 't-amount', `$${formatMoney(r.cost_twd || r.cost)}`); const rightSide = DomUtils.createEl('div'); rightSide.appendChild(tAmount);
-            if (r.type === 'USD') { const cost = parseMoney(r.cost_twd || r.cost); const amt = parseMoney(r.amount_usd); const calcRate = (amt > 0) ? (cost / amt).toFixed(2) : '0.00'; const subVal = DomUtils.createEl('div', 'c-sub-value', `≈ $${formatMoney(amt)} USD `); subVal.appendChild(DomUtils.createEl('span', 'c-rate', `(@${calcRate})`)); rightSide.appendChild(subVal); }
-            let icon = r.type === 'USD' ? '🇺🇸' : '🪙'; const container = DomUtils.createEl('div', 'swipe-item-container'); const bgAction = DomUtils.createEl('div', 'swipe-bg-action', '刪除'); bgAction.onclick = () => CryptoApp.askDelete(r.uuid);
-            const card = DomUtils.createEl('div', 't-card'); const content = DomUtils.createEl('div', 't-content'); content.appendChild(DomUtils.createEl('div', 't-bank', r.method)); content.appendChild(DomUtils.createEl('div', '', `${subInfo} ${r.note ? '- '+r.note : ''}`, [], {style:'font-size:12px;color:#888'}));
-            card.appendChild(DomUtils.createEl('div', 't-icon', icon)); card.appendChild(content); card.appendChild(rightSide); container.appendChild(bgAction); container.appendChild(card); frag.appendChild(container);
+            let dateObj = new Date(r.date); 
+            let subInfo = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
+            
+            // Fix 5: Robust USD Display Logic
+            const tAmount = DomUtils.createEl('div', 't-amount', `$${formatMoney(r.cost_twd || r.cost)}`); 
+            const rightSide = DomUtils.createEl('div'); 
+            rightSide.appendChild(tAmount);
+            
+            if (r.type === 'USD') { 
+                const cost = parseMoney(r.cost_twd || r.cost); 
+                // Force parse amount_usd to ensure it's treated as number
+                const amt = parseMoney(r.amount_usd); 
+                const calcRate = (amt > 0) ? (cost / amt).toFixed(2) : '0.00'; 
+                
+                const subVal = DomUtils.createEl('div', 'c-sub-value', `≈ $${formatMoney(amt)} USD `, [], {style:'font-size:12px; color:#34C759; text-align:right;'}); 
+                subVal.appendChild(DomUtils.createEl('span', 'c-rate', `(@${calcRate})`, [], {style:'color:#8E8E93;'})); 
+                rightSide.appendChild(subVal); 
+            }
+            
+            let icon = r.type === 'USD' ? '🇺🇸' : '🪙'; 
+            const container = DomUtils.createEl('div', 'swipe-item-container'); 
+            const bgAction = DomUtils.createEl('div', 'swipe-bg-action', '刪除'); 
+            bgAction.onclick = () => CryptoApp.askDelete(r.uuid);
+            const card = DomUtils.createEl('div', 't-card'); 
+            const content = DomUtils.createEl('div', 't-content'); 
+            content.appendChild(DomUtils.createEl('div', 't-bank', r.method)); 
+            content.appendChild(DomUtils.createEl('div', '', `${subInfo} ${r.note ? '- '+r.note : ''}`, [], {style:'font-size:12px;color:#8E8E93'}));
+            card.appendChild(DomUtils.createEl('div', 't-icon', icon)); 
+            card.appendChild(content); 
+            card.appendChild(rightSide); 
+            
+            card.classList.add('swipable'); 
+            container.appendChild(bgAction); container.appendChild(card); frag.appendChild(container);
         });
         document.getElementById('c-list').innerHTML = ''; document.getElementById('c-list').appendChild(frag);
     },
@@ -823,7 +970,7 @@ const CryptoApp = {
     submit: function() { const date = document.getElementById('c-date').value; const method = document.getElementById('c-method').value; const cost = document.getElementById('c-cost').value; const usd = document.getElementById('c-usd').value; const note = document.getElementById('c-note').value; if(method == "選擇管道" || !cost) return showToast('⚠️ 請填寫完整'); if(this.mode === 'usd' && !usd) return showToast('⚠️ 請輸入外幣金額'); const now = new Date(); const fullDate = new Date(date); fullDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds()); const isoDate = fullDate.toISOString(); GLOBAL_DATA.crypto.data.unshift({ date: isoDate, method, cost_twd: cost, note, type: this.mode === 'usd' ? 'USD' : 'TWD', amount_usd: this.mode === 'usd' ? usd : 0, uuid: 'temp' }); this.render(); document.getElementById('c-cost').value = ''; document.getElementById('c-usd').value = ''; document.getElementById('c-note').value = ''; document.getElementById('c-cost').focus(); setBtnLoading('c-submit', true, '排程中...'); setTimeout(() => setBtnLoading('c-submit', false), 500); SyncManager.add({ appName: 'crypto', action: 'post', date: isoDate, method, cost, note, type: this.mode === 'usd' ? 'USD' : 'TWD', amount_usd: this.mode === 'usd' ? usd : 0, uuid: 'temp' }); },
     askDelete: function(uuid) { if(activeSwipeEl) closeSwipe(activeSwipeEl); customConfirm('刪除此紀錄?', () => { GLOBAL_DATA.crypto.data = GLOBAL_DATA.crypto.data.filter(r => r.uuid !== uuid); this.render(); SyncManager.add({ appName: 'crypto', action: 'delete', uuid }); }); },
     openSettings: function() { this.renderSettingsList(); let rate = parseFloat(GLOBAL_DATA.crypto.rate); if(isNaN(rate)) rate = 0; document.getElementById('cryptoSettingsRate').innerText = `🇺🇸 1 USD ≈ ${rate.toFixed(2)} TWD`; document.getElementById('cryptoSettingsModal').classList.add('show'); },
-    renderSettingsList: function() { const d = document.getElementById('cryptoMethodList'); d.innerHTML = ''; GLOBAL_DATA.crypto.methods.forEach(m => { const row = DomUtils.createEl('div', 'setup-row'); row.innerHTML = `<div><div style="font-weight:700">${m}</div></div><button class="btn-setup-action" style="color:#EF4444;" onclick="CryptoApp.deleteMethod('${m}')">🗑️</button>`; d.appendChild(row); }); },
+    renderSettingsList: function() { const d = document.getElementById('cryptoMethodList'); d.innerHTML = ''; GLOBAL_DATA.crypto.methods.forEach(m => { const row = DomUtils.createEl('div', 'setup-row', '', [], {style:'display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #E5E5EA;'}); row.innerHTML = `<div><div style="font-weight:700">${m}</div></div><button class="btn-setup-action" style="color:#FF3B30; background:transparent; border:none;" onclick="CryptoApp.deleteMethod('${m}')">🗑️</button>`; d.appendChild(row); }); },
     addMethod: function() { const val = document.getElementById('newCryptoMethod').value; if(!val) return showToast('⚠️ 請輸入名稱'); setBtnLoading('btnAddCryptoMethod', true, '新增中...'); GLOBAL_DATA.crypto.methods.push(val); this.renderSettingsList(); this.updateMethodSelect(); document.getElementById('c-method').value = val; document.getElementById('newCryptoMethod').value = ''; CloudStatus.set('syncing'); fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, appName:'crypto', action:'config_add', methodName:val}) }).then(() => { setBtnLoading('btnAddCryptoMethod', false); CloudStatus.set('success'); }); },
     deleteMethod: function(name) { customConfirm(`刪除 ${name}?`, () => { GLOBAL_DATA.crypto.methods = GLOBAL_DATA.crypto.methods.filter(m => m !== name); this.renderSettingsList(); this.updateMethodSelect(); CloudStatus.set('syncing'); fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, appName:'crypto', action:'config_delete', methodName:name}) }).then(() => { CloudStatus.set('success'); }); }); }
 };
@@ -849,45 +996,37 @@ const ScheduleApp = {
         const imgEl = document.getElementById('s-image');
         const emptyEl = document.getElementById('s-empty-msg');
         const spinner = document.getElementById('s-img-spinner');
-        const hint = document.getElementById('s-zoom-hint');
-        
         let viewer = null;
         if (imgEl._viewer) { viewer = imgEl._viewer; }
-
         const record = GLOBAL_DATA.schedule.data.find(r => String(r.month) === m);
         if(record && record.imageurl) { 
             if(imgEl.src !== record.imageurl) { 
-                imgEl.style.opacity = '0'; 
-                imgEl.classList.remove('loaded'); 
-                spinner.style.display = 'block'; 
-                hint.style.display = 'none';
+                imgEl.style.opacity = '0'; imgEl.classList.remove('loaded'); spinner.style.display = 'block'; 
                 if(viewer) { viewer.destroy(); imgEl._viewer = null; }
                 imgEl.src = record.imageurl; 
             }
-            imgEl.style.display = 'block'; 
-            emptyEl.style.display = 'none'; 
+            imgEl.style.display = 'block'; emptyEl.style.display = 'none'; 
         } else { 
-            imgEl.style.display = 'none'; 
-            spinner.style.display = 'none'; 
-            hint.style.display = 'none';
-            emptyEl.style.display = 'flex'; 
+            imgEl.style.display = 'none'; spinner.style.display = 'none'; emptyEl.style.display = 'block'; 
         }
         const listDiv = document.getElementById('s-list'); listDiv.innerHTML = ''; const frag = document.createDocumentFragment();
         const sortedData = [...GLOBAL_DATA.schedule.data].sort((a, b) => (parseInt(b.month)||0) - (parseInt(a.month)||0));
-        if (sortedData.length === 0) { const emptyState = DomUtils.createEl('div', '', '尚無歷史紀錄', [], {style: 'text-align:center; color:#999; padding:20px; font-size:14px;'}); listDiv.appendChild(emptyState); } 
+        if (sortedData.length === 0) { const emptyState = DomUtils.createEl('div', '', '尚無歷史紀錄', [], {style: 'text-align:center; color:#8E8E93; padding:20px; font-size:14px;'}); listDiv.appendChild(emptyState); } 
         else {
             sortedData.forEach(r => {
                 const card = DomUtils.createEl('div', 't-card schedule-card'); card.onclick = () => ScheduleApp.selectMonth(r.month);
-                const icon = DomUtils.createEl('div', 't-icon', '📅'); const content = DomUtils.createEl('div', 't-content');
+                const icon = DomUtils.createEl('div', 't-icon', '📅'); const content = DomUtils.createEl('div', 't-content', '', [], {style:'flex:1'});
                 const mStr = String(r.month || '??????'); const displayMonth = mStr.length >= 6 ? `${mStr.substring(0,4)} / ${mStr.substring(4,6)}` : mStr;
                 content.appendChild(DomUtils.createEl('div', 't-bank', displayMonth));
                 const timeStr = r.timestamp ? new Date(r.timestamp).toLocaleDateString() : '';
-                content.appendChild(DomUtils.createEl('div', '', `上傳於 ${timeStr}`, [], {style:'font-size:12px;color:#888'}));
+                content.appendChild(DomUtils.createEl('div', '', `上傳於 ${timeStr}`, [], {style:'font-size:12px;color:#8E8E93'}));
                 
-                const actions = DomUtils.createEl('div', 'card-actions');
-                const btnCopy = DomUtils.createEl('button', 'btn-icon', '🔗', [], {style: 'z-index:10; position:relative; padding:8px 10px;'});
+                // Fix 4: Unified History Buttons
+                const actions = DomUtils.createEl('div', 'card-actions', '', [], {style:'display:flex; gap:10px;'});
+                const btnCopy = DomUtils.createEl('button', 'mini-action-btn', '🔗'); 
                 btnCopy.onclick = (e) => { e.stopPropagation(); ScheduleApp.copyLink(r.imageurl); };
-                const btnDelete = DomUtils.createEl('button', 'btn-icon', '🗑️', [], {style: 'color:#EF4444; z-index:10; position:relative; padding:8px 10px;'});
+                
+                const btnDelete = DomUtils.createEl('button', 'mini-action-btn danger', '🗑️'); 
                 btnDelete.onclick = (e) => { e.stopPropagation(); ScheduleApp.delete(r.uuid); };
                 
                 actions.appendChild(btnCopy); actions.appendChild(btnDelete);
@@ -897,18 +1036,10 @@ const ScheduleApp = {
         }
     },
     onImageLoad: function() { 
-        const imgEl = document.getElementById('s-image'); 
-        const spinner = document.getElementById('s-img-spinner'); 
-        const hint = document.getElementById('s-zoom-hint');
-        spinner.style.display = 'none'; 
-        hint.style.display = 'block';
-        imgEl.classList.add('loaded'); 
-        imgEl.style.opacity = '1'; 
-        
+        const imgEl = document.getElementById('s-image'); const spinner = document.getElementById('s-img-spinner'); 
+        spinner.style.display = 'none'; imgEl.classList.add('loaded'); imgEl.style.opacity = '1'; 
         if(imgEl._viewer) imgEl._viewer.destroy();
-        imgEl._viewer = new Viewer(imgEl, {
-            inline: false, toolbar: false, navbar: false, title: false, tooltip: false, movable: true, zoomable: true, rotatable: false, scalable: false, transition: true, backdrop: true, className: 'schedule-lightbox'
-        });
+        imgEl._viewer = new Viewer(imgEl, { inline: false, toolbar: false, navbar: false, title: false, tooltip: false, movable: true, zoomable: true, rotatable: false, scalable: false, transition: true, backdrop: true });
     },
     onImageError: function() { document.getElementById('s-img-spinner').style.display = 'none'; showToast('⚠️ 圖片載入失敗'); },
     selectMonth: function(m) {
@@ -917,17 +1048,14 @@ const ScheduleApp = {
         if (!opt) { opt = document.createElement('option'); opt.value = m; opt.text = `${m.substring(0,4)} 年 ${m.substring(4,6)} 月`; sel.appendChild(opt); }
         sel.value = m; this.render(); document.querySelector('#app-schedule .hero').scrollIntoView({behavior:'smooth'});
     },
-    copyLink: function(url) {
-        navigator.clipboard.writeText(url).then(() => showToast('✅ 連結已複製')).catch(() => showToast('❌ 複製失敗'));
-    },
+    copyLink: function(url) { navigator.clipboard.writeText(url).then(() => showToast('✅ 連結已複製')).catch(() => showToast('❌ 複製失敗')); },
     handleUpload: async function(input) {
-        if(CLOUDINARY_CLOUD_NAME === "dmgdasluw") return alert("請先填入 Cloudinary Cloud Name！");
+        if(!CLOUDINARY_CLOUD_NAME) return alert("請填入 Cloud Name");
+
         const file = input.files[0]; if(!file) return;
         const m = document.getElementById('s-month-selector').value;
-        
         const exists = GLOBAL_DATA.schedule.data.find(r => String(r.month) === m);
         if (exists) { input.value = ''; return customAlert('⚠️ 該月份已有班表，請先刪除舊紀錄後再上傳。'); }
-
         const spinner = document.getElementById('uploadSpinner'); spinner.style.display = 'inline-block';
         try {
             const compressedFile = await compressImage(file, 1024, 0.6);
@@ -957,27 +1085,22 @@ function customConfirm(msg, callback) { document.getElementById('confirmMsg').in
 function customAlert(msg) { document.getElementById('alertMsg').innerText = msg; openModal('alertModal'); }
 function openModal(id) { document.getElementById(id).classList.add('show'); }
 function initMonthSelect(id) { const s=document.getElementById(id); if (!s) return; const startD = new Date(); startD.setMonth(startD.getMonth() + 1); const frag = document.createDocumentFragment(); for(let i=0; i<24; i++){ const v=`${startD.getFullYear()}${String(startD.getMonth()+1).padStart(2,'0')}`; const o=document.createElement('option'); o.value=v; o.text=`${startD.getFullYear()} / ${String(startD.getMonth()+1).padStart(2,'0')}`; frag.appendChild(o); startD.setMonth(startD.getMonth()-1); } s.appendChild(frag); const d=new Date(); s.value = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`; }
-// 🟢 Optimistic Settings Logic
 function addTemplate() { const b=document.getElementById('newBank').value, bill=document.getElementById('newBill').value, pay=document.getElementById('newPay').value; if(!b||!bill||!pay) return showToast('⚠️ 請填寫完整'); document.getElementById('newBank').value=''; document.getElementById('newBill').value=''; document.getElementById('newPay').value=''; 
-    // Optimistic Add
     GLOBAL_DATA.wallet.templates.push({ bankname: b, billdate: bill, paymentdate: pay, templateindex: b });
     renderTemplateList(); WalletApp.render(); CloudStatus.set('syncing'); fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, appName:'wallet', action:'template_create', BankName:b, BillDate:bill, PaymentDate:pay}) }).then(() => { CloudStatus.set('success'); }); 
 }
 function saveTemplateEdit() { const idx = document.getElementById('editIndex').value; const bank = document.getElementById('editBankName').value; const bill = document.getElementById('editBill').value; const pay = document.getElementById('editPay').value; if(!bill || !pay) return showToast('⚠️ 日期不能為空'); 
-    // Optimistic Edit
     const target = GLOBAL_DATA.wallet.templates.find(t => t.templateindex == idx); if (target) { target.billdate = bill; target.paymentdate = pay; }
     renderTemplateList(); WalletApp.render(); closeModal('editTemplateModal'); CloudStatus.set('syncing'); fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ password: USER_PASSWORD, appName:'wallet', action: 'template_update', templateIndex: idx, BankName: bank, BillDate: bill, PaymentDate: pay }) }).then(() => { CloudStatus.set('success'); }); 
 }
 function deleteTemplate(idx) { 
     customConfirm('確定刪除此銀行?', () => { 
-        // Optimistic Delete
         GLOBAL_DATA.wallet.templates = GLOBAL_DATA.wallet.templates.filter(t => t.templateindex !== String(idx));
         renderTemplateList(); WalletApp.render(); CloudStatus.set('syncing'); fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:USER_PASSWORD, appName:'wallet', action:'template_delete', templateIndex:idx}) }).then(()=> { CloudStatus.set('success'); }); 
     }); 
 }
 function openEditTemplateModal(index, bank, bill, pay) { document.getElementById('editIndex').value = index; document.getElementById('editBankName').value = bank; document.getElementById('editBill').value = bill; document.getElementById('editPay').value = pay; openModal('editTemplateModal'); }
-// 🟢 Render Template Fix (Use string quotes)
-function renderTemplateList() { const d = document.getElementById('templateList'); d.innerHTML=''; const sorted = [...GLOBAL_DATA.wallet.templates].sort((a,b) => (parseInt(a.billdate)||0) - (parseInt(b.billdate)||0)); sorted.forEach(t => { const n = t.bankname; const b = t.billdate; const p = t.paymentdate; const row = DomUtils.createEl('div', 'setup-row'); row.innerHTML = `<div><div style="font-weight:700">${n}</div><div style="font-size:12px;color:#888;">結帳日 ${b} / 扣款日 ${p}</div></div><div style="display:flex; gap:5px;"><button class="btn-setup-action" style="color:#4F46E5;" onclick="openEditTemplateModal('${t.templateindex}', '${n}', '${b}', '${p}')">✎ 編輯</button><button class="btn-setup-action" style="color:#EF4444;" onclick="deleteTemplate('${t.templateindex}')">🗑️ 刪除</button></div>`; d.appendChild(row); }); }
+function renderTemplateList() { const d = document.getElementById('templateList'); d.innerHTML=''; const sorted = [...GLOBAL_DATA.wallet.templates].sort((a,b) => (parseInt(a.billdate)||0) - (parseInt(b.billdate)||0)); sorted.forEach(t => { const n = t.bankname; const b = t.billdate; const p = t.paymentdate; const row = DomUtils.createEl('div', 'setup-row', '', [], {style:'display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #E5E5EA;'}); row.innerHTML = `<div><div style="font-weight:700">${n}</div><div style="font-size:12px;color:#8E8E93;">結帳日 ${b} / 扣款日 ${p}</div></div><div style="display:flex; gap:5px;"><button class="mini-action-btn" style="color:#007AFF; border:none; background:transparent;" onclick="openEditTemplateModal('${t.templateindex}', '${n}', '${b}', '${p}')">✎</button><button class="mini-action-btn" style="color:#FF3B30; border:none; background:transparent;" onclick="deleteTemplate('${t.templateindex}')">🗑️</button></div>`; d.appendChild(row); }); }
 </script>
 </body>
 </html>
